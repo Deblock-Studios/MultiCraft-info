@@ -20,7 +20,7 @@
     {
       host: 'r4.multicraft.network',
       location: 'Singapour',
-      provider: 'Leaweb'
+      provider: 'Leaseweb'
     },
     {
       host: 'r6.multicraft.network',

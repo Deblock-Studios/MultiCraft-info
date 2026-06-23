@@ -1,15 +1,21 @@
 ---
-date: 2024-06-10
-title: Ouverture de la bêta privée
-images: [beta.svg]
+date: 2026-06-23
+title: MAJ du mod cuivre et du bambou
+images: [1.jpg, 2.jpg]
 ---
 
-La **bêta privée** de MultiCraft est lancée ! Un groupe restreint de testeurs peut désormais explorer le serveur et remonter leurs retours.
+Mise à jour du mod cuivre !
 
-## Objectifs de la bêta
+Cette mise à jour apporte plusieurs items :
+- Les portes
+- Les trappes
+- L'armure 
+- L'équipement pour cheval
+- L'échelle
+- La longue vue
+- Les chaîne set les morceaux de chaînes
+- Les panneaux (suspendus et normaux)
 
-1. Tester la stabilité des 9 datacenters
-2. Valider le système de permissions
-3. Optimiser les performances du hub
+Disponible sur les serveurs officiels !
 
-Merci à tous les testeurs pour votre participation. Vos retours sont précieux pour préparer le lancement officiel.
+Ensuite, un bois de bambou à été ajouté, accompagné d'un bateau en bambou.

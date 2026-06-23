@@ -105,44 +105,50 @@
     });
   }
 
-  /* ── Cursor halo ── */
-  const halo = document.getElementById('cursor-halo');
-  let haloX = 0;
-  let haloY = 0;
-  let targetX = 0;
-  let targetY = 0;
-  let rafId = null;
+/* ── Cursor halo ── */
+const halo = document.getElementById('cursor-halo');
+const size = 100 / 2;
 
-  function isDesktopPointer() {
-    return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  }
+let haloX = 0;
+let haloY = 0;
+let targetX = 0;
+let targetY = 0;
+let rafId = null;
 
-  function animateHalo() {
-    haloX += (targetX - haloX) * 0.08;
-    haloY += (targetY - haloY) * 0.08;
-    halo.style.transform = 'translate(' + (haloX - 210) + 'px, ' + (haloY - 210) + 'px)';
-    rafId = requestAnimationFrame(animateHalo);
-  }
+function isDesktopPointer() {
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+}
 
-  function initCursorHalo() {
-    if (!isDesktopPointer() || !halo) return;
+function animateHalo() {
+  haloX += (targetX - haloX) * 0.08;
+  haloY += (targetY - haloY) * 0.08;
 
-    document.body.classList.add('cursor-active');
-    if (!rafId) rafId = requestAnimationFrame(animateHalo);
+  halo.style.transform =
+    'translate(' + (haloX - size) + 'px, ' + (haloY - size) + 'px)';
 
-    document.addEventListener('mousemove', function(e) {
-      targetX = e.clientX;
-      targetY = e.clientY;
-    });
+  rafId = requestAnimationFrame(animateHalo);
+}
 
-    document.addEventListener('mouseleave', function() {
-      document.body.classList.remove('cursor-active');
-    });
+function initCursorHalo() {
+  if (!isDesktopPointer() || !halo) return;
 
-    document.addEventListener('mouseenter', function() {
-      if (isDesktopPointer()) document.body.classList.add('cursor-active');
-    });
-  }
+  document.body.classList.add('cursor-active');
+
+  if (!rafId) rafId = requestAnimationFrame(animateHalo);
+
+  document.addEventListener('mousemove', function (e) {
+    targetX = e.clientX;
+    targetY = e.clientY;
+  });
+
+  document.addEventListener('mouseleave', function () {
+    document.body.classList.remove('cursor-active');
+  });
+
+  document.addEventListener('mouseenter', function () {
+    if (isDesktopPointer()) document.body.classList.add('cursor-active');
+  });
+}
 
   /* ── Markdown parser (minimal) ── */
   function parseFrontmatter(raw) {

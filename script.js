@@ -24,8 +24,8 @@
     },
     {
       host: 'menu3.multicraft.network',
-      location: 'Helsinki,Finlande',
-      provider: 'Hetzner',
+      location: 'Helsinki, Finlande',
+      provider: 'Hetzner'
     },
     {
       host: 'menu4.multicraft.network',
@@ -36,17 +36,7 @@
       host: 'menu5.multicraft.network',
       location: 'Russie',
       provider: 'JSC timeweb'
-    },
-    {
-      host: 'menu6.multicraft.network',
-      location: 'À compléter',
-      provider: 'À compléter'
-    },
-    {
-      host: 'menu7.multicraft.network',
-      location: 'À compléter',
-      provider: 'À compléter',
-    },
+    }
   ];
 
   /* ── Navigation SPA ── */
@@ -63,16 +53,16 @@
   function navigateTo(pageId) {
     if (!pages[pageId]) return;
 
-    Object.values(pages).forEach((p) => p.classList.remove('active'));
-    pages[pageId].classList.add('active');
+    Object.values(pages).forEach((p) => p?.classList.remove('active'));
+    pages[pageId]?.classList.add('active');
 
     document.querySelectorAll('.nav-link').forEach((link) => {
       link.classList.toggle('active', link.dataset.nav === pageId);
     });
 
-    mainNav.classList.remove('open');
-    navToggle.classList.remove('open');
-    navToggle.setAttribute('aria-expanded', 'false');
+    mainNav?.classList.remove('open');
+    navToggle?.classList.remove('open');
+    navToggle?.setAttribute('aria-expanded', 'false');
 
     if (pageId === 'mises-a-jour' && !updatesLoaded) loadUpdates();
     if (pageId === 'info-du-jeu' && !datacentersLoaded) renderDatacenters();
@@ -95,10 +85,10 @@
 
   window.addEventListener('hashchange', handleRoute);
 
-  navToggle.addEventListener('click', () => {
-    const open = mainNav.classList.toggle('open');
-    navToggle.classList.toggle('open', open);
-    navToggle.setAttribute('aria-expanded', String(open));
+  navToggle?.addEventListener('click', () => {
+    const open = mainNav?.classList.toggle('open');
+    navToggle?.classList.toggle('open', open);
+    navToggle?.setAttribute('aria-expanded', String(open));
   });
 
   /* ── Cursor halo ── */
@@ -121,7 +111,7 @@
   }
 
   function initCursorHalo() {
-    if (!isDesktopPointer()) return;
+    if (!isDesktopPointer() || !halo) return;
 
     document.body.classList.add('cursor-active');
     if (!rafId) rafId = requestAnimationFrame(animateHalo);
@@ -136,7 +126,7 @@
     });
 
     document.addEventListener('mouseenter', () => {
-      document.body.classList.add('cursor-active');
+      if (isDesktopPointer()) document.body.classList.add('cursor-active');
     });
   }
 
@@ -167,7 +157,8 @@
   }
 
   function escapeHtml(str) {
-    return str
+    if (str === undefined || str === null) return '';
+    return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -175,6 +166,7 @@
   }
 
   function renderMarkdown(md) {
+    if (!md) return '';
     const lines = md.split('\n');
     const html = [];
     let inCode = false;
@@ -189,6 +181,7 @@
     }
 
     function inline(text) {
+      if (!text) return '';
       return escapeHtml(text)
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
@@ -214,7 +207,7 @@
         continue;
       }
 
-      if (/^---+$/.test(line.trim())) {
+      if (/^---+\$/.test(line.trim())) {
         closeList();
         html.push('<hr>');
         continue;
@@ -316,14 +309,15 @@
     } catch (err) {
       console.error(err);
       updatesContainer.innerHTML =
-        '<div class="error-state"><p>Impossible de charger les mises à jour.</p><p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim)">Servez le site via un serveur local (ex. <code>python -m http.server</code>).</p></div>';
+        '<div class="error-state"><p>Impossible de charger les mises à jour.</p><p style="margin-top:0.5rem;font-size:0.85rem;color\:var(--text-dim)">Servez le site via un serveur local (ex. <code>python -m http.server</code>).</p></div>';
     }
   }
 
   function renderUpdatePost(post) {
+    if (!post) return '';
     const imagesHtml =
-      post.images.length > 0
-        ? `<div class="update-images">${post.images
+      post.images && post.images.length > 0
+        ? `<div class="update-images">\${post.images
             .map(
               (img) =>
                 `<img src="updates/${post.folder}/images/${img}" alt="" loading="lazy">`
@@ -334,20 +328,21 @@
     return `
       <article class="update-post">
         <div class="update-header">
-          <time class="update-date" datetime="${post.date}">${formatDate(post.date)}</time>
+          <time class="update-date" datetime="${escapeHtml(post.date)}">${formatDate(post.date)}</time>
           <h2 class="update-title">${escapeHtml(post.title)}</h2>
         </div>
         <div class="update-body">${renderMarkdown(post.body)}</div>
-        ${imagesHtml}
+        \${imagesHtml}
       </article>`;
   }
 
   function bindLightbox() {
+    if (!updatesContainer) return;
     updatesContainer.querySelectorAll('.update-images img').forEach((img) => {
       img.addEventListener('click', () => {
         const lb = document.createElement('div');
         lb.className = 'lightbox';
-        lb.innerHTML = `<img src="${img.src}" alt="${img.alt}">`;
+        lb.innerHTML = `<img src="${img.src}" alt="${img.alt || ''}">`;
         lb.addEventListener('click', () => lb.remove());
         document.body.appendChild(lb);
       });
@@ -359,17 +354,16 @@
   const dcContainer = document.getElementById('datacenters-container');
 
   function renderDatacenters() {
+    if (!dcContainer) return;
     dcContainer.innerHTML = DATACENTERS.map(
       (dc) => `
       <article class="dc-card">
         <div class="dc-header">
-          <span class="dc-name">${escapeHtml(dc.host)}</span>
-          <span class="dc-status">${escapeHtml(dc.status)}</span>
+          <span class="dc-name">\${escapeHtml(dc.host)}</span>
         </div>
         <div class="dc-details">
           <div class="dc-row"><span class="dc-label">Localisation</span><span class="dc-value">${escapeHtml(dc.location)}</span></div>
           <div class="dc-row"><span class="dc-label">Hébergeur</span><span class="dc-value">${escapeHtml(dc.provider)}</span></div>
-          <div class="dc-row"><span class="dc-label">Rôle</span><span class="dc-value">${escapeHtml(dc.role)}</span></div>
         </div>
       </article>`
     ).join('');
@@ -377,7 +371,8 @@
   }
 
   /* ── Init ── */
-  document.getElementById('footer-year').textContent = new Date().getFullYear();
+  const footerYear = document.getElementById('footer-year');
+  if (footerYear) footerYear.textContent = new Date().getFullYear();
   initCursorHalo();
   handleRoute();
 

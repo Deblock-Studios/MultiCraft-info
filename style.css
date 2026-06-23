@@ -1,3 +1,11 @@
+/* Chargement de la police personnalisée */
+@font-face {
+  font-family: 'MultiCraftFont';
+  src: url('MultiCraftFont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 /* ── Variables ── */
 :root {
   --bg-deep: #0a0f0c;
@@ -16,8 +24,8 @@
   --radius: 14px;
   --radius-sm: 8px;
   --header-h: 72px;
-  --font: 'Outfit', system-ui, sans-serif;
-  --mono: 'JetBrains Mono', monospace;
+  --font: 'MultiCraftFont', sans-serif;
+  --mono: 'MultiCraftFont', monospace;
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

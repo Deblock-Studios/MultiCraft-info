@@ -577,6 +577,7 @@
       : '';
 
     const adminHtml = adminName ? '<div class="server-admin">👑 ' + adminName + '</div>' : '';
+    const serverDataAttr = escapeHtml(JSON.stringify(server));
 
     return (
       '<article class="server-card">' +
@@ -591,7 +592,8 @@
       '<p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p>' +
       '<div class="server-actions">' +
       discordBtn +
-      '<button type="button" class="btn btn-primary btn-details" data-server="' + escapeHtml(JSON.stringify(server)) + '">Détails</button>' +
+      '<button type="button" class="btn btn-players" data-server="' + serverDataAttr + '">👥 Liste des joueurs</button>' +
+      '<button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button>' +
       '</div>' +
       '</article>'
     );
@@ -605,6 +607,17 @@
         try {
           const serverData = JSON.parse(btn.dataset.server);
           openServerDetailsModal(serverData);
+        } catch (e) {
+          console.error('Erreur lors du parsing des données du serveur', e);
+        }
+      });
+    });
+
+    serversContainer.querySelectorAll('.btn-players').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        try {
+          const serverData = JSON.parse(btn.dataset.server);
+          openPlayersModal(serverData);
         } catch (e) {
           console.error('Erreur lors du parsing des données du serveur', e);
         }
@@ -692,6 +705,15 @@
   const modalCloseBtn2 = document.getElementById('modal-close-btn-2');
   let modalCopyResetTimer = null;
 
+  // Centralise l'ajout/retrait de la classe modal-open : plusieurs pop-up
+  // peuvent exister (détails serveur, liste des joueurs), on ne retire la
+  // classe que si aucune n'est ouverte.
+  function syncModalOpenState() {
+    const serverModalOpen = !!(serverModal && !serverModal.hidden);
+    const playersModalOpen = !!(playersModal && !playersModal.hidden);
+    document.body.classList.toggle('modal-open', serverModalOpen || playersModalOpen);
+  }
+
   // Fonction pour ouvrir le modal détaillé du serveur
   function openServerDetailsModal(server) {
     if (!serverModal) return;
@@ -745,7 +767,7 @@
     }
 
     serverModal.hidden = false;
-    document.body.classList.add('modal-open');
+    syncModalOpenState();
 
     const shareBtn = document.getElementById('modal-share-btn');
     if (shareBtn) {
@@ -816,13 +838,13 @@
     if (modalCode) modalCode.textContent = code || '—';
     if (modalCopyBtn) modalCopyBtn.textContent = 'Copier';
     serverModal.hidden = false;
-    document.body.classList.add('modal-open');
+    syncModalOpenState();
   }
 
   function closeServerModal() {
     if (!serverModal) return;
     serverModal.hidden = true;
-    document.body.classList.remove('modal-open');
+    syncModalOpenState();
   }
 
   function fallbackCopyText(text) {
@@ -867,8 +889,230 @@
       if (e.target === serverModal) closeServerModal();
     });
   }
+
+  /* ── Pop-up "Liste des joueurs" ── */
+  const PLAYERS_API_URL = 'https://multicraft-player-list.creatif-france.workers.dev/';
+
+  const playersModal = document.getElementById('players-modal');
+  const playersModalTitle = document.getElementById('players-modal-title');
+  const playersModalCount = document.getElementById('players-modal-count');
+  const playersListContainer = document.getElementById('players-list-container');
+  const playersSearchInput = document.getElementById('players-search-input');
+  const playersModalCloseBtn = document.getElementById('players-modal-close-btn');
+  const playersModalCloseBtn2 = document.getElementById('players-modal-close-btn-2');
+
+  let currentPlayersList = [];
+  let playersFetchAbortController = null;
+
+  function genderIcon(gender) {
+    switch (gender) {
+      case 'staff': return '🛡️';
+      case 'admin': return '👑';
+      case 'female': return '♀️';
+      case 'male': return '♂️';
+      default: return '👤';
+    }
+  }
+
+  /* Le jeu MultiCraft encode les couleurs/badges des pseudos avec des
+     séquences d'échappement façon "code couleur Minecraft" :
+       \u001b(c@COULEUR)   -> change la couleur du texte qui suit (nom CSS ou hex)
+       \u001b(T@NOM)       -> ouvre un badge spécial (ex: badge "[S]" staff)
+       \u001bE             -> ferme le badge spécial ouvert juste avant
+     Tout le reste (emoji, espaces, texte brut) est affiché tel quel.
+     Cette fonction reconstruit le pseudo en HTML, en échappant chaque
+     fragment de texte individuellement (jamais de HTML brut injecté). */
+  function renderPlayerTagHtml(tag, fallbackName) {
+    if (!tag) {
+      return '<span class="player-name">' + escapeHtml(fallbackName || '') + '</span>';
+    }
+
+    const ESC = '\u001b';
+    let out = '';
+    let currentColor = null;
+    let inBadge = false;
+    let buffer = '';
+    let badgeBuffer = '';
+    let i = 0;
+
+    function colorSpan(text) {
+      if (!text) return '';
+      const style = currentColor ? ' style="color:' + escapeHtml(currentColor) + '"' : '';
+      return '<span' + style + '>' + escapeHtml(text) + '</span>';
+    }
+
+    function flushBuffer() {
+      if (buffer) {
+        out += colorSpan(buffer);
+        buffer = '';
+      }
+    }
+
+    while (i < tag.length) {
+      const ch = tag[i];
+
+      if (ch === ESC) {
+        const next = tag[i + 1];
+
+        if (next === '(') {
+          const closeIdx = tag.indexOf(')', i + 2);
+          if (closeIdx === -1) { i += 1; continue; }
+          const code = tag.slice(i + 2, closeIdx);
+          const atIdx = code.indexOf('@');
+          const key = atIdx === -1 ? code : code.slice(0, atIdx);
+          const value = atIdx === -1 ? '' : code.slice(atIdx + 1);
+
+          if (key === 'c') {
+            flushBuffer();
+            currentColor = value || null;
+          } else if (key === 'T') {
+            flushBuffer();
+            inBadge = true;
+            badgeBuffer = '';
+          }
+          // Autres clés inconnues : ignorées silencieusement
+
+          i = closeIdx + 1;
+          continue;
+        }
+
+        if (next === 'E') {
+          if (inBadge) {
+            const style = currentColor
+              ? ' style="border-color:' + escapeHtml(currentColor) + ';color:' + escapeHtml(currentColor) + '"'
+              : '';
+            out += '<span class="player-badge"' + style + '>' + escapeHtml(badgeBuffer) + '</span>';
+            inBadge = false;
+            badgeBuffer = '';
+          }
+          i += 2;
+          continue;
+        }
+
+        // Code inconnu : on ignore simplement le caractère d'échappement
+        i += 1;
+        continue;
+      }
+
+      if (inBadge) {
+        badgeBuffer += ch;
+      } else {
+        buffer += ch;
+      }
+      i += 1;
+    }
+
+    flushBuffer();
+    if (inBadge && badgeBuffer) out += colorSpan(badgeBuffer);
+
+    return '<span class="player-name">' + out + '</span>';
+  }
+
+  function renderPlayersList(players, query) {
+    if (!playersListContainer) return;
+
+    if (!players.length) {
+      playersListContainer.innerHTML = '<div class="empty-state"><p>Aucun joueur en ligne pour le moment.</p></div>';
+      return;
+    }
+
+    const q = (query || '').trim().toLowerCase();
+    const list = q
+      ? players.filter(function (p) { return (p.name || '').toLowerCase().indexOf(q) !== -1; })
+      : players;
+
+    if (!list.length) {
+      playersListContainer.innerHTML = '<div class="empty-state"><p>Aucun joueur ne correspond à votre recherche.</p></div>';
+      return;
+    }
+
+    playersListContainer.innerHTML = list.map(function (p) {
+      const icon = genderIcon(p.gender);
+      const nameHtml = renderPlayerTagHtml(p.tag, p.name);
+      return '<div class="player-row"><span class="player-icon" aria-hidden="true">' + icon + '</span>' + nameHtml + '</div>';
+    }).join('');
+  }
+
+  function openPlayersModal(server) {
+    if (!playersModal) return;
+
+    const name = server.server_name || 'Serveur';
+    const serverId = server.server_id || '';
+
+    if (playersModalTitle) playersModalTitle.textContent = name;
+    if (playersSearchInput) playersSearchInput.value = '';
+    currentPlayersList = [];
+
+    if (playersModalCount) playersModalCount.textContent = '';
+    if (playersListContainer) {
+      playersListContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Chargement des joueurs…</p></div>';
+    }
+
+    playersModal.hidden = false;
+    syncModalOpenState();
+
+    if (!serverId) {
+      playersListContainer.innerHTML = '<div class="error-state"><p>Code d\'invitation introuvable pour ce serveur.</p></div>';
+      return;
+    }
+
+    if (playersFetchAbortController) playersFetchAbortController.abort();
+    playersFetchAbortController = new AbortController();
+
+    fetch(PLAYERS_API_URL + '?server_id=' + encodeURIComponent(serverId), { signal: playersFetchAbortController.signal })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
+        return res.json();
+      })
+      .then(function (data) {
+        const players = Array.isArray(data.players) ? data.players : [];
+        const max = data.max_players != null
+          ? data.max_players
+          : (server.max_players != null ? server.max_players : '?');
+
+        currentPlayersList = players;
+
+        if (playersModalCount) {
+          playersModalCount.textContent = players.length + ' / ' + max + ' joueur' + (max === 1 ? '' : 's') + ' en ligne';
+        }
+
+        renderPlayersList(players, playersSearchInput ? playersSearchInput.value : '');
+      })
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        console.error(err);
+        if (playersListContainer) {
+          playersListContainer.innerHTML =
+            '<div class="error-state"><p>Impossible de charger la liste des joueurs.</p>' +
+            '<p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim)">Vérifiez votre connexion et réessayez dans un instant.</p></div>';
+        }
+      });
+  }
+
+  function closePlayersModal() {
+    if (!playersModal) return;
+    playersModal.hidden = true;
+    syncModalOpenState();
+    if (playersFetchAbortController) playersFetchAbortController.abort();
+  }
+
+  if (playersSearchInput) {
+    playersSearchInput.addEventListener('input', function () {
+      renderPlayersList(currentPlayersList, playersSearchInput.value);
+    });
+  }
+
+  if (playersModalCloseBtn) playersModalCloseBtn.addEventListener('click', closePlayersModal);
+  if (playersModalCloseBtn2) playersModalCloseBtn2.addEventListener('click', closePlayersModal);
+  if (playersModal) {
+    playersModal.addEventListener('click', function (e) {
+      if (e.target === playersModal) closePlayersModal();
+    });
+  }
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && serverModal && !serverModal.hidden) closeServerModal();
+    if (e.key !== 'Escape') return;
+    if (playersModal && !playersModal.hidden) { closePlayersModal(); return; }
+    if (serverModal && !serverModal.hidden) closeServerModal();
   });
 
   /* ── Init ── */

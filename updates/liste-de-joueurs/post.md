@@ -4,4 +4,4 @@ title: MAJ liste de joueurs sur le menu principal
 images: [1.png]
 ---
 
-Maintenant on peu voir la liste de joueurs de chaque serveur en cliquant sur un petit bouton en bas a droite de la déscription de votre serveur !
+Maintenant on peut voir la liste de joueurs de chaque serveur en cliquant sur un petit bouton en bas à droite de la description du serveur !

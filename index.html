@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.">
+  <meta name="description"
+    content="MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.">
   <title>MultiCraft Info</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <div id="cursor-halo" aria-hidden="true"></div>
   <div class="grid-bg" aria-hidden="true"></div>
@@ -38,7 +41,7 @@
       <div class="hero">
         <h1>Bienvenue sur <span class="gradient-text">MultiCraft Info</span></h1>
         <p class="hero-subtitle">
-         Retrouvez ici la liste des mises à jour du jeu ainsi que tous leurs serveurs physiques.
+          Retrouvez ici la liste des mises à jour du jeu ainsi que tous leurs serveurs physiques.
         </p>
         <div class="hero-actions">
           <a href="#mises-a-jour" class="btn btn-primary" data-nav="mises-a-jour">Voir les mises à jour</a>
@@ -76,7 +79,7 @@
       </div>
     </section>
 
-   <!-- Serveurs -->
+    <!-- Serveurs -->
     <section id="page-serveurs" class="page">
       <div class="page-header">
         <h1>Serveurs</h1>
@@ -86,7 +89,8 @@
       <div class="servers-toolbar">
         <label class="search-bar" for="server-search">
           <span class="search-icon" aria-hidden="true">🔍</span>
-          <input type="search" id="server-search" placeholder="Rechercher un serveur…" aria-label="Rechercher un serveur">
+          <input type="search" id="server-search" placeholder="Rechercher un serveur…"
+            aria-label="Rechercher un serveur">
         </label>
         <span id="servers-count" class="servers-count"></span>
       </div>
@@ -99,14 +103,15 @@
       </div>
     </section>
 
-   <!-- Info du site -->
+    <!-- Info du site -->
     <section id="page-info-du-site" class="page">
       <div class="page-header">
         <h1>Info du site</h1>
-        <p>Ce site web a été créé par <a href="https://github.com/NattMath22">Aurelmattnath</a> et <a href="https://github.com/lulu76450">Lucas76</a>.</p>
-<p>Le code source du site est disponible <a href="https://github.com/NattMath22/multicraft-info">ici</a>.</p>
-<p>Nous ne sommes pas affiliés à MultiCraft</p>
-<p>Version 1.0</p>
+        <p>Ce site web a été créé par <a href="https://github.com/NattMath22">Aurelmattnath</a> et <a
+            href="https://github.com/lulu76450">Lucas76</a>.</p>
+        <p>Le code source du site est disponible <a href="https://github.com/NattMath22/multicraft-info">ici</a>.</p>
+        <p>Nous ne sommes pas affiliés à MultiCraft</p>
+        <p>Version 1.0</p>
       </div>
     </section>
 
@@ -128,17 +133,28 @@
   <div id="server-modal" class="modal-overlay" hidden>
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-server-name">
       <button type="button" class="modal-close" id="modal-close-btn" aria-label="Fermer">✕</button>
-      <p class="modal-eyebrow">Rejoindre</p>
+      <p class="modal-eyebrow">Informations du serveur</p>
       <h2 id="modal-server-name">Serveur</h2>
+
+      <!-- Conteneur pour les détails -->
+      <div class="modal-body">
+        <!-- Rempli dynamiquement par JavaScript -->
+      </div>
+
       <p class="modal-label">Code d'invitation</p>
       <div class="modal-code-row">
         <code id="modal-code" class="modal-code"></code>
         <button type="button" id="modal-copy-btn" class="btn btn-primary btn-copy">Copier</button>
       </div>
-      <button type="button" id="modal-close-btn-2" class="btn btn-ghost modal-close-bottom">Fermer</button>
+
+      <div class="modal-actions">
+        <button type="button" id="modal-share-btn" class="btn btn-ghost">🔗 Partager</button>
+        <button type="button" id="modal-close-btn-2" class="btn btn-ghost modal-close-bottom">Fermer</button>
+      </div>
     </div>
   </div>
 
   <script src="script.js"></script>
 </body>
+
 </html>

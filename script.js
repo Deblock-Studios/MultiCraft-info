@@ -37,7 +37,7 @@
       location: 'Helsinki, Finlande',
       provider: 'Hetzner'
     },
-     {
+    {
       host: 'r9.multicraft.network',
       location: 'Sydney, Autralie',
       provider: 'OVH'
@@ -60,12 +60,12 @@
   function navigateTo(pageId) {
     if (!pages[pageId]) return;
 
-    Object.values(pages).forEach(function(p) {
+    Object.values(pages).forEach(function (p) {
       if (p) p.classList.remove('active');
     });
     if (pages[pageId]) pages[pageId].classList.add('active');
 
-    document.querySelectorAll('.nav-link').forEach(function(link) {
+    document.querySelectorAll('.nav-link').forEach(function (link) {
       if (link.dataset.nav === pageId) {
         link.classList.add('active');
       } else {
@@ -95,8 +95,8 @@
     }
   }
 
-  navLinks.forEach(function(el) {
-    el.addEventListener('click', function(e) {
+  navLinks.forEach(function (el) {
+    el.addEventListener('click', function (e) {
       e.preventDefault();
       const page = el.dataset.nav;
       location.hash = page;
@@ -106,57 +106,57 @@
   window.addEventListener('hashchange', handleRoute);
 
   if (navToggle && mainNav) {
-    navToggle.addEventListener('click', function() {
+    navToggle.addEventListener('click', function () {
       const open = mainNav.classList.toggle('open');
       navToggle.classList.toggle('open', open);
       navToggle.setAttribute('aria-expanded', String(open));
     });
   }
 
-/* ── Cursor halo ── */
-const halo = document.getElementById('cursor-halo');
-const size = 100 / 2;
+  /* ── Cursor halo ── */
+  const halo = document.getElementById('cursor-halo');
+  const size = 100 / 2;
 
-let haloX = 0;
-let haloY = 0;
-let targetX = 0;
-let targetY = 0;
-let rafId = null;
+  let haloX = 0;
+  let haloY = 0;
+  let targetX = 0;
+  let targetY = 0;
+  let rafId = null;
 
-function isDesktopPointer() {
-  return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-}
+  function isDesktopPointer() {
+    return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  }
 
-function animateHalo() {
-  haloX += (targetX - haloX) * 0.08;
-  haloY += (targetY - haloY) * 0.08;
+  function animateHalo() {
+    haloX += (targetX - haloX) * 0.08;
+    haloY += (targetY - haloY) * 0.08;
 
-  halo.style.transform =
-    'translate(' + (haloX - size) + 'px, ' + (haloY - size) + 'px)';
+    halo.style.transform =
+      'translate(' + (haloX - size) + 'px, ' + (haloY - size) + 'px)';
 
-  rafId = requestAnimationFrame(animateHalo);
-}
+    rafId = requestAnimationFrame(animateHalo);
+  }
 
-function initCursorHalo() {
-  if (!isDesktopPointer() || !halo) return;
+  function initCursorHalo() {
+    if (!isDesktopPointer() || !halo) return;
 
-  document.body.classList.add('cursor-active');
+    document.body.classList.add('cursor-active');
 
-  if (!rafId) rafId = requestAnimationFrame(animateHalo);
+    if (!rafId) rafId = requestAnimationFrame(animateHalo);
 
-  document.addEventListener('mousemove', function (e) {
-    targetX = e.clientX;
-    targetY = e.clientY;
-  });
+    document.addEventListener('mousemove', function (e) {
+      targetX = e.clientX;
+      targetY = e.clientY;
+    });
 
-  document.addEventListener('mouseleave', function () {
-    document.body.classList.remove('cursor-active');
-  });
+    document.addEventListener('mouseleave', function () {
+      document.body.classList.remove('cursor-active');
+    });
 
-  document.addEventListener('mouseenter', function () {
-    if (isDesktopPointer()) document.body.classList.add('cursor-active');
-  });
-}
+    document.addEventListener('mouseenter', function () {
+      if (isDesktopPointer()) document.body.classList.add('cursor-active');
+    });
+  }
 
   /* ── Markdown parser (minimal) ── */
   function parseFrontmatter(raw) {
@@ -164,7 +164,7 @@ function initCursorHalo() {
     if (!match) return { meta: {}, body: raw.trim() };
 
     const meta = {};
-    match[1].split('\n').forEach(function(line) {
+    match[1].split('\n').forEach(function (line) {
       const idx = line.indexOf(':');
       if (idx === -1) return;
       const key = line.slice(0, idx).trim();
@@ -173,7 +173,7 @@ function initCursorHalo() {
         val = val
           .slice(1, -1)
           .split(',')
-          .map(function(s) { return s.trim().replace(/^["']|["']$/g, ''); })
+          .map(function (s) { return s.trim().replace(/^["']|["']$/g, ''); })
           .filter(Boolean);
       } else {
         val = val.replace(/^["']|["']$/g, '');
@@ -330,7 +330,7 @@ function initCursorHalo() {
       const folders = await manifestRes.json();
 
       const posts = await Promise.all(
-        folders.map(async function(folder) {
+        folders.map(async function (folder) {
           const res = await fetch('updates/' + folder + '/post.md');
           if (!res.ok) return null;
           const raw = await res.text();
@@ -345,8 +345,8 @@ function initCursorHalo() {
         })
       );
 
-      const valid = posts.filter(function(p) { return p !== null; })
-        .sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+      const valid = posts.filter(function (p) { return p !== null; })
+        .sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
 
       if (valid.length === 0) {
         updatesContainer.innerHTML = '<div class="empty-state"><p>Aucune mise à jour pour le moment.</p></div>';
@@ -358,7 +358,7 @@ function initCursorHalo() {
       updatesLoaded = true;
     } catch (err) {
       console.error(err);
-      updatesContainer.innerHTML = '<div class="error-state"><p>Impossible de charger les mises à jour.</p><p style="margin-top:0.5rem;font-size:0.85rem;color\:var(--text-dim)">Servez le site via un serveur local (ex. <code>python -m http.server</code>).</p></div>';
+      updatesContainer.innerHTML = '<div class="error-state"><p>Impossible de charger les mises à jour.</p><p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim)">Servez le site via un serveur local (ex. <code>python -m http.server</code>).</p></div>';
     }
   }
 
@@ -366,7 +366,7 @@ function initCursorHalo() {
     if (!post) return '';
     let imagesHtml = '';
     if (post.images && post.images.length > 0) {
-      imagesHtml = '<div class="update-images">' + post.images.map(function(img) {
+      imagesHtml = '<div class="update-images">' + post.images.map(function (img) {
         return '<img src="updates/' + post.folder + '/images/' + img + '" alt="" loading="lazy">';
       }).join('') + '</div>';
     }
@@ -379,12 +379,12 @@ function initCursorHalo() {
 
   function bindLightbox() {
     if (!updatesContainer) return;
-    updatesContainer.querySelectorAll('.update-images img').forEach(function(img) {
-      img.addEventListener('click', function() {
+    updatesContainer.querySelectorAll('.update-images img').forEach(function (img) {
+      img.addEventListener('click', function () {
         const lb = document.createElement('div');
         lb.className = 'lightbox';
         lb.innerHTML = '<img src="' + img.src + '" alt="' + (img.alt || '') + '">';
-        lb.addEventListener('click', function() { lb.remove(); });
+        lb.addEventListener('click', function () { lb.remove(); });
         document.body.appendChild(lb);
       });
     });
@@ -434,12 +434,12 @@ function initCursorHalo() {
         if (!found.has(node.server_id)) found.set(node.server_id, node);
         return;
       }
-      Object.keys(node).forEach(function(key) { walk(node[key]); });
+      Object.keys(node).forEach(function (key) { walk(node[key]); });
     }
 
     walk(data);
 
-    return Array.from(found.values()).sort(function(a, b) {
+    return Array.from(found.values()).sort(function (a, b) {
       const aOnline = a.online ? 1 : 0;
       const bOnline = b.online ? 1 : 0;
       if (aOnline !== bOnline) return bOnline - aOnline;
@@ -464,24 +464,31 @@ function initCursorHalo() {
 
     return (
       '<article class="server-card">' +
-        '<div class="server-card-head">' +
-          '<h2 class="server-name">' + name + '</h2>' +
-          '<span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span>' +
-        '</div>' +
-        '<p class="server-desc">' + description + '</p>' +
-        '<div class="server-actions">' +
-          discordBtn +
-          '<button type="button" class="btn btn-primary btn-join" data-name="' + name + '" data-code="' + code + '">Rejoindre</button>' +
-        '</div>' +
+      '<div class="server-card-head">' +
+      '<h2 class="server-name">' + name + '</h2>' +
+      '<span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span>' +
+      '</div>' +
+      '<p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p>' +
+      '<div class="server-actions">' +
+      discordBtn +
+      '<button type="button" class="btn btn-primary btn-details" data-server="' + escapeHtml(JSON.stringify(server)) + '">Détails</button>' +
+      '</div>' +
       '</article>'
     );
   }
 
   function bindServerCardActions() {
     if (!serversContainer) return;
-    serversContainer.querySelectorAll('.btn-join').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        openServerModal(btn.dataset.name, btn.dataset.code);
+
+    // Gérer les boutons Détails
+    serversContainer.querySelectorAll('.btn-details').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        try {
+          const serverData = JSON.parse(btn.dataset.server);
+          openServerDetailsModal(serverData);
+        } catch (e) {
+          console.error('Erreur lors du parsing des données du serveur', e);
+        }
       });
     });
   }
@@ -502,7 +509,7 @@ function initCursorHalo() {
   function filterServers(query) {
     const q = query.trim().toLowerCase();
     if (!q) return allServers;
-    return allServers.filter(function(s) {
+    return allServers.filter(function (s) {
       return (
         (s.server_name && s.server_name.toLowerCase().indexOf(q) !== -1) ||
         (s.description && s.description.toLowerCase().indexOf(q) !== -1) ||
@@ -520,6 +527,9 @@ function initCursorHalo() {
       allServers = extractServers(data);
       serversLoaded = true;
       renderServers(filterServers(serverSearchInput ? serverSearchInput.value : ''));
+
+      // Vérifier si un serveur est partagé dans l'URL
+      handleServerShare();
     } catch (err) {
       console.error(err);
       if (serversContainer) {
@@ -532,7 +542,7 @@ function initCursorHalo() {
   }
 
   if (serverSearchInput) {
-    serverSearchInput.addEventListener('input', function() {
+    serverSearchInput.addEventListener('input', function () {
       if (!serversLoaded) return;
       renderServers(filterServers(serverSearchInput.value));
     });
@@ -546,6 +556,97 @@ function initCursorHalo() {
   const modalCloseBtn = document.getElementById('modal-close-btn');
   const modalCloseBtn2 = document.getElementById('modal-close-btn-2');
   let modalCopyResetTimer = null;
+
+  // Fonction pour ouvrir le modal détaillé du serveur
+  function openServerDetailsModal(server) {
+    if (!serverModal) return;
+
+    // Remplir les informations du modal
+    const name = server.server_name || 'Serveur sans nom';
+    const description = server.description || 'Aucune description disponible.';
+    const code = server.server_id || '';
+    const players = server.online ? (server.connected_players || 0) : 0;
+    const maxPlayers = server.max_players != null ? server.max_players : '?';
+    const onlineStatus = server.online ? '🟢 En ligne' : '🔴 Hors ligne';
+    const version = server.version || 'Inconnue';
+    const ip = server.ip || 'Non disponible';
+    const port = server.port || 'Non disponible';
+    const url = server.url || null;
+
+    // Mettre à jour le contenu du modal
+    if (modalServerName) modalServerName.textContent = name;
+    if (modalCode) modalCode.textContent = code;
+
+    // Créer le contenu détaillé
+    const modalBody = document.querySelector('.modal-body');
+    if (modalBody) {
+      modalBody.innerHTML = `
+        <div class="modal-details">
+            <div class="modal-status ${server.online ? 'online' : 'offline'}">
+                <span class="status-dot"></span>
+                ${onlineStatus}
+            </div>
+            <div class="modal-description">
+                <h3>Description</h3>
+                <p>${escapeHtml(description)}</p>
+            </div>
+            <div class="modal-info-grid">
+                <div class="modal-info-item">
+                    <span class="modal-info-label">👥 Joueurs</span>
+                    <span class="modal-info-value">${players} / ${maxPlayers}</span>
+                </div>
+            </div>
+            ${url ? `<div class="modal-discord-link"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="btn btn-discord">Rejoindre Discord</a></div>` : ''}
+        </div>
+      `;
+    }
+
+    // Afficher le modal
+    serverModal.hidden = false;
+    document.body.classList.add('modal-open');
+
+    // Mettre à jour le bouton de partage
+    const shareBtn = document.getElementById('modal-share-btn');
+    if (shareBtn) {
+      shareBtn.onclick = function () {
+        const shareUrl = window.location.origin + window.location.pathname + '?server=' + encodeURIComponent(code);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareUrl).then(function () {
+            shareBtn.textContent = '✅ Lien copié !';
+            setTimeout(function () { shareBtn.textContent = '🔗 Partager'; }, 2000);
+          }).catch(function () {
+            fallbackCopyText(shareUrl);
+            shareBtn.textContent = '✅ Lien copié !';
+            setTimeout(function () { shareBtn.textContent = '🔗 Partager'; }, 2000);
+          });
+        } else {
+          fallbackCopyText(shareUrl);
+          shareBtn.textContent = '✅ Lien copié !';
+          setTimeout(function () { shareBtn.textContent = '🔗 Partager'; }, 2000);
+        }
+      };
+    }
+
+    // Mettre à jour le titre du modal
+    const modalEyebrow = document.querySelector('.modal-eyebrow');
+    if (modalEyebrow) modalEyebrow.textContent = 'Informations du serveur';
+  }
+
+  // Gestion du paramètre ?server= dans l'URL
+  function handleServerShare() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const serverId = urlParams.get('server');
+    if (serverId && allServers.length > 0) {
+      const server = allServers.find(function (s) {
+        return s.server_id === serverId;
+      });
+      if (server) {
+        setTimeout(function () {
+          openServerDetailsModal(server);
+        }, 500);
+      }
+    }
+  }
 
   function openServerModal(name, code) {
     if (!serverModal) return;
@@ -575,18 +676,18 @@ function initCursorHalo() {
   }
 
   if (modalCopyBtn) {
-    modalCopyBtn.addEventListener('click', function() {
+    modalCopyBtn.addEventListener('click', function () {
       const code = modalCode ? modalCode.textContent : '';
       if (!code) return;
 
       function showCopied() {
         modalCopyBtn.textContent = 'Copié ✓';
         clearTimeout(modalCopyResetTimer);
-        modalCopyResetTimer = setTimeout(function() { modalCopyBtn.textContent = 'Copier'; }, 1600);
+        modalCopyResetTimer = setTimeout(function () { modalCopyBtn.textContent = 'Copier'; }, 1600);
       }
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(code).then(showCopied).catch(function() {
+        navigator.clipboard.writeText(code).then(showCopied).catch(function () {
           fallbackCopyText(code);
           showCopied();
         });
@@ -600,11 +701,11 @@ function initCursorHalo() {
   if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeServerModal);
   if (modalCloseBtn2) modalCloseBtn2.addEventListener('click', closeServerModal);
   if (serverModal) {
-    serverModal.addEventListener('click', function(e) {
+    serverModal.addEventListener('click', function (e) {
       if (e.target === serverModal) closeServerModal();
     });
   }
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && serverModal && !serverModal.hidden) closeServerModal();
   });
 

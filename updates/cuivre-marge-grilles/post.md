@@ -4,7 +4,7 @@ date: 2026-06-27
 
 title: Le mod cuivre disparait, la marge diminue et les grilles refaites 
 
-images: [1.png, 2.png]
+images: [1.jpg, 2.jpg]
 
 ---
 

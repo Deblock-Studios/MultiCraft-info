@@ -1434,7 +1434,7 @@
   }
 
   /* ── Pop-up "Liste des joueurs" ── */
-  const PLAYERS_API_URL = 'goozkziidiwjjabnzbej.creatif-france.workers.dev';
+  const PLAYERS_API_URL = 'https://goozkziidiwjjabnzbej.creatif-france.workers.dev';
 
   const playersModal = document.getElementById('players-modal');
   const playersModalTitle = document.getElementById('players-modal-title');

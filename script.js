@@ -59,7 +59,7 @@
   /* ── Discord OAuth2 (Authorization Code via Worker proxy) ── */
   // 👉 Remplacez par le Client ID de votre application Discord
   //    discord.com/developers/applications → votre app → OAuth2
-  const DISCORD_CLIENT_ID = 'VOTRE_CLIENT_ID_ICI';
+  const DISCORD_CLIENT_ID = '1520060964920103013';
   // ⚠️  Doit correspondre EXACTEMENT à ce qui est enregistré dans Discord Developer Portal
   //     Discord → OAuth2 → Redirects
   const DISCORD_REDIRECT_URI = 'https://multicraft-info.netlify.app/';

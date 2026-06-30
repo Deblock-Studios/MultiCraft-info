@@ -48,7 +48,6 @@
     'apikey': SUPABASE_ANON_KEY,
     'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
     'Content-Type': 'application/json',
-    'Prefer': 'return=representation'
   };
 
   /* ── Discord OAuth2 ── */
@@ -59,6 +58,7 @@
 
   /* ── État de l'utilisateur Discord ── */
   let discordUser = null;
+  let chatMessages = []; // Déclaré ici pour être accessible partout
 
   function getDiscordAvatarUrl(user) {
     if (!user) return '';
@@ -1976,7 +1976,6 @@
   (function () {
     var chatOpen = false;
     var chatPollingInterval = null;
-    var chatMessages = [];
     var isPolling = false;
 
     var chatBubble = document.getElementById('chat-bubble');
@@ -2018,14 +2017,11 @@
       var time = msg.created_at ? formatTime(msg.created_at) : '';
       var userDisplay = msg.username || 'Anonyme';
 
-      // Vérifier si l'utilisateur est admin
       var isAdminUserFlag = isAdminUser(msg.discord_user_id);
       var adminBadge = isAdminUserFlag ? ' <span style="color:#5865F2;font-size:0.6rem;">🛡️ Admin</span>' : '';
 
-      // Indicateur de modification
       var editedIndicator = msg.is_edited ? ' <span style="font-size:0.6rem;color:var(--text-dim);font-style:italic;">(modifié)</span>' : '';
 
-      // Indicateur de censure (visible uniquement pour les admins)
       var censoredIndicator = (msg.is_censored && isAdminUser(discordUser ? discordUser.id : null))
         ? ' <span style="font-size:0.6rem;color:#fbbf24;font-style:italic;">(censuré)</span>' : '';
 
@@ -2135,8 +2131,8 @@
       }
     }
 
-    // Fonction pour supprimer un message (admin ou propriétaire)
-    async function deleteMessage(messageId, discordUserId) {
+    // Fonction pour supprimer un message
+    async function deleteChatMessage(messageId, discordUserId) {
       if (!discordUser) return;
 
       const isAdmin = isAdminUser(discordUser.id);
@@ -2173,7 +2169,7 @@
     }
 
     // Fonction pour éditer un message
-    async function editMessage(messageId, newText, discordUserId) {
+    async function editChatMessage(messageId, newText, discordUserId) {
       if (!discordUser) return;
 
       const isAdmin = isAdminUser(discordUser.id);
@@ -2244,6 +2240,8 @@
 
     // Fonction pour ajouter les boutons d'action sur les messages
     function addMessageActions() {
+      if (!discordUser) return;
+
       document.querySelectorAll('.chat-msg').forEach(function (msgElement) {
         if (msgElement.querySelector('.chat-msg-actions')) return;
 
@@ -2251,11 +2249,11 @@
         const msg = chatMessages.find(function (m) { return m.id === msgId; });
         if (!msg) return;
 
-        const isAdmin = discordUser && isAdminUser(discordUser.id);
-        const isOwner = discordUser && discordUser.id === msg.discord_user_id;
-        const canModerate = discordUser && canModerate(discordUser.id);
+        const isAdmin = isAdminUser(discordUser.id);
+        const isOwner = discordUser.id === msg.discord_user_id;
+        const mod = canModerate(discordUser.id);
 
-        if (!isAdmin && !isOwner && !canModerate) return;
+        if (!isAdmin && !isOwner && !mod) return;
 
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'chat-msg-actions';
@@ -2266,7 +2264,7 @@
         `;
 
         // Bouton pour voir l'original (admins/mods)
-        if (isAdmin || canModerate) {
+        if (isAdmin || mod) {
           const viewBtn = document.createElement('button');
           viewBtn.className = 'chat-action-btn';
           viewBtn.textContent = '👁️';
@@ -2293,7 +2291,7 @@
         }
 
         // Bouton modifier
-        if (isOwner || isAdmin || canModerate) {
+        if (isOwner || isAdmin || mod) {
           const editBtn = document.createElement('button');
           editBtn.className = 'chat-action-btn';
           editBtn.textContent = '✏️';
@@ -2318,14 +2316,14 @@
             const currentText = bubble.textContent;
             const newText = prompt('Modifier le message:', currentText);
             if (newText !== null && newText !== currentText) {
-              editMessage(msgId, newText, msg.discord_user_id);
+              editChatMessage(msgId, newText, msg.discord_user_id);
             }
           });
           actionsDiv.appendChild(editBtn);
         }
 
         // Bouton supprimer
-        if (isOwner || isAdmin || canModerate) {
+        if (isOwner || isAdmin || mod) {
           const deleteBtn = document.createElement('button');
           deleteBtn.className = 'chat-action-btn delete';
           deleteBtn.textContent = '🗑️';
@@ -2345,7 +2343,7 @@
           deleteBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             if (confirm('Supprimer ce message ?')) {
-              deleteMessage(msgId, msg.discord_user_id);
+              deleteChatMessage(msgId, msg.discord_user_id);
             }
           });
           actionsDiv.appendChild(deleteBtn);

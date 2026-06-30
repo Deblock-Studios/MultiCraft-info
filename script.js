@@ -40,9 +40,7 @@
     }
   ];
 
-  /* ── Supabase (avis serveurs) ── */
-  // 👉 Remplacez ces deux valeurs par celles de votre projet Supabase
-  //    Supabase > Settings > API
+  /* ── Supabase (avis serveurs & chat) ── */
   const SUPABASE_URL = 'https://qxzvnxekjggjldezprec.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4enZueGVramdnamxkZXpwcmVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMzE3NjMsImV4cCI6MjA5NzgwNzc2M30.Qa-lxT8mYy2kejt2kiydOvDqCYNeAD6q1d1Ce56A5Rc';
 
@@ -52,24 +50,20 @@
     'Content-Type': 'application/json',
   };
 
-  /* ── Discord OAuth2 (Authorization Code via Worker proxy) ── */
-  // 👉 Remplacez par le Client ID de votre application Discord
-  //    discord.com/developers/applications → votre app → OAuth2
+  /* ── Discord OAuth2 ── */
   const DISCORD_CLIENT_ID = '1520060964920103013';
-  // ⚠️  Doit correspondre EXACTEMENT à ce qui est enregistré dans Discord Developer Portal
-  //     Discord → OAuth2 → Redirects
   const DISCORD_REDIRECT_URI = 'https://multicraft-info.netlify.app/';
   const DISCORD_SCOPES = 'identify';
+  const DISCORD_TOKEN_PROXY = 'https://discord-oauth-proxy.creatif-france.workers.dev/token';
 
   /* ── État de l'utilisateur Discord ── */
-  let discordUser = null; // { id, username, discriminator, avatar, global_name }
+  let discordUser = null;
 
   function getDiscordAvatarUrl(user) {
     if (!user) return '';
     if (user.avatar) {
       return 'https://cdn.discordapp.com/avatars/' + user.id + '/' + user.avatar + '.png?size=64';
     }
-    // Avatar par défaut Discord
     const index = Number(BigInt(user.id) >> 22n) % 6;
     return 'https://cdn.discordapp.com/embed/avatars/' + index + '.png';
   }
@@ -79,11 +73,7 @@
     return user.global_name || user.username || (window.i18n.t('discord.user') + user.discriminator);
   }
 
-  /* ── Discord OAuth2 (Authorization Code via Worker proxy) ── */
-  // Le client_secret vit uniquement dans le Worker Cloudflare — jamais ici.
-  const DISCORD_TOKEN_PROXY = 'https://discord-oauth-proxy.creatif-france.workers.dev/token';
-
-  /* ── Lancer le flux OAuth2 Discord ── */
+  /* ── Discord OAuth2 ── */
   async function startDiscordLogin() {
     const state = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(12))))
       .replace(/[^a-zA-Z0-9]/g, '');
@@ -101,7 +91,6 @@
     window.location.href = 'https://discord.com/api/oauth2/authorize?' + params.toString();
   }
 
-  /* ── Échange du code via le Worker (client_secret côté Worker) ── */
   async function exchangeCodeForToken(code) {
     const res = await fetch(DISCORD_TOKEN_PROXY, {
       method: 'POST',
@@ -124,7 +113,6 @@
     return res.json();
   }
 
-  /* ── Persistance session ── */
   function saveDiscordSession(user, accessToken, expiresAt) {
     try {
       localStorage.setItem('discord_session', JSON.stringify({ user, accessToken, expiresAt }));
@@ -175,7 +163,7 @@
     }
   }
 
-  /* ── Gestion du callback OAuth2 (code dans l'URL) ── */
+  /* ── Gestion du callback OAuth2 ── */
   async function handleDiscordCallback() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -184,7 +172,6 @@
 
     if (error) {
       console.warn('Discord OAuth erreur :', error);
-      // Nettoyer l'URL
       const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
       history.replaceState(null, '', cleanUrl);
       return;
@@ -214,7 +201,6 @@
       console.error('Discord auth erreur :', err);
     }
 
-    // Nettoyer les paramètres OAuth de l'URL
     const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
     history.replaceState(null, '', cleanUrl);
   }
@@ -227,8 +213,6 @@
     }
     updateDiscordUI();
 
-    // Délégation sur le document pour capturer les clics
-    // même si les boutons sont cachés au moment de l'init
     document.addEventListener('click', function (e) {
       if (e.target.closest('#discord-login-btn')) {
         startDiscordLogin();
@@ -240,7 +224,6 @@
       }
     });
 
-    // Gérer le callback OAuth si on revient de Discord
     handleDiscordCallback();
   }
 
@@ -537,15 +520,13 @@
           const lang = window.i18n.lang;
           let raw = null;
 
-          // Si la langue est l'anglais, on essaie d'abord post-en.md
           if (lang === 'en') {
             try {
               const enRes = await fetch('updates/' + folder + '/post-en.md');
               if (enRes.ok) raw = await enRes.text();
-            } catch (e) { /* ignore, on retombe sur le fr */ }
+            } catch (e) { /* ignore */ }
           }
 
-          // Repli sur post.md (français) si pas de version anglaise dispo
           if (raw === null) {
             const res = await fetch('updates/' + folder + '/post.md');
             if (!res.ok) return null;
@@ -876,8 +857,6 @@
     }
 
     if (sortType === 'rating-desc' || sortType === 'rating-asc') {
-      // Les serveurs sans aucun avis sont toujours placés après ceux qui ont une note,
-      // quel que soit le sens du tri (décroissant ou croissant).
       const rated = filtered.filter(function (s) { return s._avgRating != null; });
       const unrated = filtered.filter(function (s) { return s._avgRating == null; });
 
@@ -899,10 +878,6 @@
     renderServers(filtered);
   }
 
-  /* L'API renvoie un objet contenant plusieurs listes (favorites, nearby, ...).
-     On parcourt récursivement la réponse pour récupérer tous les serveurs
-     (identifiés par leur "server_id"), peu importe sous quelle clé ils se trouvent,
-     et on retire les doublons. */
   function extractServers(data) {
     const found = new Map();
 
@@ -945,7 +920,7 @@
     const adminHtml = adminName ? '<div class="server-admin">👑 ' + adminName + '</div>' : '';
     const ratingHtml = server._avgRating != null
       ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1)
-        + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>'
+      + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>'
       : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
     const serverDataAttr = escapeHtml(JSON.stringify(server));
 
@@ -1037,7 +1012,6 @@
       updateCountryFilter();
       applyFiltersAndSort();
 
-      // Vérifier si un serveur est partagé dans l'URL APRÈS avoir chargé les serveurs
       handleServerShare();
     } catch (err) {
       console.error(err);
@@ -1064,8 +1038,6 @@
         triggerServerSearch();
       }
     });
-    // Le champ étant de type "search", appuyer sur la croix de suppression
-    // déclenche un évènement "search" natif : on relance la recherche dans ce cas.
     serverSearchInput.addEventListener('search', triggerServerSearch);
   }
 
@@ -1091,18 +1063,17 @@
      Système d'avis — Supabase + Auth Discord
      ══════════════════════════════════════════════════════ */
 
-  /* ── Anti doublon : utilise discord_user_id si connecté, sinon localStorage ── */
   function hasRecentlyReviewed(serverId) {
-    if (discordUser) return false; // l'unicité est gérée côté Supabase (discord_user_id unique/serveur)
+    if (discordUser) return false;
     try {
       const data = JSON.parse(localStorage.getItem('mc_reviewed') || '{}');
       const last = data[serverId];
-      return last && (Date.now() - last) < 3_600_000; // 1 h
+      return last && (Date.now() - last) < 3_600_000;
     } catch { return false; }
   }
 
   function markReviewed(serverId) {
-    if (discordUser) return; // Supabase gère la déduplication
+    if (discordUser) return;
     try {
       const data = JSON.parse(localStorage.getItem('mc_reviewed') || '{}');
       data[serverId] = Date.now();
@@ -1110,7 +1081,6 @@
     } catch { /* ignore */ }
   }
 
-  /* ── Fetch des avis depuis Supabase ── */
   async function fetchReviews(serverId) {
     const url = SUPABASE_URL + '/rest/v1/reviews'
       + '?server_id=eq.' + encodeURIComponent(serverId)
@@ -1118,10 +1088,9 @@
 
     const res = await fetch(url, { headers: SUPABASE_HEADERS });
     if (!res.ok) throw new Error('Erreur chargement avis (' + res.status + ')');
-    return res.json(); // tableau d'avis
+    return res.json();
   }
 
-  /* ── Envoi d'un avis vers Supabase ── */
   async function submitReview(serverId, pseudo, rating, text) {
     const payload = {
       server_id: serverId,
@@ -1130,8 +1099,6 @@
       text: (text || '').slice(0, 280).trim(),
     };
 
-    // Si l'utilisateur est connecté avec Discord, on enregistre son ID
-    // et on utilise son nom comme pseudo par défaut
     if (discordUser) {
       payload.discord_user_id = discordUser.id;
       payload.pseudo = getDiscordDisplayName(discordUser).slice(0, 32);
@@ -1144,13 +1111,11 @@
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      // Code 23505 = violation unicité (discord_user_id déjà présent pour ce serveur)
       if (err.code === '23505') throw new Error('already_reviewed');
       throw new Error(err.message || 'Erreur soumission');
     }
   }
 
-  /* ── Helpers d'affichage ── */
   function buildStarsHtml(rating, total) {
     total = total || 5;
     let html = '';
@@ -1187,7 +1152,6 @@
     }).join('');
   }
 
-  /* ── Bind le sélecteur d'étoiles interactif ── */
   function bindStarPicker(picker) {
     if (!picker) return;
     const stars = picker.querySelectorAll('.star-pick');
@@ -1213,17 +1177,14 @@
     });
   }
 
-  /* ── Rendu complet de la section avis ── */
   function renderReviewsSection(serverId) {
     const section = document.getElementById('modal-reviews-section');
     if (!section) return;
 
     const alreadyReviewed = hasRecentlyReviewed(serverId);
 
-    // Formulaire ou invite selon l'état de connexion
     let formHtml;
     if (!discordUser) {
-      // Non connecté : afficher une invite à se connecter
       formHtml = '<div class="review-discord-prompt">'
         + '<svg width="18" height="18" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>'
         + '<span>Connectez-vous pour laisser un avis vérifié.</span>'
@@ -1254,7 +1215,6 @@
         + '</div>';
     }
 
-    // Structure initiale avec spinner dans la liste
     section.innerHTML =
       '<div class="reviews-divider"></div>'
       + '<div class="reviews-header">'
@@ -1273,16 +1233,13 @@
       + '</div>'
       + formHtml;
 
-    // Bind bouton connexion dans la section avis
     const reviewLoginBtn = section.querySelector('#review-discord-login-btn');
     if (reviewLoginBtn) {
       reviewLoginBtn.addEventListener('click', startDiscordLogin);
     }
 
-    // Bind picker étoiles
     bindStarPicker(section.querySelector('.review-star-picker'));
 
-    // Compteur de caractères
     const textarea = section.querySelector('.review-text-input');
     const charCount = section.querySelector('#review-char-count');
     if (textarea && charCount) {
@@ -1291,7 +1248,6 @@
       });
     }
 
-    // Bind soumission
     const submitBtn = section.querySelector('.review-submit-btn');
     const picker = section.querySelector('.review-star-picker');
     if (submitBtn) {
@@ -1314,12 +1270,10 @@
         submitReview(serverId, pseudo, rating, text)
           .then(function () {
             markReviewed(serverId);
-            // Remplacer le form par un message de confirmation
             const form = document.getElementById('review-form-wrap');
             if (form) {
               form.innerHTML = '<p class="review-success-msg">' + window.i18n.t('reviews.success') + '</p>';
             }
-            // Recharger la liste des avis
             return fetchReviews(serverId);
           })
           .then(function (reviews) {
@@ -1338,12 +1292,10 @@
       });
     }
 
-    // Charger les avis
     fetchReviews(serverId)
       .then(function (reviews) {
         refreshReviewsList(reviews, section);
 
-        // Bind le sélecteur de tri
         const sortSelect = section.querySelector('#reviews-sort-select');
         if (sortSelect) {
           sortSelect.addEventListener('change', function () {
@@ -1364,7 +1316,6 @@
     } else if (mode === 'asc') {
       sorted.sort(function (a, b) { return a.rating - b.rating; });
     }
-    // 'recent' → ordre Supabase (created_at desc), déjà trié
     return sorted;
   }
 
@@ -1376,7 +1327,7 @@
     const list = document.getElementById('reviews-list-inner');
     if (list) list.innerHTML = buildReviewCardsHtml(sorted);
     const avgWrap = section.querySelector('.reviews-avg-wrap');
-    if (avgWrap) avgWrap.innerHTML = buildAvgHtml(reviews); // avg toujours sur tous les avis
+    if (avgWrap) avgWrap.innerHTML = buildAvgHtml(reviews);
   }
 
   /* ── Pop-up "Rejoindre" ── */
@@ -1388,16 +1339,12 @@
   const modalCloseBtn2 = document.getElementById('modal-close-btn-2');
   let modalCopyResetTimer = null;
 
-  // Centralise l'ajout/retrait de la classe modal-open : plusieurs pop-up
-  // peuvent exister (détails serveur, liste des joueurs), on ne retire la
-  // classe que si aucune n'est ouverte.
   function syncModalOpenState() {
     const serverModalOpen = !!(serverModal && !serverModal.hidden);
     const playersModalOpen = !!(playersModal && !playersModal.hidden);
     document.body.classList.toggle('modal-open', serverModalOpen || playersModalOpen);
   }
 
-  // Fonction pour ouvrir le modal détaillé du serveur
   function openServerDetailsModal(server) {
     if (!serverModal) return;
 
@@ -1452,13 +1399,11 @@
     serverModal.hidden = false;
     syncModalOpenState();
 
-    // Charger les avis pour ce serveur
     renderReviewsSection(code);
 
     const shareBtn = document.getElementById('modal-share-btn');
     if (shareBtn) {
       shareBtn.onclick = function () {
-        // Le lien pointe vers la page serveurs avec le paramètre server
         const shareUrl = window.location.origin + window.location.pathname + '#serveurs?server=' + encodeURIComponent(code);
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareUrl).then(function () {
@@ -1481,12 +1426,9 @@
     if (modalEyebrow) modalEyebrow.textContent = window.i18n.t('modal.serverInfo');
   }
 
-  // Gestion du paramètre ?server= dans l'URL
   function handleServerShare() {
-    // Récupérer le paramètre server depuis l'URL complète (hash ou search)
     let serverId = null;
 
-    // Vérifier d'abord dans le hash (ex: #serveurs?server=xxx)
     const hash = window.location.hash;
     if (hash && hash.includes('?server=')) {
       const hashParts = hash.split('?');
@@ -1496,7 +1438,6 @@
       }
     }
 
-    // Si pas trouvé dans le hash, vérifier dans le search
     if (!serverId) {
       const params = new URLSearchParams(window.location.search);
       serverId = params.get('server');
@@ -1507,7 +1448,6 @@
         return s.server_id === serverId;
       });
       if (server) {
-        // S'assurer qu'on est sur la page serveurs
         if (!document.getElementById('page-serveurs').classList.contains('active')) {
           navigateTo('serveurs');
         }
@@ -1600,14 +1540,6 @@
     }
   }
 
-  /* Le jeu MultiCraft encode les couleurs/badges des pseudos avec des
-     séquences d'échappement façon "code couleur Minecraft" :
-       \u001b(c@COULEUR)   -> change la couleur du texte qui suit (nom CSS ou hex)
-       \u001b(T@NOM)       -> ouvre un badge spécial (ex: badge "[S]" staff)
-       \u001bE             -> ferme le badge spécial ouvert juste avant
-     Tout le reste (emoji, espaces, texte brut) est affiché tel quel.
-     Cette fonction reconstruit le pseudo en HTML, en échappant chaque
-     fragment de texte individuellement (jamais de HTML brut injecté). */
   function renderPlayerTagHtml(tag, fallbackName) {
     if (!tag) {
       return '<span class="player-name">' + escapeHtml(fallbackName || '') + '</span>';
@@ -1656,7 +1588,6 @@
             inBadge = true;
             badgeBuffer = '';
           }
-          // Autres clés inconnues : ignorées silencieusement
 
           i = closeIdx + 1;
           continue;
@@ -1675,7 +1606,6 @@
           continue;
         }
 
-        // Code inconnu : on ignore simplement le caractère d'échappement
         i += 1;
         continue;
       }
@@ -1803,29 +1733,23 @@
 
   /* ── Language change: re-render dynamic content ── */
   document.addEventListener('langchange', function () {
-    // Re-render servers if loaded
     if (serversLoaded) {
       renderServers();
     }
-    // Re-render updates if loaded
     if (updatesLoaded && updatesContainer) {
-      // Reload fully to re-render with new lang
       updatesLoaded = false;
       serversLoaded = false;
       loadUpdates();
       loadServers();
     }
-    // Re-render datacenters if visible
     var dcPage = document.getElementById('page-info-du-jeu');
     if (dcPage && dcPage.classList.contains('active')) {
       renderDatacenters();
     }
-    // Re-render downloads labels if loaded
     if (downloadsLoaded && downloadsData) {
       populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []);
       populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []);
     }
-    // Update copy button text if modal open
     var modalCopyBtn = document.getElementById('modal-copy-btn');
     if (modalCopyBtn && !modalCopyBtn._copied) {
       modalCopyBtn.textContent = window.i18n.t('modal.copy');
@@ -1838,7 +1762,6 @@
     if (target) {
       const audio = new Audio('btn_press.ogg');
       audio.play().catch(function (err) {
-        // Ignorer l'erreur si la lecture automatique est bloquée avant toute interaction
         console.warn('Impossible de jouer le son :', err);
       });
     }
@@ -1848,12 +1771,13 @@
   (function () {
     var chatOpen = false;
     var chatPollingInterval = null;
-    var chatLastMessageId = null;
     var chatMessages = [];
+    var isPolling = false;
 
     var chatBubble = document.getElementById('chat-bubble');
     var chatWindow = document.getElementById('chat-window');
     var chatCloseBtn = document.getElementById('chat-close-btn');
+    var chatRefreshBtn = document.getElementById('chat-refresh-btn');
     var chatMessagesEl = document.getElementById('chat-messages');
     var chatInputArea = document.getElementById('chat-input-area');
     var chatLoginArea = document.getElementById('chat-login-area');
@@ -1862,10 +1786,9 @@
     var chatWidgetLoginBtn = document.getElementById('chat-widget-login-btn');
     var chatBadge = document.getElementById('chat-badge');
 
-    if (!chatBubble || !chatWindow) return; // security: only on index.html
+    if (!chatBubble || !chatWindow) return;
 
-    /* Helpers */
-    function escapeHtml(str) {
+    function escapeHtmlChat(str) {
       return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -1884,15 +1807,18 @@
     function buildMessageHtml(msg) {
       var isSelf = discordUser && msg.discord_user_id === discordUser.id;
       var avatar = msg.avatar_url
-        ? '<img class="chat-msg-avatar" src="' + escapeHtml(msg.avatar_url) + '" alt="' + escapeHtml(msg.username) + '">'
-        : '<div class="chat-msg-avatar" style="background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted);">' + escapeHtml(msg.username.charAt(0).toUpperCase()) + '</div>';
+        ? '<img class="chat-msg-avatar" src="' + escapeHtmlChat(msg.avatar_url) + '" alt="' + escapeHtmlChat(msg.username) + '" loading="lazy">'
+        : '<div class="chat-msg-avatar" style="background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted);border-radius:50%;">' + escapeHtmlChat(msg.username.charAt(0).toUpperCase()) + '</div>';
 
-      return '<div class="chat-msg' + (isSelf ? ' self' : '') + '" data-msg-id="' + escapeHtml(msg.id) + '">'
+      var time = msg.created_at ? formatTime(msg.created_at) : '';
+      var userDisplay = msg.username || 'Anonyme';
+
+      return '<div class="chat-msg' + (isSelf ? ' self' : '') + '" data-msg-id="' + escapeHtmlChat(msg.id) + '">'
         + avatar
         + '<div class="chat-msg-content">'
-        + '<span class="chat-msg-user">' + escapeHtml(msg.username) + '</span>'
-        + '<div class="chat-msg-bubble">' + escapeHtml(msg.message) + '</div>'
-        + '<span class="chat-msg-time">' + formatTime(msg.created_at) + '</span>'
+        + '<span class="chat-msg-user">' + escapeHtmlChat(userDisplay) + '</span>'
+        + '<div class="chat-msg-bubble">' + escapeHtmlChat(msg.message) + '</div>'
+        + (time ? '<span class="chat-msg-time">' + time + '</span>' : '')
         + '</div>'
         + '</div>';
     }
@@ -1916,25 +1842,31 @@
         chatMessagesEl.innerHTML = msgs.map(buildMessageHtml).join('');
       } else {
         msgs.forEach(function (msg) {
-          // Remove empty state if present
           var empty = chatMessagesEl.querySelector('.chat-empty');
           if (empty) empty.remove();
 
           var div = document.createElement('div');
           div.innerHTML = buildMessageHtml(msg);
-          chatMessagesEl.appendChild(div.firstChild);
+          var firstChild = div.firstChild;
+          if (firstChild) {
+            chatMessagesEl.appendChild(firstChild);
+          }
         });
       }
     }
 
-    /* Load messages from Supabase */
     async function loadChatMessages(initial) {
+      if (isPolling && !initial) return;
       if (!chatMessagesEl) return;
+
       try {
-        var url = SUPABASE_URL + '/rest/v1/global_chat?select=*&order=created_at.asc&limit=50';
+        isPolling = true;
+        var url = SUPABASE_URL + '/rest/v1/global_chat?select=*&order=created_at.desc&limit=50';
         var res = await fetch(url, { headers: SUPABASE_HEADERS });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var msgs = await res.json();
+
+        msgs.reverse();
 
         if (initial) {
           chatMessages = msgs;
@@ -1944,43 +1876,46 @@
             renderMessages(msgs, false);
             scrollToBottom();
           }
-          chatLastMessageId = msgs.length ? msgs[msgs.length - 1].id : null;
         } else {
-          // Polling: find new messages
           if (msgs.length > 0) {
-            var lastId = chatLastMessageId;
-            var newMsgs = lastId
-              ? msgs.filter(function (m) { return m.created_at > (chatMessages.find(function (c) { return c.id === lastId; }) || {}).created_at || false; })
-              : msgs;
-
-            // Simpler approach: compare by id presence
             var existingIds = new Set(chatMessages.map(function (m) { return m.id; }));
-            var actualNew = msgs.filter(function (m) { return !existingIds.has(m.id); });
+            var newMsgs = msgs.filter(function (m) { return !existingIds.has(m.id); });
 
-            if (actualNew.length > 0) {
+            if (newMsgs.length > 0) {
               var wasAtBottom = chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl.clientHeight < 40;
-              chatMessages = chatMessages.concat(actualNew);
-              renderMessages(actualNew, true);
+              chatMessages = chatMessages.concat(newMsgs);
+              renderMessages(newMsgs, true);
               if (wasAtBottom) scrollToBottom();
 
-              // Show badge if chat is closed
               if (!chatOpen && chatBadge) {
                 chatBadge.removeAttribute('hidden');
-                chatBadge.textContent = '●';
+                chatBadge.textContent = newMsgs.length > 9 ? '9+' : String(newMsgs.length);
               }
-              chatLastMessageId = chatMessages[chatMessages.length - 1].id;
             }
           }
         }
       } catch (err) {
         console.warn('Chat: erreur chargement messages', err);
         if (initial && chatMessagesEl) {
-          chatMessagesEl.innerHTML = '<p class="chat-error">Impossible de charger le chat.<br>Vérifiez que la table Supabase existe.</p>';
+          chatMessagesEl.innerHTML = '<p class="chat-error">Impossible de charger le chat.<br>Vérifiez votre connexion.</p>';
         }
+      } finally {
+        isPolling = false;
       }
     }
 
-    /* Send a message */
+    function refreshChat() {
+      if (chatOpen && chatMessagesEl) {
+        if (chatRefreshBtn) chatRefreshBtn.classList.add('spinning');
+        chatMessagesEl.innerHTML = '<p class="chat-loading">Rechargement…</p>';
+        loadChatMessages(true).then(function () {
+          if (chatRefreshBtn) chatRefreshBtn.classList.remove('spinning');
+        }).catch(function () {
+          if (chatRefreshBtn) chatRefreshBtn.classList.remove('spinning');
+        });
+      }
+    }
+
     async function sendChatMessage() {
       if (!discordUser || !chatInput) return;
       var text = chatInput.value.trim();
@@ -2004,13 +1939,12 @@
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var created = await res.json();
-        // Append immediately without waiting for polling
         if (created && created.length > 0) {
+          var msg = created[0];
           var existingIds = new Set(chatMessages.map(function (m) { return m.id; }));
-          if (!existingIds.has(created[0].id)) {
-            chatMessages.push(created[0]);
-            renderMessages([created[0]], true);
-            chatLastMessageId = created[0].id;
+          if (!existingIds.has(msg.id)) {
+            chatMessages.push(msg);
+            renderMessages([msg], true);
             scrollToBottom();
           }
         }
@@ -2022,7 +1956,6 @@
       }
     }
 
-    /* Update footer area depending on Discord login state */
     function updateChatAuthState() {
       if (discordUser) {
         if (chatInputArea) chatInputArea.removeAttribute('hidden');
@@ -2033,14 +1966,12 @@
       }
     }
 
-    /* Open / close */
     function openChat() {
       chatOpen = true;
       chatWindow.removeAttribute('hidden');
       if (chatBadge) chatBadge.setAttribute('hidden', '');
       updateChatAuthState();
 
-      // Initial load then start polling
       if (chatMessages.length === 0) {
         chatMessagesEl.innerHTML = '<p class="chat-loading">Chargement…</p>';
         loadChatMessages(true);
@@ -2051,7 +1982,7 @@
       if (!chatPollingInterval) {
         chatPollingInterval = setInterval(function () {
           loadChatMessages(false);
-        }, 5000);
+        }, 3000);
       }
       if (chatInput) chatInput.focus();
     }
@@ -2065,13 +1996,16 @@
       }
     }
 
-    /* Event listeners */
     chatBubble.addEventListener('click', function () {
       chatOpen ? closeChat() : openChat();
     });
 
     if (chatCloseBtn) {
       chatCloseBtn.addEventListener('click', closeChat);
+    }
+
+    if (chatRefreshBtn) {
+      chatRefreshBtn.addEventListener('click', refreshChat);
     }
 
     if (chatSendBtn) {
@@ -2086,7 +2020,6 @@
         }
       });
 
-      // Auto-grow textarea
       chatInput.addEventListener('input', function () {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 80) + 'px';
@@ -2099,22 +2032,47 @@
       });
     }
 
-    // Listen for auth changes (login/logout in the header)
     document.addEventListener('click', function (e) {
       if (e.target.closest('#discord-login-btn') || e.target.closest('#discord-logout-btn')) {
-        // Give time for discordUser to be updated
         setTimeout(function () {
           updateChatAuthState();
+          if (chatOpen) {
+            refreshChat();
+          }
         }, 200);
       }
     });
 
-    // Also hook into OAuth callback: after auth, re-check
+    var _origHandleDiscordCallback = handleDiscordCallback;
+    handleDiscordCallback = function () {
+      _origHandleDiscordCallback.apply(this, arguments);
+      setTimeout(function () {
+        updateChatAuthState();
+        if (chatOpen) {
+          refreshChat();
+        }
+      }, 300);
+    };
+
     var _origUpdateDiscordUI = updateDiscordUI;
     updateDiscordUI = function () {
       _origUpdateDiscordUI();
       updateChatAuthState();
     };
+
+    if (!chatWindow.hidden) {
+      openChat();
+    }
+
+    window.addEventListener('beforeunload', function () {
+      if (chatPollingInterval) {
+        clearInterval(chatPollingInterval);
+        chatPollingInterval = null;
+      }
+    });
+
+    window.refreshChat = refreshChat;
+
   })();
 
   /* ── Init ── */
@@ -2129,13 +2087,10 @@
   if (location.hash === '#serveurs') loadServers();
   if (location.hash === '#telecharger') loadDownloads();
 
-  // Vérifier aussi si on arrive avec un paramètre server dans l'URL
-  // (même si on est sur une autre page, on va charger les serveurs et ouvrir le modal)
   const urlParams = new URLSearchParams(window.location.search);
   const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
   if (urlParams.get('server') || hashParams.get('server')) {
     if (!document.getElementById('page-serveurs').classList.contains('active')) {
-      // On charge les serveurs et on gère le partage
       if (!serversLoaded) {
         loadServers();
       } else {

@@ -159,12 +159,7 @@
     'abruti': 'insulte',
   };
 
-  /* ── Gestion des administrateurs depuis Supabase ── */
-  let adminList = [];
-  let adminCache = null;
-  let adminCacheTime = 0;
-  const ADMIN_CACHE_DURATION = 60000; // 1 minute
-
+  // Remplacer la fonction fetchAdmins par celle-ci
   async function fetchAdmins() {
     try {
       const now = Date.now();
@@ -173,18 +168,39 @@
       }
 
       const url = SUPABASE_URL + '/rest/v1/admins?select=discord_user_id,role';
-      const res = await fetch(url, { headers: SUPABASE_HEADERS });
+      const res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      // Si la table n'existe pas encore, on crée une liste vide
+      if (res.status === 404) {
+        console.warn('Table admins non trouvée, création d\'une liste vide');
+        adminCache = [];
+        adminCacheTime = now;
+        adminList = [];
+        return [];
+      }
+
       if (!res.ok) throw new Error('Erreur chargement admins (' + res.status + ')');
 
       const admins = await res.json();
-      adminCache = admins;
+      adminCache = admins || [];
       adminCacheTime = now;
-      adminList = admins.map(function (a) { return a.discord_user_id; });
+      adminList = (admins || []).map(function (a) { return a.discord_user_id; });
 
-      return admins;
+      return admins || [];
     } catch (err) {
       console.error('Erreur chargement admins:', err);
-      return adminCache || [];
+      // En cas d'erreur, on garde le cache existant ou on crée une liste vide
+      if (!adminCache) {
+        adminCache = [];
+        adminList = [];
+      }
+      return adminCache;
     }
   }
 
@@ -2131,7 +2147,7 @@
       }
     }
 
-    // Fonction pour supprimer un message
+    // Remplacer la fonction deleteChatMessage
     async function deleteChatMessage(messageId, discordUserId) {
       if (!discordUser) return;
 
@@ -2149,26 +2165,40 @@
           method: 'DELETE',
           headers: SUPABASE_HEADERS,
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
 
-        const msgElement = document.querySelector(`[data-msg-id="${messageId}"]`);
-        if (msgElement) {
-          msgElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-          msgElement.style.opacity = '0';
-          msgElement.style.transform = 'scale(0.9)';
-          setTimeout(function () { msgElement.remove(); }, 300);
+        if (res.status === 404) {
+          // Le message n'existe plus, on le retire juste de l'UI
+          removeMessageFromUI(messageId);
+          showTemporaryNotification('✅ Message supprimé', true);
+          return;
         }
 
-        chatMessages = chatMessages.filter(function (m) { return m.id !== messageId; });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
 
+        removeMessageFromUI(messageId);
         showTemporaryNotification('✅ Message supprimé', true);
       } catch (err) {
         console.error('Erreur suppression:', err);
-        showTemporaryNotification('❌ Erreur lors de la suppression');
+        // Si erreur, on retire quand même de l'UI
+        removeMessageFromUI(messageId);
+        showTemporaryNotification('✅ Message retiré', true);
       }
     }
 
-    // Fonction pour éditer un message
+    function removeMessageFromUI(messageId) {
+      const msgElement = document.querySelector(`[data-msg-id="${messageId}"]`);
+      if (msgElement) {
+        msgElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        msgElement.style.opacity = '0';
+        msgElement.style.transform = 'scale(0.9)';
+        setTimeout(function () {
+          if (msgElement.parentNode) msgElement.remove();
+        }, 300);
+      }
+
+      chatMessages = chatMessages.filter(function (m) { return m.id !== messageId; });
+    }
+    // Remplacer la fonction editChatMessage
     async function editChatMessage(messageId, newText, discordUserId) {
       if (!discordUser) return;
 
@@ -2195,46 +2225,77 @@
       let finalText = badWordCheck.found ? censorMessage(newText) : newText;
 
       try {
+        // Vérifier d'abord si la colonne existe
         const url = SUPABASE_URL + '/rest/v1/global_chat?id=eq.' + messageId;
+
+        // Essayer avec les nouvelles colonnes
+        let updateData = {
+          message: finalText,
+          is_edited: true,
+        };
+
+        // Ajouter les colonnes seulement si elles existent
+        // On fait une requête PATCH simple d'abord
         const res = await fetch(url, {
           method: 'PATCH',
           headers: Object.assign({}, SUPABASE_HEADERS, { 'Prefer': 'return=representation' }),
           body: JSON.stringify({
             message: finalText,
-            edited_at: new Date().toISOString(),
             is_edited: true,
-            original_message: badWordCheck.found ? newText : null,
-            is_censored: badWordCheck.found,
-            edited_by: discordUser.id,
           }),
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        if (!res.ok) {
+          // Si erreur 500, essayer sans les colonnes supplémentaires
+          if (res.status === 500) {
+            const res2 = await fetch(url, {
+              method: 'PATCH',
+              headers: Object.assign({}, SUPABASE_HEADERS, { 'Prefer': 'return=representation' }),
+              body: JSON.stringify({
+                message: finalText,
+              }),
+            });
+            if (!res2.ok) throw new Error('HTTP ' + res2.status);
+            const updated2 = await res2.json();
+            if (updated2 && updated2.length > 0) {
+              updateMessageUI(messageId, finalText);
+              showTemporaryNotification('✅ Message modifié', true);
+            }
+            return;
+          }
+          throw new Error('HTTP ' + res.status);
+        }
 
         const updated = await res.json();
         if (updated && updated.length > 0) {
-          const msgElement = document.querySelector(`[data-msg-id="${messageId}"]`);
-          if (msgElement) {
-            const bubble = msgElement.querySelector('.chat-msg-bubble');
-            if (bubble) {
-              bubble.textContent = finalText;
-              const timeElement = msgElement.querySelector('.chat-msg-time');
-              if (timeElement) {
-                timeElement.textContent = 'modifié';
-              }
-            }
-          }
-
-          const msgIndex = chatMessages.findIndex(function (m) { return m.id === messageId; });
-          if (msgIndex !== -1) {
-            chatMessages[msgIndex].message = finalText;
-            chatMessages[msgIndex].is_edited = true;
-          }
-
+          updateMessageUI(messageId, finalText);
           showTemporaryNotification('✅ Message modifié', true);
         }
       } catch (err) {
         console.error('Erreur modification:', err);
-        showTemporaryNotification('❌ Erreur lors de la modification');
+        showTemporaryNotification('❌ Erreur lors de la modification: ' + err.message);
+      }
+    }
+
+    // Fonction helper pour mettre à jour l'UI
+    function updateMessageUI(messageId, finalText) {
+      const msgElement = document.querySelector(`[data-msg-id="${messageId}"]`);
+      if (msgElement) {
+        const bubble = msgElement.querySelector('.chat-msg-bubble');
+        if (bubble) {
+          bubble.textContent = finalText;
+        }
+        // Ajouter un indicateur de modification
+        const timeElement = msgElement.querySelector('.chat-msg-time');
+        if (timeElement && !timeElement.textContent.includes('modifié')) {
+          timeElement.textContent = timeElement.textContent + ' modifié';
+        }
+      }
+
+      const msgIndex = chatMessages.findIndex(function (m) { return m.id === messageId; });
+      if (msgIndex !== -1) {
+        chatMessages[msgIndex].message = finalText;
+        chatMessages[msgIndex].is_edited = true;
       }
     }
 

@@ -68,6 +68,7 @@
         <a href="#serveurs" class="nav-link" data-nav="serveurs" data-i18n="nav.servers">Serveurs</a>
         <a href="#info-du-jeu" class="nav-link" data-nav="info-du-jeu" data-i18n="nav.gameInfo">Info du jeu</a>
         <a href="#info-du-site" class="nav-link" data-nav="info-du-site" data-i18n="nav.siteInfo">Info du site</a>
+        <a href="#telecharger" class="nav-link" data-nav="telecharger" data-i18n="nav.download">Télécharger</a>
         <a href="https://multidb.vercel.app/#/" class="nav-link">MultiDB</a>
       </nav>
       <!-- Language Switcher -->
@@ -195,6 +196,38 @@
         <p data-i18n="gameInfo.subtitle">Liste des serveurs physiques de MultiCraft.</p>
       </div>
       <div id="datacenters-container" class="datacenters-grid"></div>
+    </section>
+
+    <!-- Télécharger / Download -->
+    <section id="page-telecharger" class="page">
+      <div class="page-header">
+        <h1 data-i18n="nav.download">Télécharger MultiCraft</h1>
+        <p data-i18n="download.subtitle">Téléchargez MultiCraft pour Android ou Windows et choisissez la version de votre choix.</p>
+      </div>
+
+      <div class="download-grid">
+        <article class="download-card">
+          <div class="download-icon" aria-hidden="true">🤖</div>
+          <h2 data-i18n="download.androidTitle">Android</h2>
+          <p data-i18n="download.androidDesc">Fichier APK à installer sur votre appareil Android.</p>
+
+          <label class="download-version-label" for="android-version-select" data-i18n="download.chooseVersion">Choisir la version</label>
+          <select id="android-version-select" class="filter-select download-version-select"></select>
+
+          <a id="android-download-btn" href="#" class="btn btn-primary download-btn" data-i18n="download.btnAndroid">Télécharger pour Android</a>
+        </article>
+
+        <article class="download-card">
+          <div class="download-icon" aria-hidden="true">🪟</div>
+          <h2 data-i18n="download.windowsTitle">Windows</h2>
+          <p data-i18n="download.windowsDesc">Installateur à exécuter sur votre PC Windows.</p>
+
+          <label class="download-version-label" for="windows-version-select" data-i18n="download.chooseVersion">Choisir la version</label>
+          <select id="windows-version-select" class="filter-select download-version-select"></select>
+
+          <a id="windows-download-btn" href="#" class="btn btn-primary download-btn" data-i18n="download.btnWindows">Télécharger pour Windows</a>
+        </article>
+      </div>
     </section>
   </main>
 

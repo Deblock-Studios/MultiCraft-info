@@ -1,6 +1,6 @@
 ---
 
-date: 2026-06-28
+date: 2026-06-30
 
 title: MAJ de l'été & disparition du Play Store
 

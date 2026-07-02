@@ -1262,8 +1262,16 @@
       if (msgs.length === 0) {
         chatMessagesEl.innerHTML = '<p class="chat-empty">Aucun message pour le moment.</p>';
       } else {
-        renderMessagesForTab(msgs, tab);
-        scrollToBottom();
+        var isFirstLoad = !hasVisibleMessages;
+        var wasAtBottom = chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl.clientHeight < 60;
+
+        if (isFirstLoad) {
+          renderMessagesForTab(msgs, tab);
+          scrollToBottom();
+        } else {
+          appendNewMessagesForTab(msgs, tab);
+          if (wasAtBottom) scrollToBottom();
+        }
       }
 
       // La fenêtre de chat est ouverte : l'utilisateur voit les messages,
@@ -1288,6 +1296,40 @@
     } else {
       chatMessagesEl.innerHTML = msgs.map(buildMessageHtml).join('');
     }
+    addMessageActions();
+  }
+
+  function appendNewMessagesForTab(msgs, tab) {
+    chatMessagesEl = document.getElementById('chat-messages');
+    if (!chatMessagesEl) return;
+
+    // Récupère les IDs des messages déjà affichés
+    var existingIds = {};
+    chatMessagesEl.querySelectorAll('[data-msg-id]').forEach(function (el) {
+      existingIds[el.getAttribute('data-msg-id')] = el;
+    });
+
+    // Met à jour les messages existants (ex: édité/censuré) et ajoute les nouveaux
+    var fragment = document.createDocumentFragment();
+    msgs.forEach(function (msg) {
+      var id = String(msg.id);
+      if (existingIds[id]) {
+        // Remplace le contenu si le message a été modifié
+        var newHtml = tab === 'private' ? buildPrivateMessageHtml(msg) : buildMessageHtml(msg);
+        var tmp = document.createElement('div');
+        tmp.innerHTML = newHtml;
+        var newEl = tmp.firstElementChild;
+        if (newEl && existingIds[id].outerHTML !== newEl.outerHTML) {
+          existingIds[id].replaceWith(newEl);
+        }
+      } else {
+        var html = tab === 'private' ? buildPrivateMessageHtml(msg) : buildMessageHtml(msg);
+        var tmp2 = document.createElement('div');
+        tmp2.innerHTML = html;
+        if (tmp2.firstElementChild) fragment.appendChild(tmp2.firstElementChild);
+      }
+    });
+    chatMessagesEl.appendChild(fragment);
     addMessageActions();
   }
 

@@ -534,7 +534,7 @@
   }
 
   /* ── Updates loader ── */
-  let updatesLoaded = true;
+  let updatesLoaded =false;
   const updatesContainer = document.getElementById('updates-container');
 
   async function loadUpdates() {

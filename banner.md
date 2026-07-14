@@ -1,5 +1,5 @@
 ---
-isDisplayed: oui
+isDisplayed: non
 ---
 
 **fr:** 🚨 Dû à une maintenance de notre hébergeur, la page serveurs est indisponible. Nous sommes désolés !

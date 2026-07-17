@@ -27,4 +27,4 @@ License for text and pictures in "updates" directory : CC-BY-NC 4.0 <br>
 License of MultiCraft Font : CC-BY-SA 3.0 (Copyright MultiCraft Studio OÜ)
 </p>
 
-### (C) MultiCraft Info Team
+### (C) Deblock Studios 2026

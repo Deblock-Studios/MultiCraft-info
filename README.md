@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-<a href="https://multicraft-info.netlify.app/">Site web</a>
+<a href="https://multicraft-info.netlify.app/">Website</a>
 </p>
  
 Developed with HTML/CSS/JS

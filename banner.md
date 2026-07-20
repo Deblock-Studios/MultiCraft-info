@@ -1,7 +1,10 @@
 ---
-isDisplayed: non
+isDisplayed: oui
 ---
 
-**fr:** 🚨 MultiCraft à retiré la possibilité de télécharger MultiCraft pour Windows. Il est donc également impossible de le télécharger sur notre site.
+**fr:** 🚨 Nous n'arrivons plus à récupérer le nombre de joueurs ainsi que les nouveaux serveurs. L'équipe est sur le problème.
 
-**en:** 🚨 MultiCraft delete the ability to download MultiCraft for Widnows. So it's impossible to download it on our website.
+**en:** We are no longer able to retrieve the player count or the new servers. The team is working on the issue.
+
+
+ 

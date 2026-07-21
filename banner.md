@@ -1,5 +1,5 @@
 ---
-isDisplayed: oui
+isDisplayed: non
 ---
 
 **fr:** 🚨 Nous n'arrivons plus à récupérer le nombre de joueurs ainsi que les nouveaux serveurs. L'équipe est sur le problème.

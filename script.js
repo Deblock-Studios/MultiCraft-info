@@ -1261,7 +1261,7 @@ async function measureLatency(host) {
     playersFetchAbortController = new AbortController();
     fetch(PLAYERS_API_URL + '?server_id=' + encodeURIComponent(serverId), { signal: playersFetchAbortController.signal })
       .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
-      .then(function (data) { const players = Array.isArray(data.players) ? data.players : []; const max = data.max_players != null ? data.max_players : (server.max_players != null ? server.max_players : '?'); currentPlayersList = players; if (playersModalCount) playersModalCount.textContent = players.length + ' / ' + max + ' ' + (players.length === 1 ? window.i18n.t('modal.playerOnline1') : window.i18n.t('modal.playerOnlineN')); renderPlayersList(players, playersSearchInput ? playersSearchInput.value : ''); })
+      //  .then(function (data) { const players = Array.isArray(data.players) ? data.players : []; const max = data.max_players != null ? data.max_players : (server.max_players != null ? server.max_players : '?'); currentPlayersList = players; if (playersModalCount) playersModalCount.textContent = players.length + ' / ' + max + ' ' + (players.length === 1 ? window.i18n.t('modal.playerOnline1') : window.i18n.t('modal.playerOnlineN')); renderPlayersList(players, playersSearchInput ? playersSearchInput.value : ''); }  
       .catch(function (err) { if (err && err.name === 'AbortError') return; console.error(err); if (playersListContainer) playersListContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('modal.errorPlayers') + '</p><p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim)">' + window.i18n.t('modal.errorPlayersHint') + '</p></div>'; });
   }
 

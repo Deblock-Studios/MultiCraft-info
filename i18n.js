@@ -55,7 +55,6 @@
 
       /* Game Info page */
       'gameInfo.subtitle': 'Liste des serveurs physiques de MultiCraft.',
-      'gameInfo.subtitle2': 'La latence en ms est mesurée depuis un serveur à Paris (France).',
       'gameInfo.locations': {
         'Falkenstein, Allemagne': 'Falkenstein, Allemagne',
         'Falkenstein Allemagne':  'Falkenstein Allemagne',
@@ -122,17 +121,53 @@
       'reviews.ratingLabel': 'Note :',
       'reviews.placeholder': 'Votre commentaire (optionnel)',
       'reviews.submit':      'Envoyer',
-      'reviews.loginPrompt': 'Connectez-vous avec Discord pour laisser un avis.',
+      'reviews.loginPrompt': 'Connectez-vous avec Deblock pour laisser un avis.',
       'reviews.loginBtn':    'Se connecter',
 
-      /* Discord */
-      'discord.login':  'Connexion',
-      'discord.user':   'Utilisateur#',
+      /* Deblock Auth */
+      'deblock.login':       'Connexion',
+      'deblock.loginTitle':  'Connexion Deblock',
+      'deblock.loginBtn':    'Se connecter',
+      'deblock.createAccount': 'Créer un compte',
+      'deblock.noAccount':   'Pas encore de compte ?',
+      'deblock.hasAccount':  'Déjà un compte ?',
+      'deblock.signUpBtn':   'Créer mon compte',
+      'deblock.pseudo':      'Pseudo',
+      'deblock.pseudoPlaceholder': 'Choisissez un pseudo',
+      'deblock.forgotPassword': 'Mot de passe oublié ?',
+      'deblock.sendReset':   'Envoyer le lien de réinitialisation',
+      'deblock.backToLogin': '← Retour à la connexion',
+      'deblock.loading':     'Chargement…',
+      'deblock.user':        'Compte',
+      'deblock.logout':      'Déconnexion',
+
+      /* Profile page */
+      'nav.profile':        'Profil',
+      'profile.title':      'Mon Profil',
+      'profile.subtitle':   'Gérez vos informations personnelles',
+      'profile.pseudo':     'Pseudo',
+      'profile.pseudoPlaceholder': 'Votre pseudo',
+      'profile.email':      'Email',
+      'profile.password':   'Mot de passe',
+      'profile.newPassword': 'Nouveau mot de passe',
+      'profile.confirmPassword': 'Confirmer le mot de passe',
+      'profile.save':       'Enregistrer',
+      'profile.saved':      '✓ Enregistré !',
+      'profile.error':      'Erreur : ',
+      'profile.deleteAccount': 'Supprimer mon compte',
+      'profile.deleteConfirm': 'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
+      'profile.deleteCancel': 'Annuler',
+      'profile.deleteConfirmBtn': 'Oui, supprimer',
+      'profile.deleted':    '✓ Compte supprimé.',
+      'profile.passwordChanged': '✓ Mot de passe changé !',
+      'profile.emailChanged': '✓ Un email de confirmation a été envoyé à votre nouvelle adresse.',
+      'profile.pseudoChanged': '✓ Pseudo mis à jour !',
+      'profile.reauthNeeded': 'Veuillez vous reconnecter pour continuer.',
 
       /* Chat */
       'chat.title': 'Chat Global',
       'chat.placeholder': 'Écrire un message...',
-      'chat.loginPrompt': 'Connectez-vous avec Discord pour discuter.',
+      'chat.loginPrompt': 'Connectez-vous avec Deblock pour discuter.',
       'chat.send': 'Envoyer',
 
       /* Meta */
@@ -188,7 +223,6 @@
 
       /* Game Info page */
       'gameInfo.subtitle': 'List of MultiCraft physical servers.',
-      'gameInfo.subtitle2': 'Latency in ms is measured from a server in Paris, France',
       'gameInfo.locations': {
         'Falkenstein, Allemagne': 'Falkenstein, Germany',
         'Falkenstein Allemagne':  'Falkenstein Germany',
@@ -255,17 +289,53 @@
       'reviews.ratingLabel': 'Rating:',
       'reviews.placeholder': 'Your comment (optional)',
       'reviews.submit':      'Submit',
-      'reviews.loginPrompt': 'Log in with Discord to leave a review.',
+      'reviews.loginPrompt': 'Log in with Deblock to leave a review.',
       'reviews.loginBtn':    'Log in',
 
-      /* Discord */
-      'discord.login':  'Log in',
-      'discord.user':   'User#',
+      /* Deblock Auth */
+      'deblock.login':       'Log in',
+      'deblock.loginTitle':  'Deblock Login',
+      'deblock.loginBtn':    'Log in',
+      'deblock.createAccount': 'Create an account',
+      'deblock.noAccount':   'No account yet?',
+      'deblock.hasAccount':  'Already have an account?',
+      'deblock.signUpBtn':   'Create my account',
+      'deblock.pseudo':      'Username',
+      'deblock.pseudoPlaceholder': 'Choose a username',
+      'deblock.forgotPassword': 'Forgot password?',
+      'deblock.sendReset':   'Send reset link',
+      'deblock.backToLogin': '← Back to login',
+      'deblock.loading':     'Loading…',
+      'deblock.user':        'Account',
+      'deblock.logout':      'Log out',
+
+      /* Profile page */
+      'nav.profile':        'Profile',
+      'profile.title':      'My Profile',
+      'profile.subtitle':   'Manage your personal information',
+      'profile.pseudo':     'Username',
+      'profile.pseudoPlaceholder': 'Your username',
+      'profile.email':      'Email',
+      'profile.password':   'Password',
+      'profile.newPassword': 'New password',
+      'profile.confirmPassword': 'Confirm password',
+      'profile.save':       'Save',
+      'profile.saved':      '✓ Saved!',
+      'profile.error':      'Error: ',
+      'profile.deleteAccount': 'Delete my account',
+      'profile.deleteConfirm': 'Are you sure you want to delete your account? This action is irreversible.',
+      'profile.deleteCancel': 'Cancel',
+      'profile.deleteConfirmBtn': 'Yes, delete',
+      'profile.deleted':    '✓ Account deleted.',
+      'profile.passwordChanged': '✓ Password changed!',
+      'profile.emailChanged': '✓ A confirmation email has been sent to your new address.',
+      'profile.pseudoChanged': '✓ Username updated!',
+      'profile.reauthNeeded': 'Please log in again to continue.',
 
       /* Chat */
       'chat.title': 'Global Chat',
       'chat.placeholder': 'Type a message...',
-      'chat.loginPrompt': 'Log in with Discord to chat.',
+      'chat.loginPrompt': 'Log in with Deblock to chat.',
       'chat.send': 'Send',
 
       /* Meta */
@@ -320,8 +390,8 @@
     const navToggle = document.querySelector('.nav-toggle');
     if (navToggle) navToggle.setAttribute('aria-label', lang === 'fr' ? 'Ouvrir le menu' : 'Open menu');
 
-    // Update discord logout aria-label
-    const logoutBtn = document.getElementById('discord-logout-btn');
+    // Update deblock logout aria-label
+    const logoutBtn = document.getElementById('deblock-logout-btn');
     if (logoutBtn) logoutBtn.setAttribute('aria-label', lang === 'fr' ? 'Se déconnecter' : 'Log out');
 
     // Update modal close aria-label

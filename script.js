@@ -13,30 +13,17 @@
   ];
 
   /* ── Supabase ── */
-  const SUPABASE_URL = 'https://qxzvnxekjggjldezprec.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4enZueGVramdnamxkZXpwcmVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMzE3NjMsImV4cCI6MjA5NzgwNzc2M30.Qa-lxT8mYy2kejt2kiydOvDqCYNeAD6q1d1Ce56A5Rc';
+  const SUPABASE_URL = 'https://rdtvftclctwfqtpkbzlf.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkdHZmdGNsY3R3ZnF0cGtiemxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTc0MjksImV4cCI6MjEwMDI5MzQyOX0.DIsdZkJaoziW2OI2hbDalDl0IQCGPF3QRcBhKT7GW7o';
 
-  const SUPABASE_HEADERS = {
-    'apikey': SUPABASE_ANON_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-    'Content-Type': 'application/json',
-  };
-
-  /* ── Discord OAuth2 ── */
-  const DISCORD_CLIENT_ID = '1520060964920103013';
-  const DISCORD_REDIRECT_URI = 'https://multicraft-info.netlify.app/';
-  const DISCORD_SCOPES = 'identify';
-  const DISCORD_TOKEN_PROXY = 'https://discord-oauth-proxy.creatif-france.workers.dev/token';
-
-  /* ── État de l'utilisateur Discord ── */
-  let discordUser = null;
+  /* ── State ── */
   let chatMessages = [];
 
-  /* ── Gestion des administrateurs ── */
-  let adminList = [];
-  let adminCache = null;
-  let adminCacheTime = 0;
-  const ADMIN_CACHE_DURATION = 60000;
+  /* ── Gestion des rôles ── */
+  let userRoles = [];
+  let rolesCache = null;
+  let rolesCacheTime = 0;
+  const ROLES_CACHE_DURATION = 60000;
 
   /* ── Variables globales pour le chat ── */
   let currentChatTab = 'global';
@@ -51,22 +38,18 @@
   /* ── Suivi des messages non lus (point vert du bouton Chat) ── */
   let lastSeenChatTimestamp = localStorage.getItem('mc_chat_last_seen');
   if (!lastSeenChatTimestamp) {
-    // Première visite : on considère l'historique existant comme déjà vu
     lastSeenChatTimestamp = new Date().toISOString();
     localStorage.setItem('mc_chat_last_seen', lastSeenChatTimestamp);
   }
   let unreadCheckInterval = null;
 
-  function getDiscordAvatarUrl(user) {
-    if (!user) return '';
-    if (user.avatar) return 'https://cdn.discordapp.com/avatars/' + user.id + '/' + user.avatar + '.png?size=64';
-    const index = Number(BigInt(user.id) >> 22n) % 6;
-    return 'https://cdn.discordapp.com/embed/avatars/' + index + '.png';
-  }
-
-  function getDiscordDisplayName(user) {
-    if (!user) return '';
-    return user.global_name || user.username || (window.i18n.t('discord.user') + user.discriminator);
+  /* ── Helper: get authenticated headers for Supabase REST calls ── */
+  function getApiHeaders() {
+    return Deblock && Deblock.getApiHeaders ? Deblock.getApiHeaders() : {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+    };
   }
 
   /* ── Dictionnaire des mots interdits ── */
@@ -144,36 +127,38 @@
     }
   }
 
-  /* ── Fonctions Admin ── */
-  async function fetchAdmins() {
+  /* ── Fonctions Rôles (remplace l'ancien système admins) ── */
+  async function fetchUserRoles() {
     try {
       const now = Date.now();
-      if (adminCache && (now - adminCacheTime) < ADMIN_CACHE_DURATION) return adminCache;
-      const url = SUPABASE_URL + '/rest/v1/admins?select=discord_user_id,role';
-      const res = await fetch(url, { headers: SUPABASE_HEADERS });
-      if (res.status === 404) { adminCache = []; adminCacheTime = now; adminList = []; return []; }
-      if (!res.ok) throw new Error('Erreur chargement admins (' + res.status + ')');
-      const admins = await res.json();
-      adminCache = admins || [];
-      adminCacheTime = now;
-      adminList = (admins || []).map(function (a) { return a.discord_user_id; });
-      return admins || [];
+      if (rolesCache && (now - rolesCacheTime) < ROLES_CACHE_DURATION) return rolesCache;
+      const url = SUPABASE_URL + '/rest/v1/user_roles?select=user_id,role_id';
+      const res = await fetch(url, { headers: getApiHeaders() });
+      if (res.status === 404) { rolesCache = []; rolesCacheTime = now; userRoles = []; return []; }
+      if (!res.ok) throw new Error('Erreur chargement rôles (' + res.status + ')');
+      const roles = await res.json();
+      rolesCache = roles || [];
+      rolesCacheTime = now;
+      userRoles = (roles || []).map(function (r) { return r.user_id; });
+      return roles || [];
     } catch (err) {
-      console.error('Erreur chargement admins:', err);
-      if (!adminCache) { adminCache = []; adminList = []; }
-      return adminCache;
+      console.error('Erreur chargement rôles:', err);
+      if (!rolesCache) { rolesCache = []; userRoles = []; }
+      return rolesCache;
     }
   }
 
   function isAdminUser(userId) {
     if (!userId) return false;
-    return adminList.includes(userId);
+    // Check if user has role 'admin' in user_roles
+    if (!rolesCache) return false;
+    return rolesCache.some(function (r) { return r.user_id === userId && r.role_id === 1; });
   }
 
   function getUserRole(userId) {
-    if (!userId) return null;
-    const admin = adminCache ? adminCache.find(function (a) { return a.discord_user_id === userId; }) : null;
-    return admin ? admin.role : null;
+    if (!userId || !rolesCache) return null;
+    const entry = rolesCache.find(function (r) { return r.user_id === userId; });
+    return entry ? entry.role_id : null;
   }
 
   function canModerate(userId) {
@@ -182,19 +167,21 @@
     return role === 'admin' || role === 'moderator';
   }
 
-  async function isUserBanned(discordUserId) {
+  async function isUserBanned(userId) {
     try {
-      const url = SUPABASE_URL + '/rest/v1/banned_users?discord_user_id=eq.' + encodeURIComponent(discordUserId) + '&select=*';
-      const res = await fetch(url, { headers: SUPABASE_HEADERS });
+      const url = SUPABASE_URL + '/rest/v1/banned_users?user_id=eq.' + encodeURIComponent(userId) + '&select=*';
+      const res = await fetch(url, { headers: getApiHeaders() });
       if (res.status === 404) return false;
+      if (res.status === 400) { console.warn('isUserBanned: table banned_users manquante'); return false; }
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       return data && data.length > 0;
     } catch (err) { console.error('Erreur vérification bannissement:', err); return false; }
   }
 
-  async function banChatUser(discordUserId, reason) {
-    if (!discordUser || !isAdminUser(discordUser.id)) {
+  async function banChatUser(userId, reason) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser || !isAdminUser(currentUser.id)) {
       showTemporaryNotification('❌ Seul un admin peut bannir');
       return;
     }
@@ -202,16 +189,16 @@
       const url = SUPABASE_URL + '/rest/v1/banned_users';
       const res = await fetch(url, {
         method: 'POST',
-        headers: Object.assign({}, SUPABASE_HEADERS, { 'Prefer': 'return=minimal' }),
+        headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=minimal' }),
         body: JSON.stringify({
-          discord_user_id: discordUserId,
-          banned_by: discordUser.id,
+          user_id: userId,
+          banned_by: currentUser.id,
           reason: reason || 'Comportement inapproprié',
           banned_at: new Date().toISOString(),
         }),
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const messagesToRemove = chatMessages.filter(function (m) { return m.discord_user_id === discordUserId; });
+      const messagesToRemove = chatMessages.filter(function (m) { return m.user_id === userId; });
       messagesToRemove.forEach(function (msg) { removeMessageFromUI(msg.id); });
       showTemporaryNotification('✅ Utilisateur banni !', true);
     } catch (err) {
@@ -220,72 +207,26 @@
     }
   }
 
-  /* ── Discord OAuth2 ── */
-  async function startDiscordLogin() {
-    const state = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(12)))).replace(/[^a-zA-Z0-9]/g, '');
-    sessionStorage.setItem('discord_oauth_state', state);
-    const params = new URLSearchParams({
-      client_id: DISCORD_CLIENT_ID,
-      redirect_uri: DISCORD_REDIRECT_URI,
-      response_type: 'code',
-      scope: DISCORD_SCOPES,
-      state: state,
-    });
-    window.location.href = 'https://discord.com/api/oauth2/authorize?' + params.toString();
-  }
+  /* ── Deblock Auth ── */
+  function updateDeblockUI() {
+    const loginBtn = document.getElementById('deblock-login-btn');
+    const userInfo = document.getElementById('deblock-user-info');
+    const avatarEl = document.getElementById('deblock-avatar');
+    const usernameEl = document.getElementById('deblock-username');
 
-  async function exchangeCodeForToken(code) {
-    const res = await fetch(DISCORD_TOKEN_PROXY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, redirect_uri: DISCORD_REDIRECT_URI, client_id: DISCORD_CLIENT_ID }),
-    });
-    if (!res.ok) throw new Error('Erreur échange token (' + res.status + ')');
-    return res.json();
-  }
+    const user = Deblock.getUser();
 
-  async function fetchDiscordUser(accessToken) {
-    const res = await fetch('https://discord.com/api/v10/users/@me', {
-      headers: { 'Authorization': 'Bearer ' + accessToken },
-    });
-    if (!res.ok) throw new Error('Erreur profil Discord (' + res.status + ')');
-    return res.json();
-  }
-
-  function saveDiscordSession(user, accessToken, expiresAt) {
-    try { localStorage.setItem('discord_session', JSON.stringify({ user, accessToken, expiresAt })); } catch { /* ignore */ }
-  }
-
-  function loadDiscordSession() {
-    try {
-      const raw = localStorage.getItem('discord_session');
-      if (!raw) return null;
-      const session = JSON.parse(raw);
-      if (session.expiresAt && Date.now() > session.expiresAt) { localStorage.removeItem('discord_session'); return null; }
-      return session;
-    } catch { return null; }
-  }
-
-  function clearDiscordSession() { localStorage.removeItem('discord_session'); }
-
-  /* ── Mise à jour de l'UI ── */
-  function updateDiscordUI() {
-    const loginBtn = document.getElementById('discord-login-btn');
-    const userInfo = document.getElementById('discord-user-info');
-    const avatarEl = document.getElementById('discord-avatar');
-    const usernameEl = document.getElementById('discord-username');
-
-    if (discordUser) {
+    if (user) {
       if (loginBtn) loginBtn.style.display = 'none';
       if (userInfo) {
         userInfo.removeAttribute('hidden');
         userInfo.style.display = 'flex';
       }
       if (avatarEl) {
-        avatarEl.src = getDiscordAvatarUrl(discordUser);
-        avatarEl.alt = getDiscordDisplayName(discordUser);
+        avatarEl.src = Deblock.getAvatarUrl();
+        avatarEl.alt = Deblock.getDisplayName();
       }
-      if (usernameEl) usernameEl.textContent = getDiscordDisplayName(discordUser);
+      if (usernameEl) usernameEl.textContent = Deblock.getDisplayName();
     } else {
       if (loginBtn) loginBtn.style.display = '';
       if (userInfo) {
@@ -294,105 +235,354 @@
       }
     }
 
-    // 🔥 Mettre à jour l'état du chat après chaque changement d'utilisateur
     updateChatAuthState();
   }
 
-  /* ── Gestion du callback OAuth2 ── */
-  async function handleDiscordCallback() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    const error = urlParams.get('error');
+  /* ── Login Modal ── */
+  function openLoginModal() {
+    const modal = document.getElementById('deblock-login-modal');
+    if (!modal) return;
+    // Reset to login mode
+    document.getElementById('deblock-login-mode').hidden = false;
+    document.getElementById('deblock-signup-mode').hidden = true;
+    document.getElementById('deblock-forgot-mode').hidden = true;
+    document.getElementById('deblock-auth-loading').hidden = true;
+    document.getElementById('deblock-login-error').hidden = true;
+    document.getElementById('deblock-email').value = '';
+    document.getElementById('deblock-password').value = '';
+    modal.hidden = false;
+  }
 
-    if (error) {
-      console.warn('Discord OAuth erreur :', error);
-      const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
-      history.replaceState(null, '', cleanUrl);
-      return;
-    }
+  function closeLoginModal() {
+    const modal = document.getElementById('deblock-login-modal');
+    if (!modal) return;
+    modal.hidden = true;
+    document.getElementById('deblock-login-error').hidden = true;
+  }
 
-    if (!code) return;
+  function showLoginError(msg) {
+    const errEl = document.getElementById('deblock-login-error');
+    if (!errEl) return;
+    errEl.textContent = msg;
+    errEl.hidden = false;
+  }
 
-    const savedState = sessionStorage.getItem('discord_oauth_state');
-    sessionStorage.removeItem('discord_oauth_state');
+  function showAuthLoading(show) {
+    document.getElementById('deblock-auth-loading').hidden = !show;
+    document.getElementById('deblock-login-mode').hidden = show;
+    document.getElementById('deblock-signup-mode').hidden = true;
+    document.getElementById('deblock-forgot-mode').hidden = true;
+  }
 
-    if (!savedState || state !== savedState) {
-      console.error('Discord OAuth : état invalide (CSRF)');
-      const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
-      history.replaceState(null, '', cleanUrl);
-      return;
-    }
+  function initDeblockAuth() {
+    // Wait for Deblock module to be ready
+    Deblock.ready().then(function () {
+      // Initial UI update
+      updateDeblockUI();
+      fetchUserRoles();
+      initProfilePage();
 
-    try {
-      const tokenData = await exchangeCodeForToken(code);
-      const user = await fetchDiscordUser(tokenData.access_token);
-      const expiresAt = Date.now() + (tokenData.expires_in || 604800) * 1000;
-
-      discordUser = user;
-      saveDiscordSession(user, tokenData.access_token, expiresAt);
-      updateDiscordUI();
-      await fetchAdmins();
-
-      // 🔥 Forcer la mise à jour du chat après connexion
-      setTimeout(function () {
-        updateChatAuthState();
+      // Listen for auth state changes
+      Deblock.onAuthStateChanged(function () {
+        updateDeblockUI();
         if (chatOpen && chatMessagesEl) {
           loadChatMessagesForTab(currentChatTab, currentPrivatePartner);
         }
-      }, 300);
+      });
+    });
 
-    } catch (err) {
-      console.error('Discord auth erreur :', err);
-    }
-
-    const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
-    history.replaceState(null, '', cleanUrl);
-  }
-
-  /* ── Init auth ── */
-  function initDiscordAuth() {
-    const session = loadDiscordSession();
-    if (session) {
-      discordUser = session.user;
-    }
-    updateDiscordUI();
-    fetchAdmins();
-
-    // 🔥 Forcer la mise à jour du chat après connexion
-    setTimeout(function () {
-      updateChatAuthState();
-      if (chatOpen && chatMessagesEl) {
-        loadChatMessagesForTab(currentChatTab, currentPrivatePartner);
-      }
-    }, 200);
-
+    // ── Login modal event listeners ──
     document.addEventListener('click', function (e) {
-      if (e.target.closest('#discord-login-btn')) {
-        startDiscordLogin();
+
+      // Open login modal
+      if (e.target.closest('#deblock-login-btn') || e.target.closest('#chat-widget-login-btn')) {
+        e.preventDefault();
+        if (Deblock.getUser()) return;
+        openLoginModal();
       }
-      if (e.target.closest('#discord-logout-btn')) {
-        discordUser = null;
-        clearDiscordSession();
-        updateDiscordUI();
+
+      // Logout
+      if (e.target.closest('#deblock-logout-btn')) {
+        Deblock.logout().catch(console.error);
         if (chatOpen) {
           closeChat();
         }
       }
+
+      // Profile link
+      if (e.target.closest('.deblock-profile-link')) {
+        e.preventDefault();
+        location.hash = 'profil';
+      }
+
+      // Close modal buttons
+      if (e.target.closest('#deblock-login-close')) {
+        closeLoginModal();
+      }
+      if (e.target.closest('#deblock-login-modal') && e.target === document.getElementById('deblock-login-modal')) {
+        closeLoginModal();
+      }
+
+      // Switch to signup mode
+      if (e.target.closest('#deblock-show-signup')) {
+        e.preventDefault();
+        document.getElementById('deblock-login-mode').hidden = true;
+        document.getElementById('deblock-signup-mode').hidden = false;
+        document.getElementById('deblock-login-error').hidden = true;
+        document.getElementById('deblock-signup-pseudo').value = '';
+        document.getElementById('deblock-signup-email').value = '';
+        document.getElementById('deblock-signup-password').value = '';
+        document.getElementById('deblock-signup-confirm').value = '';
+      }
+
+      // Switch to login mode
+      if (e.target.closest('#deblock-show-login')) {
+        e.preventDefault();
+        document.getElementById('deblock-signup-mode').hidden = true;
+        document.getElementById('deblock-login-mode').hidden = false;
+        document.getElementById('deblock-login-error').hidden = true;
+      }
+
+      // Switch to forgot password mode
+      if (e.target.closest('#deblock-show-forgot')) {
+        e.preventDefault();
+        document.getElementById('deblock-login-mode').hidden = true;
+        document.getElementById('deblock-forgot-mode').hidden = false;
+        document.getElementById('deblock-login-error').hidden = true;
+        document.getElementById('deblock-forgot-email').value = '';
+      }
+
+      // Back to login from forgot mode
+      if (e.target.closest('#deblock-back-to-login')) {
+        e.preventDefault();
+        document.getElementById('deblock-forgot-mode').hidden = true;
+        document.getElementById('deblock-login-mode').hidden = false;
+        document.getElementById('deblock-login-error').hidden = true;
+      }
+
+      // Password toggle
+      if (e.target.closest('#deblock-password-toggle')) {
+        const pwInput = document.getElementById('deblock-password');
+        if (pwInput.type === 'password') {
+          pwInput.type = 'text';
+          e.target.textContent = '🙈';
+        } else {
+          pwInput.type = 'password';
+          e.target.textContent = '👁';
+        }
+      }
     });
 
-    handleDiscordCallback();
+    // ── Login submit ──
+    document.getElementById('deblock-login-submit').addEventListener('click', async function () {
+      const email = document.getElementById('deblock-email').value.trim();
+      const password = document.getElementById('deblock-password').value;
+      if (!email || !password) { showLoginError('Veuillez remplir tous les champs.'); return; }
+      showAuthLoading(true);
+      try {
+        await Deblock.login(email, password);
+        closeLoginModal();
+      } catch (err) {
+        showAuthLoading(false);
+        showLoginError(err.message || 'Erreur de connexion');
+      }
+    });
+
+    // ── Signup submit ──
+    document.getElementById('deblock-signup-submit').addEventListener('click', async function () {
+      const pseudo = document.getElementById('deblock-signup-pseudo').value.trim();
+      const email = document.getElementById('deblock-signup-email').value.trim();
+      const password = document.getElementById('deblock-signup-password').value;
+      const confirm = document.getElementById('deblock-signup-confirm').value;
+      if (!email || !password) { showLoginError('Veuillez remplir tous les champs.'); return; }
+      if (password.length < 6) { showLoginError('Le mot de passe doit contenir au moins 6 caractères.'); return; }
+      if (password !== confirm) { showLoginError('Les mots de passe ne correspondent pas.'); return; }
+      showAuthLoading(true);
+      try {
+        await Deblock.signUp(email, password, pseudo || null);
+        showAuthLoading(false);
+        showLoginError('✅ Compte cr\u00e9\u00e9 ! V\u00e9rifiez votre email pour confirmer votre inscription.');
+      } catch (err) {
+        showAuthLoading(false);
+        showLoginError(err.message || 'Erreur lors de l\'inscription');
+      }
+    });
+
+    // ── Forgot password submit ──
+    document.getElementById('deblock-forgot-submit').addEventListener('click', async function () {
+      const email = document.getElementById('deblock-forgot-email').value.trim();
+      if (!email) { showLoginError('Veuillez entrer votre email.'); return; }
+      showAuthLoading(true);
+      try {
+        await Deblock.sendMagicLink(email);
+        closeLoginModal();
+        showTemporaryNotification('✅ Lien de réinitialisation envoyé par email', true);
+      } catch (err) {
+        showAuthLoading(false);
+        showLoginError(err.message || 'Erreur lors de l\'envoi');
+      }
+    });
+
+    // ── Allow Enter key to submit ──
+    document.getElementById('deblock-password').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') document.getElementById('deblock-login-submit').click();
+    });
+    document.getElementById('deblock-signup-confirm').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') document.getElementById('deblock-signup-submit').click();
+    });
+    document.getElementById('deblock-forgot-email').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') document.getElementById('deblock-forgot-submit').click();
+    });
+
+    // ── Close modal on Escape ──
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeLoginModal();
+    });
   }
 
-  /* ── Navigation SPA ── */
+  /* ── Profile Management ── */
+  var profilePageInitialized = false;
+
+  function refreshProfileData() {
+    const user = Deblock.getUser();
+    if (!user) return;
+    const pseudoInput = document.getElementById('profile-pseudo');
+    const emailInput = document.getElementById('profile-email');
+    if (pseudoInput) pseudoInput.value = Deblock.getDisplayName() || '';
+    if (emailInput) emailInput.value = user.email || '';
+    // Clear password fields
+    const newPwdInput = document.getElementById('profile-new-password');
+    const confirmPwdInput = document.getElementById('profile-confirm-password');
+    if (newPwdInput) newPwdInput.value = '';
+    if (confirmPwdInput) confirmPwdInput.value = '';
+    // Reset delete flow
+    const deleteBtn = document.getElementById('profile-delete-btn');
+    const deleteCancel = document.getElementById('profile-delete-cancel');
+    const deleteConfirm = document.getElementById('profile-delete-confirm');
+    if (deleteBtn) deleteBtn.hidden = false;
+    if (deleteCancel) deleteCancel.hidden = true;
+    if (deleteConfirm) deleteConfirm.hidden = true;
+    // Hide status message
+    const msgEl = document.getElementById('profile-status-msg');
+    if (msgEl) msgEl.hidden = true;
+  }
+
+  function initProfilePage() {
+    if (profilePageInitialized) return;
+    profilePageInitialized = true;
+
+    const profilePage = document.getElementById('page-profil');
+    if (!profilePage) return;
+
+    const msgEl = document.getElementById('profile-status-msg');
+
+    function showProfileMsg(msg, isSuccess) {
+      if (!msgEl) return;
+      msgEl.textContent = msg;
+      msgEl.hidden = false;
+      msgEl.style.color = isSuccess ? 'var(--green, #4ade80)' : 'var(--red, #ef4444)';
+      setTimeout(function () { msgEl.hidden = true; }, 4000);
+    }
+
+    // Save pseudo
+    document.getElementById('profile-save-pseudo').addEventListener('click', async function () {
+      const pseudoInput = document.getElementById('profile-pseudo');
+      const newPseudo = pseudoInput ? pseudoInput.value.trim() : '';
+      if (!newPseudo) { showProfileMsg('Le pseudo ne peut pas \u00eatre vide.'); return; }
+      try {
+        await Deblock.updateProfile({ display_name: newPseudo });
+        updateDeblockUI();
+        showProfileMsg(window.i18n ? window.i18n.t('profile.pseudoChanged') : '\u2713 Pseudo mis \u00e0 jour !', true);
+      } catch (err) {
+        showProfileMsg((window.i18n ? window.i18n.t('profile.error') : 'Erreur : ') + (err.message || ''));
+      }
+    });
+
+    // Save email
+    document.getElementById('profile-save-email').addEventListener('click', async function () {
+      const emailInput = document.getElementById('profile-email');
+      const newEmail = emailInput ? emailInput.value.trim() : '';
+      if (!newEmail) { showProfileMsg('L\'email ne peut pas \u00eatre vide.'); return; }
+      try {
+        await Deblock.updateEmail(newEmail);
+        showProfileMsg(window.i18n ? window.i18n.t('profile.emailChanged') : '\u2713 Email de confirmation envoy\u00e9.', true);
+      } catch (err) {
+        showProfileMsg((window.i18n ? window.i18n.t('profile.error') : 'Erreur : ') + (err.message || ''));
+      }
+    });
+
+    // Save password
+    document.getElementById('profile-save-password').addEventListener('click', async function () {
+      const newPwdInput = document.getElementById('profile-new-password');
+      const confirmPwdInput = document.getElementById('profile-confirm-password');
+      const pwd = newPwdInput ? newPwdInput.value : '';
+      const confirm = confirmPwdInput ? confirmPwdInput.value : '';
+      if (!pwd || pwd.length < 6) { showProfileMsg('Le mot de passe doit contenir au moins 6 caract\u00e8res.'); return; }
+      if (pwd !== confirm) { showProfileMsg('Les mots de passe ne correspondent pas.'); return; }
+      try {
+        await Deblock.updatePassword(pwd);
+        if (newPwdInput) newPwdInput.value = '';
+        if (confirmPwdInput) confirmPwdInput.value = '';
+        showProfileMsg(window.i18n ? window.i18n.t('profile.passwordChanged') : '\u2713 Mot de passe chang\u00e9 !', true);
+      } catch (err) {
+        showProfileMsg((window.i18n ? window.i18n.t('profile.error') : 'Erreur : ') + (err.message || ''));
+      }
+    });
+
+    // Enter key on confirm password triggers save
+    if (document.getElementById('profile-confirm-password')) {
+      document.getElementById('profile-confirm-password').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') document.getElementById('profile-save-password').click();
+      });
+    }
+
+    // Delete account flow
+    const deleteBtn = document.getElementById('profile-delete-btn');
+    const deleteCancel = document.getElementById('profile-delete-cancel');
+    const deleteConfirm = document.getElementById('profile-delete-confirm');
+
+    deleteBtn.addEventListener('click', function () {
+      deleteBtn.hidden = true;
+      if (deleteCancel) deleteCancel.hidden = false;
+      if (deleteConfirm) deleteConfirm.hidden = false;
+    });
+
+    if (deleteCancel) {
+      deleteCancel.addEventListener('click', function () {
+        deleteCancel.hidden = true;
+        deleteConfirm.hidden = true;
+        if (deleteBtn) deleteBtn.hidden = false;
+      });
+    }
+
+    if (deleteConfirm) {
+      deleteConfirm.addEventListener('click', async function () {
+        try {
+          await Deblock.deleteAccount();
+          showProfileMsg(window.i18n ? window.i18n.t('profile.deleted') : '\u2713 Compte supprim\u00e9.', true);
+          setTimeout(function () {
+            navigateTo('accueil');
+            updateDeblockUI();
+          }, 1500);
+        } catch (err) {
+          showProfileMsg((window.i18n ? window.i18n.t('profile.error') : 'Erreur : ') + (err.message || ''));
+          if (deleteCancel) deleteCancel.hidden = true;
+          if (deleteConfirm) deleteConfirm.hidden = true;
+          if (deleteBtn) deleteBtn.hidden = false;
+        }
+      });
+    }
+  }
+
+  /* ── Navigation SPA ── */  /* ── Navigation SPA ── */
   const pages = {
     accueil: document.getElementById('page-accueil'),
     'mises-a-jour': document.getElementById('page-mises-a-jour'),
     serveurs: document.getElementById('page-serveurs'),
     'le-jeu': document.getElementById('page-le-jeu'),
     'info-du-site': document.getElementById('page-info-du-site'),
+    profil: document.getElementById('page-profil'),
   };
-  // Anciennes ancres conservées pour compatibilité (liens/marque-pages existants)
   const legacyPageRedirects = { 'info-du-jeu': 'le-jeu', telecharger: 'le-jeu' };
 
   const navLinks = document.querySelectorAll('[data-nav]');
@@ -413,6 +603,12 @@
     if (pageId === 'le-jeu' && !datacentersLoaded) renderDatacenters();
     if (pageId === 'serveurs' && !serversLoaded) loadServers();
     if (pageId === 'le-jeu' && !downloadsLoaded) loadDownloads();
+    if (pageId === 'profil') {
+      document.getElementById('app').style.display = 'none';
+      refreshProfileData();
+    } else {
+      document.getElementById('app').style.display = '';
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -534,7 +730,7 @@
   }
 
   /* ── Updates loader ── */
-  let updatesLoaded =false;
+  let updatesLoaded = false;
   const updatesContainer = document.getElementById('updates-container');
 
   async function loadUpdates() {
@@ -617,44 +813,30 @@
     }
     dcContainer.innerHTML = html;
     datacentersLoaded = true;
-    // Start latency tests asynchronously without blocking rendering
     setTimeout(function () { runLatencyTests(); }, 100);
   }
-  
-async function measureLatency(host) {
-  try {
-    const res = await fetch(
-      'https://lag-test.creatif-france.workers.dev/?url=' +
-      encodeURIComponent(host)
-    );
 
-    if (!res.ok) return null;
-
-    const data = await res.json();
-
-    // Nouvelle structure du Worker
-    const avg = data?.results?.[0]?.result?.stats?.avg;
-
-    if (typeof avg === 'number') {
-      return Math.round(avg);
+  async function measureLatency(host) {
+    try {
+      const res = await fetch(
+        'https://lag-test.creatif-france.workers.dev/?url=' +
+        encodeURIComponent(host)
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      const avg = data?.results?.[0]?.result?.stats?.avg;
+      if (typeof avg === 'number') return Math.round(avg);
+      const timings = data?.results?.[0]?.result?.timings;
+      if (Array.isArray(timings) && timings.length) {
+        const sum = timings.reduce((a, b) => a + b.rtt, 0);
+        return Math.round(sum / timings.length);
+      }
+      return null;
+    } catch (e) {
+      console.error(e);
+      return null;
     }
-
-    // Au cas où "stats.avg" n'existe pas
-    const timings = data?.results?.[0]?.result?.timings;
-
-    if (Array.isArray(timings) && timings.length) {
-      const sum = timings.reduce((a, b) => a + b.rtt, 0);
-      return Math.round(sum / timings.length);
-    }
-
-    return null;
-
-  } catch (e) {
-    console.error(e);
-    return null;
   }
-}
-
 
   function latencyClass(ms) {
     if (ms === null) return 'latency-error';
@@ -664,7 +846,6 @@ async function measureLatency(host) {
   }
 
   async function runLatencyTests() {
-    // Run all tests concurrently — they don't block each other
     DATACENTERS.forEach(async function (dc) {
       const id = 'lat-' + dc.host.replace(/\./g, '-');
       const badge = document.getElementById(id);
@@ -749,15 +930,15 @@ async function measureLatency(host) {
       'Pologne': ['poland', 'pologne', 'warsaw', 'varsovie', 'cracovie', 'krakow', '🇵🇱'],
       'Suède': ['sweden', 'suède', 'suede', 'stockholm', 'göteborg', 'gothenburg', '🇸🇪'],
       'Belgique': ['belgium', 'belgique', 'bruxelles', 'brussels', 'anvers', 'antwerp', '🇧🇪'],
-      'Suisse': ['switzerland', 'suisse', 'zurich', 'genève', 'geneva', 'berne', 'bern', '🇨🇭'],
+      'Suisse': ['switzerland', 'suisse', 'zurich', 'genève', 'geneve', 'berne', 'bern', '🇨🇭'],
       'Espagne': ['spain', 'espagne', 'madrid', 'barcelone', 'barcelona', 'séville', 'sevilla', 'valence', '🇪🇸'],
       'Portugal': ['portugal', 'lisbonne', 'lisbon', 'porto', '🇵🇹'],
-      'Italie': ['italy', 'italie', 'rome', 'rome', 'milan', 'milano', 'naples', 'naples', 'turin', 'torino', '🇮🇹'],
+      'Italie': ['italy', 'italie', 'rome', 'milan', 'milano', 'naples', 'turin', 'torino', '🇮🇹'],
       'Autriche': ['austria', 'autriche', 'vienne', 'vienna', 'salzbourg', 'salzburg', '🇦🇹'],
       'Norvège': ['norway', 'norvège', 'norvege', 'oslo', 'bergen', '🇳🇴'],
       'Danemark': ['denmark', 'danemark', 'copenhague', 'copenhagen', 'aarhus', '🇩🇰'],
       'Irlande': ['ireland', 'irlande', 'dublin', 'cork', '🇮🇪'],
-      'République tchèque': ['czech', 'tchèque', 'tcheque', 'prague', 'prague', '🇨🇿'],
+      'République tchèque': ['czech', 'tchèque', 'tcheque', 'prague', '🇨🇿'],
       'Roumanie': ['romania', 'roumanie', 'bucarest', 'bucharest', 'cluj', '🇷🇴'],
       'Hongrie': ['hungary', 'hongrie', 'budapest', '🇭🇺'],
       'Grèce': ['greece', 'grèce', 'grece', 'athènes', 'athens', 'thessalonique', '🇬🇷'],
@@ -846,7 +1027,7 @@ async function measureLatency(host) {
     const ratings = new Map();
     try {
       const url = SUPABASE_URL + '/rest/v1/reviews?select=server_id,rating&limit=10000';
-      const res = await fetch(url, { headers: SUPABASE_HEADERS });
+      const res = await fetch(url, { headers: getApiHeaders() });
       if (!res.ok) throw new Error('Erreur chargement des notes (' + res.status + ')');
       const rows = await res.json();
       const totals = new Map();
@@ -940,9 +1121,7 @@ async function measureLatency(host) {
 
   function renderServers(list) {
     if (!serversContainer) return;
-    // Fallback to filteredServers if no list passed (e.g. from langchange)
     if (!list) list = filteredServers;
-    // Remove any existing load-more button
     var oldBtn = document.getElementById('load-more-servers-btn');
     if (oldBtn) oldBtn.remove();
     serversDisplayedCount = 0;
@@ -1033,28 +1212,31 @@ async function measureLatency(host) {
      Système d'avis
      ══════════════════════════════════════════════════════ */
   function hasRecentlyReviewed(serverId) {
-    if (discordUser) return false;
+    const user = Deblock.getUser();
+    if (user) return false;
     try { const data = JSON.parse(localStorage.getItem('mc_reviewed') || '{}'); const last = data[serverId]; return last && (Date.now() - last) < 3600000; } catch { return false; }
   }
 
   function markReviewed(serverId) {
-    if (discordUser) return;
+    const user = Deblock.getUser();
+    if (user) return;
     try { const data = JSON.parse(localStorage.getItem('mc_reviewed') || '{}'); data[serverId] = Date.now(); localStorage.setItem('mc_reviewed', JSON.stringify(data)); } catch { /* ignore */ }
   }
 
   async function fetchReviews(serverId) {
     const url = SUPABASE_URL + '/rest/v1/reviews?server_id=eq.' + encodeURIComponent(serverId) + '&order=created_at.desc&limit=50';
-    const res = await fetch(url, { headers: SUPABASE_HEADERS });
+    const res = await fetch(url, { headers: getApiHeaders() });
     if (!res.ok) throw new Error('Erreur chargement avis (' + res.status + ')');
     return res.json();
   }
 
   async function submitReview(serverId, pseudo, rating, text) {
+    const currentUser = Deblock.getUser();
     const payload = { server_id: serverId, pseudo: (pseudo || 'Anonyme').slice(0, 32).trim() || 'Anonyme', rating: rating, text: (text || '').slice(0, 280).trim() };
-    if (discordUser) { payload.discord_user_id = discordUser.id; payload.pseudo = getDiscordDisplayName(discordUser).slice(0, 32); }
+    if (currentUser) { payload.user_id = currentUser.id; payload.pseudo = Deblock.getDisplayName().slice(0, 32); }
     const res = await fetch(SUPABASE_URL + '/rest/v1/reviews', {
       method: 'POST',
-      headers: { ...SUPABASE_HEADERS, 'Prefer': 'return=minimal' },
+      headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=minimal' }),
       body: JSON.stringify(payload),
     });
     if (!res.ok) { const err = await res.json().catch(() => ({})); if (err.code === '23505') throw new Error('already_reviewed'); throw new Error(err.message || 'Erreur soumission'); }
@@ -1071,8 +1253,8 @@ async function measureLatency(host) {
   function buildReviewCardsHtml(reviews) {
     if (!reviews.length) return '<p class="reviews-empty">' + window.i18n.t('reviews.noReviews') + '</p>';
     return reviews.map(function (r) {
-      const discordBadge = r.discord_user_id ? '<span class="review-discord-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg> Discord</span>' : '';
-      return '<div class="review-card"><div class="review-header"><span class="review-stars">' + buildStarsHtml(r.rating) + '</span><span class="review-pseudo">' + escapeHtml(r.pseudo || 'Anonyme') + '</span>' + discordBadge + '<span class="review-date">' + escapeHtml(r.date || new Date(r.created_at).toLocaleDateString('fr-FR')) + '</span></div>' + (r.text ? '<p class="review-text">' + escapeHtml(r.text) + '</p>' : '') + '</div>';
+      const verifiedBadge = r.user_id ? '<span class="review-deblock-badge">✓ Vérifié</span>' : '';
+      return '<div class="review-card"><div class="review-header"><span class="review-stars">' + buildStarsHtml(r.rating) + '</span><span class="review-pseudo">' + escapeHtml(r.pseudo || 'Anonyme') + '</span>' + verifiedBadge + '<span class="review-date">' + escapeHtml(r.date || new Date(r.created_at).toLocaleDateString('fr-FR')) + '</span></div>' + (r.text ? '<p class="review-text">' + escapeHtml(r.text) + '</p>' : '') + '</div>';
     }).join('');
   }
 
@@ -1090,17 +1272,20 @@ async function measureLatency(host) {
   function renderReviewsSection(serverId) {
     const section = document.getElementById('modal-reviews-section');
     if (!section) return;
+    const currentUser = Deblock.getUser();
     const alreadyReviewed = hasRecentlyReviewed(serverId);
     let formHtml;
-    if (!discordUser) {
-      formHtml = '<div class="review-discord-prompt"><svg width="18" height="18" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg><span>Connectez-vous pour laisser un avis vérifié.</span><button type="button" class="btn-discord-inline" id="review-discord-login-btn">' + window.i18n.t('reviews.loginBtn') + '</button></div>';
+
+    if (!currentUser) {
+      formHtml = '<div class="review-deblock-prompt"><svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg><span>Connectez-vous pour laisser un avis vérifié.</span><button type="button" class="btn-deblock-inline" id="review-deblock-login-btn">' + window.i18n.t('reviews.loginBtn') + '</button></div>';
     } else if (alreadyReviewed) { formHtml = '<p class="review-already-done">' + window.i18n.t('reviews.alreadyDone') + '</p>'; }
     else {
-      formHtml = '<div class="review-form" id="review-form-wrap"><p class="review-form-title">Laisser un avis en tant que <strong style="color:var(--green-muted)">' + escapeHtml(getDiscordDisplayName(discordUser)) + '</strong></p><div class="review-form-fields"><div class="review-form-row"><div class="review-star-picker" data-selected="0"><span class="review-star-picker-label">' + window.i18n.t('reviews.ratingLabel') + '</span><span class="star-pick" data-val="1">★</span><span class="star-pick" data-val="2">★</span><span class="star-pick" data-val="3">★</span><span class="star-pick" data-val="4">★</span><span class="star-pick" data-val="5">★</span></div></div><textarea class="review-input review-text-input" placeholder="' + window.i18n.t('reviews.placeholder') + '" maxlength="280" rows="2"></textarea><div class="review-form-footer"><span class="review-char-count" id="review-char-count">0 / 280</span><button type="button" class="btn btn-primary review-submit-btn">Publier</button></div></div></div>';
+      formHtml = '<div class="review-form" id="review-form-wrap"><p class="review-form-title">Laisser un avis en tant que <strong style="color:var(--green-muted)">' + escapeHtml(Deblock.getDisplayName()) + '</strong></p><div class="review-form-fields"><div class="review-form-row"><div class="review-star-picker" data-selected="0"><span class="review-star-picker-label">' + window.i18n.t('reviews.ratingLabel') + '</span><span class="star-pick" data-val="1">★</span><span class="star-pick" data-val="2">★</span><span class="star-pick" data-val="3">★</span><span class="star-pick" data-val="4">★</span><span class="star-pick" data-val="5">★</span></div></div><textarea class="review-input review-text-input" placeholder="' + window.i18n.t('reviews.placeholder') + '" maxlength="280" rows="2"></textarea><div class="review-form-footer"><span class="review-char-count" id="review-char-count">0 / 280</span><button type="button" class="btn btn-primary review-submit-btn">Publier</button></div></div></div>';
     }
+
     section.innerHTML = '<div class="reviews-divider"></div><div class="reviews-header"><h3 class="reviews-title">' + window.i18n.t('reviews.title') + '</h3><div class="reviews-header-right"><span class="reviews-avg-wrap"><span class="reviews-no-badge">' + window.i18n.t('reviews.loading') + '</span></span><select class="reviews-sort-select" id="reviews-sort-select" aria-label="Trier les avis"><option value="recent">' + window.i18n.t('reviews.sortRecent') + '</option><option value="desc">' + window.i18n.t('reviews.sortDesc') + '</option><option value="asc">' + window.i18n.t('reviews.sortAsc') + '</option></select></div></div><div class="reviews-list" id="reviews-list-inner"><div class="reviews-spinner"><div class="spinner"></div></div></div>' + formHtml;
-    const reviewLoginBtn = section.querySelector('#review-discord-login-btn');
-    if (reviewLoginBtn) reviewLoginBtn.addEventListener('click', startDiscordLogin);
+    const reviewLoginBtn = section.querySelector('#review-deblock-login-btn');
+    if (reviewLoginBtn) reviewLoginBtn.addEventListener('click', function () { if (!Deblock.getUser()) openLoginModal(); });
     bindStarPicker(section.querySelector('.review-star-picker'));
     const textarea = section.querySelector('.review-text-input');
     const charCount = section.querySelector('#review-char-count');
@@ -1111,7 +1296,7 @@ async function measureLatency(host) {
       submitBtn.addEventListener('click', function () {
         const rating = picker ? parseInt(picker.dataset.selected || 0) : 0;
         if (!rating) { if (picker) { picker.classList.add('shake'); setTimeout(function () { picker.classList.remove('shake'); }, 450); } return; }
-        const pseudo = discordUser ? getDiscordDisplayName(discordUser) : '';
+        const pseudo = currentUser ? Deblock.getDisplayName() : '';
         const text = textarea ? textarea.value.trim() : '';
         submitBtn.disabled = true;
         submitBtn.textContent = '…';
@@ -1155,7 +1340,7 @@ async function measureLatency(host) {
     if (modalCode) modalCode.textContent = code;
     const modalBody = document.querySelector('.modal-body');
     if (modalBody) {
-      modalBody.innerHTML = '<div class="modal-details"><div class="modal-status ' + (server.online ? 'online' : 'offline') + '"><span class="status-dot"></span>' + onlineStatus + '</div><div class="modal-description"><h3>Description</h3><p>' + escapeHtml(description) + '</p></div><div class="modal-info-grid"><div class="modal-info-item"><span class="modal-info-label">👥 Joueurs</span><span class="modal-info-value">' + players + ' / ' + maxPlayers + '</span></div><div class="modal-info-item"><span class="modal-info-label">👑 Administrateur</span><span class="modal-info-value">' + escapeHtml(adminName) + '</span></div><div class="modal-info-item"><span class="modal-info-label">📍 Localisation</span><span class="modal-info-value">' + escapeHtml(location) + '</span></div></div>' + (url ? '<div class="modal-discord-link"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-discord">Rejoindre Discord</a></div>' : '') + '</div>';
+      modalBody.innerHTML = '<div class="modal-details"><div class="modal-status ' + (server.online ? 'online' : 'offline') + '"><span class="status-dot"></span>' + onlineStatus + '</div><div class="modal-description"><h3>Description</h3><p>' + escapeHtml(description) + '</p></div><div class="modal-info-grid"><div class="modal-info-item"><span class="modal-info-label">👥 Joueurs</span><span class="modal-info-value">' + players + ' / ' + maxPlayers + '</span></div><div class="modal-info-item"><span class="modal-info-label">👑 Administrateur</span><span class="modal-info-value">' + escapeHtml(adminName) + '</span></div><div class="modal-info-item"><span class="modal-info-label">📍 Localisation</span><span class="modal-info-value">' + escapeHtml(location) + '</span></div></div>' + (url ? '<div class="modal-deblock-link"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-deblock">Rejoindre Discord</a></div>' : '') + '</div>';
     }
     serverModal.hidden = false;
     syncModalOpenState();
@@ -1261,7 +1446,7 @@ async function measureLatency(host) {
     playersFetchAbortController = new AbortController();
     fetch(PLAYERS_API_URL + '?server_id=' + encodeURIComponent(serverId), { signal: playersFetchAbortController.signal })
       .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
-      //  .then(function (data) { const players = Array.isArray(data.players) ? data.players : []; const max = data.max_players != null ? data.max_players : (server.max_players != null ? server.max_players : '?'); currentPlayersList = players; if (playersModalCount) playersModalCount.textContent = players.length + ' / ' + max + ' ' + (players.length === 1 ? window.i18n.t('modal.playerOnline1') : window.i18n.t('modal.playerOnlineN')); renderPlayersList(players, playersSearchInput ? playersSearchInput.value : ''); }  
+      .then(function (data) { const players = Array.isArray(data.players) ? data.players : []; const max = data.max_players != null ? data.max_players : (server.max_players != null ? server.max_players : '?'); currentPlayersList = players; if (playersModalCount) playersModalCount.textContent = players.length + ' / ' + max + ' ' + (players.length === 1 ? window.i18n.t('modal.playerOnline1') : window.i18n.t('modal.playerOnlineN')); renderPlayersList(players, playersSearchInput ? playersSearchInput.value : ''); })
       .catch(function (err) { if (err && err.name === 'AbortError') return; console.error(err); if (playersListContainer) playersListContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('modal.errorPlayers') + '</p><p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim)">' + window.i18n.t('modal.errorPlayersHint') + '</p></div>'; });
   }
 
@@ -1315,11 +1500,12 @@ async function measureLatency(host) {
   }
 
   function startPrivateChat(userId, username) {
-    if (!discordUser) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser) {
       showTemporaryNotification('❌ Connectez-vous pour envoyer des messages privés');
       return;
     }
-    if (userId === discordUser.id) {
+    if (userId === currentUser.id) {
       showTemporaryNotification('❌ Vous ne pouvez pas vous envoyer un message à vous-même');
       return;
     }
@@ -1333,15 +1519,13 @@ async function measureLatency(host) {
   }
 
   async function loadChatMessagesForTab(tab, partnerId) {
+    const currentUser = Deblock.getUser();
     chatMessagesEl = document.getElementById('chat-messages');
     if (!chatMessagesEl) {
       console.error('chatMessagesEl not found');
       return;
     }
 
-    // On n'affiche l'état "Chargement…" que si aucun message n'est déjà affiché,
-    // afin d'éviter que la liste ne clignote (disparaisse puis réapparaisse)
-    // lors des rafraîchissements automatiques ou manuels.
     var hasVisibleMessages = !!chatMessagesEl.querySelector('.chat-msg');
     if (!hasVisibleMessages) {
       chatMessagesEl.innerHTML = '<p class="chat-loading">Chargement…</p>';
@@ -1349,22 +1533,22 @@ async function measureLatency(host) {
 
     try {
       var url;
-      if (tab === 'private' && partnerId && discordUser) {
+      if (tab === 'private' && partnerId && currentUser) {
         url = SUPABASE_URL + '/rest/v1/private_messages?select=*&or=(sender_id.eq.' +
-          discordUser.id + ',receiver_id.eq.' + discordUser.id +
+          currentUser.id + ',receiver_id.eq.' + currentUser.id +
           ')&order=created_at.asc&limit=50';
       } else {
         url = SUPABASE_URL + '/rest/v1/global_chat?select=*&channel=eq.' + tab + '&order=created_at.desc&limit=50';
       }
 
-      var res = await fetch(url, { headers: SUPABASE_HEADERS });
+      var res = await fetch(url, { headers: getApiHeaders() });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       var msgs = await res.json();
 
       if (tab === 'private') {
         msgs = msgs.filter(function (m) {
-          return (m.sender_id === discordUser.id && m.receiver_id === partnerId) ||
-            (m.sender_id === partnerId && m.receiver_id === discordUser.id);
+          return (m.sender_id === currentUser.id && m.receiver_id === partnerId) ||
+            (m.sender_id === partnerId && m.receiver_id === currentUser.id);
         });
       }
 
@@ -1386,8 +1570,6 @@ async function measureLatency(host) {
         }
       }
 
-      // La fenêtre de chat est ouverte : l'utilisateur voit les messages,
-      // on met donc à jour le repère "dernier message vu".
       if (chatOpen) {
         markChatAsSeen();
       }
@@ -1415,18 +1597,15 @@ async function measureLatency(host) {
     chatMessagesEl = document.getElementById('chat-messages');
     if (!chatMessagesEl) return;
 
-    // Récupère les IDs des messages déjà affichés
     var existingIds = {};
     chatMessagesEl.querySelectorAll('[data-msg-id]').forEach(function (el) {
       existingIds[el.getAttribute('data-msg-id')] = el;
     });
 
-    // Met à jour les messages existants (ex: édité/censuré) et ajoute les nouveaux
     var fragment = document.createDocumentFragment();
     msgs.forEach(function (msg) {
       var id = String(msg.id);
       if (existingIds[id]) {
-        // Remplace le contenu si le message a été modifié
         var newHtml = tab === 'private' ? buildPrivateMessageHtml(msg) : buildMessageHtml(msg);
         var tmp = document.createElement('div');
         tmp.innerHTML = newHtml;
@@ -1446,9 +1625,10 @@ async function measureLatency(host) {
   }
 
   function buildPrivateMessageHtml(msg) {
-    var isSelf = discordUser && msg.sender_id === discordUser.id;
+    const currentUser = Deblock.getUser();
+    var isSelf = currentUser && msg.sender_id === currentUser.id;
     var senderName = isSelf ? msg.sender_username : msg.receiver_username;
-    var avatar = isSelf ? getDiscordAvatarUrl(discordUser) : '';
+    var avatar = isSelf ? Deblock.getAvatarUrl() : '';
 
     var avatarHtml = avatar
       ? '<img class="chat-msg-avatar" src="' + escapeHtmlChat(avatar) + '" alt="' + escapeHtmlChat(senderName) + '" loading="lazy">'
@@ -1496,17 +1676,19 @@ async function measureLatency(host) {
   }
 
   function buildMessageHtml(msg) {
-    var isSelf = discordUser && msg.discord_user_id === discordUser.id;
+    const currentUser = Deblock.getUser();
+    var isSelf = currentUser && msg.user_id === currentUser.id;
     var avatar = msg.avatar_url
       ? '<img class="chat-msg-avatar" src="' + escapeHtmlChat(msg.avatar_url) + '" alt="' + escapeHtmlChat(msg.username) + '" loading="lazy">'
       : '<div class="chat-msg-avatar" style="background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted);border-radius:50%;">' + escapeHtmlChat(msg.username ? msg.username.charAt(0).toUpperCase() : '?') + '</div>';
 
     var time = msg.created_at ? formatTime(msg.created_at) : '';
     var userDisplay = msg.username || 'Anonyme';
-    var isAdminUserFlag = isAdminUser(msg.discord_user_id);
-    var adminBadge = isAdminUserFlag ? ' <span style="color:#5865F2;font-size:0.6rem;">🛡️ Admin</span>' : '';
+    var isAdminUserFlag = isAdminUser(msg.user_id);
+    var adminBadge = isAdminUserFlag ? ' <span style="color:#22c55e;font-size:0.6rem;">🛡️ Admin</span>' : '';
     var editedIndicator = msg.is_edited ? ' <span style="font-size:0.6rem;color:var(--text-dim);font-style:italic;">(modifié)</span>' : '';
-    var censoredIndicator = (msg.is_censored && isAdminUser(discordUser ? discordUser.id : null))
+    var currentUserId = currentUser ? currentUser.id : null;
+    var censoredIndicator = (msg.is_censored && isAdminUser(currentUserId))
       ? ' <span style="font-size:0.6rem;color:#fbbf24;font-style:italic;">(censuré)</span>' : '';
     var channelBadge = msg.channel && msg.channel !== 'global'
       ? ' <span style="font-size:0.5rem;color:var(--text-dim);background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:8px;">#' + escapeHtmlChat(msg.channel) + '</span>'
@@ -1535,10 +1717,11 @@ async function measureLatency(host) {
     chatMessages = chatMessages.filter(function (m) { return m.id !== messageId; });
   }
 
-  async function deleteChatMessage(messageId, discordUserId) {
-    if (!discordUser) return;
-    var isAdmin = isAdminUser(discordUser.id);
-    var isOwner = discordUser.id === discordUserId;
+  async function deleteChatMessage(messageId, msgUserId) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser) return;
+    var isAdmin = isAdminUser(currentUser.id);
+    var isOwner = currentUser.id === msgUserId;
     if (!isAdmin && !isOwner) {
       showTemporaryNotification('❌ Vous ne pouvez pas supprimer ce message');
       return;
@@ -1546,7 +1729,7 @@ async function measureLatency(host) {
     try {
       var table = currentChatTab === 'private' ? 'private_messages' : 'global_chat';
       var url = SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + messageId;
-      var res = await fetch(url, { method: 'DELETE', headers: SUPABASE_HEADERS });
+      var res = await fetch(url, { method: 'DELETE', headers: getApiHeaders() });
       if (res.status === 404) {
         removeMessageFromUI(messageId);
         showTemporaryNotification('✅ Message supprimé', true);
@@ -1562,10 +1745,11 @@ async function measureLatency(host) {
     }
   }
 
-  async function editChatMessage(messageId, newText, discordUserId) {
-    if (!discordUser) return;
-    var isAdmin = isAdminUser(discordUser.id);
-    var isOwner = discordUser.id === discordUserId;
+  async function editChatMessage(messageId, newText, msgUserId) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser) return;
+    var isAdmin = isAdminUser(currentUser.id);
+    var isOwner = currentUser.id === msgUserId;
     if (!isAdmin && !isOwner) {
       showTemporaryNotification('❌ Vous ne pouvez pas modifier ce message');
       return;
@@ -1586,7 +1770,7 @@ async function measureLatency(host) {
       var url = SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + messageId;
       var res = await fetch(url, {
         method: 'PATCH',
-        headers: Object.assign({}, SUPABASE_HEADERS, { 'Prefer': 'return=representation' }),
+        headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=representation' }),
         body: JSON.stringify({ message: finalText, is_edited: true }),
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1619,7 +1803,8 @@ async function measureLatency(host) {
   }
 
   function addMessageActions() {
-    if (!discordUser) return;
+    const currentUser = Deblock.getUser();
+    if (!currentUser) return;
     document.querySelectorAll('.chat-msg').forEach(function (msgElement) {
       if (msgElement.querySelector('.chat-msg-actions')) return;
 
@@ -1627,9 +1812,9 @@ async function measureLatency(host) {
       var msg = chatMessages.find(function (m) { return m.id === msgId; });
       if (!msg) return;
 
-      var isAdmin = isAdminUser(discordUser.id);
-      var isOwner = discordUser.id === msg.discord_user_id || discordUser.id === msg.sender_id;
-      var mod = canModerate(discordUser.id);
+      var isAdmin = isAdminUser(currentUser.id);
+      var isOwner = currentUser.id === msg.user_id || currentUser.id === msg.sender_id;
+      var mod = canModerate(currentUser.id);
       if (!isAdmin && !isOwner && !mod) return;
 
       var actionsDiv = document.createElement('div');
@@ -1637,15 +1822,15 @@ async function measureLatency(host) {
       actionsDiv.style.cssText = 'display: flex; gap: 4px; margin-top: 4px;';
 
       // Bouton Message Privé
-      if (discordUser && msg.discord_user_id && msg.discord_user_id !== discordUser.id && currentChatTab !== 'private') {
+      if (msg.user_id && msg.user_id !== currentUser.id && currentChatTab !== 'private') {
         var privateBtn = document.createElement('button');
         privateBtn.className = 'chat-action-btn private';
         privateBtn.textContent = '💬';
         privateBtn.title = 'Message privé';
         privateBtn.style.cssText = 'background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; transition: background 0.15s, color 0.15s;';
         privateBtn.onmouseover = function () {
-          this.style.background = 'rgba(88, 101, 242, 0.15)';
-          this.style.color = '#5865F2';
+          this.style.background = 'rgba(34, 197, 94, 0.15)';
+          this.style.color = '#22c55e';
         };
         privateBtn.onmouseout = function () {
           this.style.background = 'none';
@@ -1653,7 +1838,7 @@ async function measureLatency(host) {
         };
         privateBtn.addEventListener('click', function (e) {
           e.stopPropagation();
-          startPrivateChat(msg.discord_user_id, msg.username);
+          startPrivateChat(msg.user_id, msg.username);
         });
         actionsDiv.appendChild(privateBtn);
       }
@@ -1696,7 +1881,7 @@ async function measureLatency(host) {
           var currentText = bubble.textContent;
           var newText = prompt('Modifier le message:', currentText);
           if (newText !== null && newText !== currentText) {
-            editChatMessage(msgId, newText, msg.discord_user_id || msg.sender_id);
+            editChatMessage(msgId, newText, msg.user_id || msg.sender_id);
           }
         });
         actionsDiv.appendChild(editBtn);
@@ -1719,7 +1904,7 @@ async function measureLatency(host) {
         deleteBtn.addEventListener('click', function (e) {
           e.stopPropagation();
           if (confirm('Supprimer ce message ?')) {
-            deleteChatMessage(msgId, msg.discord_user_id || msg.sender_id);
+            deleteChatMessage(msgId, msg.user_id || msg.sender_id);
           }
         });
         actionsDiv.appendChild(deleteBtn);
@@ -1741,7 +1926,7 @@ async function measureLatency(host) {
         };
         banBtn.addEventListener('click', function (e) {
           e.stopPropagation();
-          var userToBan = msg.discord_user_id || msg.sender_id;
+          var userToBan = msg.user_id || msg.sender_id;
           var userName = msg.username || 'Inconnu';
           var reason = prompt('Raison du bannissement de "' + userName + '" ?', 'Comportement inapproprié');
           if (reason !== null && confirm('Bannir définitivement "' + userName + '" du chat ?')) {
@@ -1759,9 +1944,10 @@ async function measureLatency(host) {
   }
 
   async function sendChatMessage() {
-    if (!discordUser || !chatInput) return;
+    const currentUser = Deblock.getUser();
+    if (!currentUser || !chatInput) return;
 
-    var banned = await isUserBanned(discordUser.id);
+    var banned = await isUserBanned(currentUser.id);
     if (banned) {
       showTemporaryNotification('❌ Vous avez été banni du chat');
       return;
@@ -1784,16 +1970,16 @@ async function measureLatency(host) {
       chatSendBtn.disabled = true;
       try {
         var payload = {
-          sender_id: discordUser.id,
+          sender_id: currentUser.id,
           receiver_id: currentPrivatePartner,
-          sender_username: getDiscordDisplayName(discordUser).slice(0, 32),
+          sender_username: Deblock.getDisplayName().slice(0, 32),
           receiver_username: partnerName,
           message: text.trim(),
           created_at: new Date().toISOString()
         };
         var res = await fetch(SUPABASE_URL + '/rest/v1/private_messages', {
           method: 'POST',
-          headers: Object.assign({}, SUPABASE_HEADERS, { 'Prefer': 'return=representation' }),
+          headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=representation' }),
           body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1840,22 +2026,24 @@ async function measureLatency(host) {
     chatSendBtn.disabled = true;
 
     try {
+      var displayName = Deblock.getDisplayName().slice(0, 32);
       var payload = {
-        discord_user_id: discordUser.id,
-        username: getDiscordDisplayName(discordUser).slice(0, 32),
-        avatar_url: getDiscordAvatarUrl(discordUser),
+        user_id: currentUser.id,
+        username: displayName,
+        avatar_url: Deblock.getAvatarUrl(),
         message: finalText,
         channel: channel,
-        original_message: badWordCheck.found ? text : null,
-        is_censored: badWordCheck.found,
       };
 
       var res = await fetch(SUPABASE_URL + '/rest/v1/global_chat', {
         method: 'POST',
-        headers: Object.assign({}, SUPABASE_HEADERS, { 'Prefer': 'return=representation' }),
+        headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=representation' }),
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      if (!res.ok) {
+        if (res.status === 400) { console.warn('Table global_chat manquante dans Supabase'); chatSendBtn.disabled = false; return; }
+        throw new Error('HTTP ' + res.status);
+      }
       var created = await res.json();
 
       if (created && created.length > 0) {
@@ -1883,7 +2071,7 @@ async function measureLatency(host) {
 
     if (!chatInputArea || !chatLoginArea) return;
 
-    if (discordUser) {
+    if (Deblock.getUser()) {
       chatInputArea.removeAttribute('hidden');
       chatLoginArea.setAttribute('hidden', '');
     } else {
@@ -1953,7 +2141,6 @@ async function measureLatency(host) {
     var chatWidgetLoginBtn = document.getElementById('chat-widget-login-btn');
     var chatBadgeElement = document.getElementById('chat-badge');
 
-    // Assigner aux variables globales
     chatMessagesEl = chatMessagesElement;
     chatInput = chatInputElement;
     chatSendBtn = chatSendBtnElement;
@@ -2003,34 +2190,17 @@ async function measureLatency(host) {
       });
     }
 
-    if (chatWidgetLoginBtn) {
-      chatWidgetLoginBtn.addEventListener('click', function () {
-        startDiscordLogin();
-      });
-    }
+    // Note: login button handled via event delegation in initDeblockAuth
 
-    document.addEventListener('click', function (e) {
-      if (e.target.closest('#discord-login-btn') || e.target.closest('#discord-logout-btn')) {
-        setTimeout(function () {
-          updateChatAuthState();
-          if (chatOpen) {
-            if (chatRefreshBtn) chatRefreshBtn.classList.add('spinning');
-            chatMessagesEl.innerHTML = '<p class="chat-loading">Rechargement…</p>';
-            loadChatMessagesForTab(currentChatTab, currentPrivatePartner)
-              .then(function () {
-                if (chatRefreshBtn) chatRefreshBtn.classList.remove('spinning');
-              })
-              .catch(function () {
-                if (chatRefreshBtn) chatRefreshBtn.classList.remove('spinning');
-              });
-          }
-        }, 200);
-      }
-    });
+    // ── Auto-reload messages when auth state changes ──
+    var _origUpdateDeblockUI = updateDeblockUI;
+    updateDeblockUI = function () {
+      _origUpdateDeblockUI();
+      updateChatAuthState();
+    };
 
-    var _origHandleDiscordCallback = handleDiscordCallback;
-    handleDiscordCallback = function () {
-      _origHandleDiscordCallback.apply(this, arguments);
+    // Rechargement après connexion/déconnexion authentifiée (via Deblock.onAuthStateChanged)
+    Deblock.onAuthStateChanged(function () {
       setTimeout(function () {
         updateChatAuthState();
         if (chatOpen) {
@@ -2045,13 +2215,7 @@ async function measureLatency(host) {
             });
         }
       }, 300);
-    };
-
-    var _origUpdateDiscordUI = updateDiscordUI;
-    updateDiscordUI = function () {
-      _origUpdateDiscordUI();
-      updateChatAuthState();
-    };
+    });
 
     if (!chatWindow.hidden) {
       openChat();
@@ -2087,7 +2251,7 @@ async function measureLatency(host) {
   const footerYear = document.getElementById('footer-year');
   if (footerYear) footerYear.textContent = new Date().getFullYear();
   initCursorHalo();
-  initDiscordAuth();
+  initDeblockAuth();
   handleRoute();
 
   if (location.hash === '#mises-a-jour') loadUpdates();
@@ -2104,6 +2268,6 @@ async function measureLatency(host) {
     }
   }
 
-  setInterval(function () { fetchAdmins(); }, 300000);
+  setInterval(function () { fetchUserRoles(); }, 300000);
 
 })();

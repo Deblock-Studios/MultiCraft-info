@@ -903,14 +903,14 @@ body.cursor-active #cursor-halo {
   min-width: 0;
 }
 
-.btn-discord {
-  background: #5865f2;
+.btn-deblock {
+  background: #22c55e;
   color: #fff;
 }
 
-.btn-discord:hover {
-  background: #4752c4;
-  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.35);
+.btn-deblock:hover {
+  background: #16a34a;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.35);
 }
 
 .btn-players {
@@ -922,6 +922,17 @@ body.cursor-active #cursor-halo {
 .btn-players:hover {
   background: rgba(56, 189, 248, 0.22);
   box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
+}
+
+/* Lien externe vers un serveur Discord (bouton "Discord" sur les cartes serveurs) */
+.btn-discord {
+  background: #5865f2;
+  color: #fff;
+}
+
+.btn-discord:hover {
+  background: #4752c4;
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.35);
 }
 
 .server-card:nth-child(1) {
@@ -1329,11 +1340,11 @@ body.modal-open {
   white-space: nowrap;
 }
 
-.modal-discord-link {
+.modal-deblock-link {
   margin-top: 0.5rem;
 }
 
-.modal-discord-link .btn-discord {
+.modal-deblock-link .btn-deblock {
   width: 100%;
   justify-content: center;
 }
@@ -2127,22 +2138,22 @@ body.modal-open {
 }
 
 /* ══════════════════════════════════════════════════════
-   Auth Discord
+   Auth Deblock (Supabase)
    ══════════════════════════════════════════════════════ */
 
-.discord-auth-widget {
+.deblock-auth-widget {
   flex-shrink: 0;
   display: flex;
   align-items: center;
 }
 
-.btn-discord-auth {
+.btn-deblock-auth {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.45rem 0.9rem;
   border-radius: var(--radius-sm);
-  background: #5865F2;
+  background: #22c55e;
   color: #fff;
   font-family: var(--font);
   font-size: 0.85rem;
@@ -2151,42 +2162,45 @@ body.modal-open {
   cursor: pointer;
   transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
   white-space: nowrap;
-  box-shadow: 0 2px 12px rgba(88, 101, 242, 0.35);
+  box-shadow: 0 2px 12px rgba(34, 197, 94, 0.35);
 }
 
-.btn-discord-auth:hover {
-  background: #4752C4;
+.btn-deblock-auth:hover {
+  background: #16a34a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.45);
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.45);
 }
 
-.discord-user-info {
+.deblock-user-info {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(88, 101, 242, 0.1);
-  border: 1px solid rgba(88, 101, 242, 0.25);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
   border-radius: var(--radius-sm);
   padding: 0.3rem 0.6rem 0.3rem 0.35rem;
 }
 
-.discord-avatar {
+.deblock-avatar {
   border-radius: 50%;
   display: block;
   flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
 }
 
-.discord-username {
+.deblock-username {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #a5b4fc;
+  color: #86efac;
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.discord-logout-btn {
+.deblock-logout-btn {
   background: none;
   border: none;
   color: var(--text-dim);
@@ -2198,33 +2212,33 @@ body.modal-open {
   flex-shrink: 0;
 }
 
-.discord-logout-btn:hover {
+.deblock-logout-btn:hover {
   color: #f87171;
 }
 
-.review-discord-prompt {
+.review-deblock-prompt {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: rgba(88, 101, 242, 0.08);
-  border: 1px solid rgba(88, 101, 242, 0.2);
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
   border-radius: var(--radius-sm);
   padding: 0.75rem 1rem;
   font-size: 0.87rem;
   color: var(--text-muted);
 }
 
-.review-discord-prompt svg {
+.review-deblock-prompt svg {
   flex-shrink: 0;
 }
 
-.review-discord-prompt .btn-discord-inline {
+.review-deblock-prompt .btn-deblock-inline {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   padding: 0.4rem 0.85rem;
-  background: #5865F2;
+  background: #22c55e;
   color: #fff;
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
@@ -2237,37 +2251,37 @@ body.modal-open {
   flex-shrink: 0;
 }
 
-.review-discord-prompt .btn-discord-inline:hover {
-  background: #4752C4;
+.review-deblock-prompt .btn-deblock-inline:hover {
+  background: #16a34a;
 }
 
-.review-discord-badge {
+.review-deblock-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.7rem;
-  color: #818cf8;
+  font-size: 0.72rem;
+  color: #22c55e;
   margin-left: auto;
 }
 
-.review-discord-badge svg {
+.review-deblock-badge svg {
   opacity: 0.75;
 }
 
 @media (max-width: 768px) {
-  .discord-username {
+  .deblock-username {
     display: none;
   }
 
-  .btn-discord-auth {
+  .btn-deblock-auth {
     padding: 0.45rem 0.6rem;
   }
 
-  #discord-btn-label {
+  #deblock-btn-label {
     display: none;
   }
 
-  .discord-user-info {
+  .deblock-user-info {
     padding: 0.3rem 0.4rem;
   }
 }
@@ -3037,4 +3051,109 @@ body.modal-open {
 
 .load-more-btn:hover .load-more-count {
   opacity: 1;
+}
+
+/* ── Profile Page ── */
+.profile-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.profile-section h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  color: var(--green-muted);
+}
+
+.profile-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-danger {
+  border-color: rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.profile-danger h3 {
+  color: #ef4444;
+}
+
+.profile-delete-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25);
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  box-shadow: 0 6px 28px rgba(239, 68, 68, 0.35);
+}
+
+.btn-secondary {
+  background: var(--bg-card-hover);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+}
+
+.deblock-profile-link {
+  font-size: 0.8rem;
+  color: var(--green-muted);
+  text-decoration: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+
+.deblock-profile-link:hover {
+  color: var(--green);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+#page-profil {
+  padding: 2.5rem 1.5rem 4rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: calc(100vh - var(--header-h) - 80px);
+}
+
+#page-profil .page-header {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#page-profil .profile-section {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#page-profil #profile-status-msg {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#page-profil .page-content {
+  animation: fadeIn 0.4s ease;
+}
+
+/* Ensure hidden attribute always works */
+[hidden] {
+  display: none !important;
 }

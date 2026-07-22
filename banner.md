@@ -1,5 +1,5 @@
 ---
-isDisplayed: oui
+isDisplayed: non
 ---
 
 **fr:** 🚨 Le nombre de joueurs est actuellement à zéro sur tous les serveurs. Notre équipe tente de résoudre le problème.

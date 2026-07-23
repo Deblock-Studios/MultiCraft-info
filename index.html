@@ -621,7 +621,7 @@
 
       <!-- ── Photo de profil ── -->
       <div class="profile-section profile-avatar-section">
-        <h3>Photo de profil</h3>
+        <h3 data-i18n="profile.avatar">Photo de profil</h3>
         <div class="profile-avatar-wrapper">
           <div class="profile-avatar-preview-wrap">
             <img id="profile-avatar-preview" src="" alt="Avatar" class="profile-avatar-large">
@@ -630,11 +630,11 @@
             </label>
           </div>
           <div class="profile-avatar-info">
-            <p class="profile-avatar-hint">JPG, PNG ou GIF · max 2 Mo</p>
+            <p class="profile-avatar-hint" data-i18n="profile.avatarHint">JPG, PNG ou GIF · max 2 Mo</p>
             <input type="file" id="profile-avatar-input" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;">
             <div class="profile-avatar-actions">
-              <button id="profile-avatar-save" class="btn btn-primary" disabled>Enregistrer</button>
-              <button id="profile-avatar-remove" class="btn btn-secondary">Supprimer</button>
+              <button id="profile-avatar-save" class="btn btn-primary" data-i18n="profile.avatarSave" disabled>Enregistrer</button>
+              <button id="profile-avatar-remove" class="btn btn-secondary" data-i18n="profile.avatarRemove">Supprimer</button>
             </div>
             <div id="profile-avatar-progress" class="profile-avatar-progress" hidden>
               <div class="profile-avatar-progress-bar"></div>

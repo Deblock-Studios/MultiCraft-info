@@ -1,95 +1,351 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description"
-    content="Documents légaux - MultiCraft Info">
-  <title>Légal - MultiCraft Info</title>
+  <meta name="description" content="Legal Documents - MultiCraft Info">
+  <title>Legal - MultiCraft Info</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .legal-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      background: var(--bg-card, #1a1a2e);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .legal-nav a {
+      color: var(--green, #22c55e);
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(34,197,94,0.25);
+      transition: background 0.15s;
+    }
+    .legal-nav a:hover { background: rgba(34,197,94,0.1); }
+    .legal-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    .legal-section {
+      margin-bottom: 3.5rem;
+      padding-top: 1rem;
+    }
+    .legal-section h1 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+    .legal-section .legal-lang-badge {
+      display: none;
+    }
+    .legal-section h2 { font-size: 1.1rem; margin-top: 1.8rem; margin-bottom: 0.5rem; color: var(--text, #e2e8f0); }
+    .legal-section p, .legal-section li { font-size: 0.92rem; line-height: 1.75; color: var(--text-muted, #94a3b8); }
+    .legal-section ul { padding-left: 1.4rem; }
+    .legal-section a { color: var(--green, #22c55e); }
+    .legal-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 3rem 0; }
+    .legal-updated { font-size: 0.78rem; color: var(--text-dim, #475569); margin-bottom: 1.5rem; }
+    .back-home { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--green, #22c55e); text-decoration: none; }
+    .back-home:hover { text-decoration: underline; }
+  </style>
 </head>
 
 <body>
- <h1>Politique de confidentialité - MultiCraft Info</h1>
-    
-    <p>
-        Le site MultiCraft Info (ci-après "le site" et/ou "notre site") tient à maintenir une transparence totale avec ses utilisateurs.
-    </p>
 
-    <h2>I - Informations diverses</h2>
-    <p>
-        Le site est géré par une équipe de bénévoles et non par une quelconque entreprise.<br>
-        Nous ne sommes ni affiliés, ni autorisés ni approuvés par MultiCraft Studio OÜ ou toute autre entreprise ou organisation.<br>
-        L'ensemble des services proposés reposent sur nos APIs basées sur celles de MultiCraft.<br>
-        Les données provenant de la page "Serveurs" proviennent uniquement des APIs officielles du jeu.<br>
-        Nous ne pouvons donc pas être tenus responsables de leur contenu.<br>
-        L'équipe du site peut être jointe par e-mail à l'adresse <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a>.
-    </p>
+  <nav class="legal-nav">
+    <a href="index.html">← MultiCraft Info</a>
+    <a href="#site-privacy">Site Privacy Policy</a>
+    <a href="#deblock-privacy">Deblock Account Privacy Policy</a>
+    <a href="#deblock-tos">Deblock Account Terms of Service</a>
+  </nav>
 
-    <h2>II - Fonctionnement du site et de ses APIs</h2>
-    <p>
-        Notre site utilise un service développé par nous-même nous permettant de scanner et de sauvegarder les serveurs du jeu à intervalles régulières.<br>
-        Les informations suivantes sont conservées dans notre base de données :
-    </p>
-    <ul>
-        <li>Nom du serveur</li>
-        <li>Description du serveur</li>
-        <li>Pseudonyme de l'administrateur</li>
-        <li>Code d'invitation du serveur</li>
-        <li>Nombre de joueurs connectés</li>
-        <li>Pays</li>
-        <li>Informations diverses, comme son statut Premium, son mode (créatif/survie/hardcore)</li>
-    </ul>
-    <p>
-        Ces informations sont conservées indéfiniment dans notre base de données et sont mises à jour si nécessaire.<br>
-        La liste des joueurs connectés, elle, n'est pas stockée et ne fait que transiter par nos APIs.
-    </p>
+  <div class="legal-wrap">
 
-    <h2>III - Demandes de suppression de données</h2>
-    <p>
-        Conformément au Règlement Général de Protection des Données, vous disposez d'un droit de suppression de vos données.<br>
-        Cette demande vous permet de supprimer votre serveur de notre base de données ainsi que toutes les informations liées à celui-ci.<br>
-        Cette demande doit inclure :
-    </p>
-    <ul>
-        <li>Votre pseudonyme sur le serveur</li>
-        <li>Le code d'invitation de votre serveur</li>
-    </ul>
-    <p>
-        Afin de nous prémunir des fraudes visant les autres serveurs, vous devez également joindre une vidéo d'un minimum de 30 secondes.<br>
-        Dans cette vidéo, vous devez ouvrir l'application MultiCraft, aller dans la rubrique "Hébergement de serveur" et sélectionner votre serveur.<br>
-        Cette vidéo nous aidera à vérifier que vous êtes bel et bien le propriétaire du serveur.<br>
-        Cette demande doit être envoyée par e-mail, à l'adresse <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a>.<br>
-        Elle prendra une durée de maximum 30 jours pour être traitée.
-    </p>
+    <!-- Site Privacy Policy -->
+    <section class="legal-section" id="site-privacy">
+      <h1>Site Privacy Policy — MultiCraft Info</h1>
+      <p class="legal-updated">Last updated: July 2026</p>
 
-    <h2>IV - Garanties</h2>
-    <p>
-        Le site est fourni sans aucune garantie de fonctionnement.
-    </p>
+      <p>
+        MultiCraft Info (hereinafter referred to as "the site" and/or "our site") is committed to maintaining full transparency with its users.
+      </p>
 
-  <h2>V - Chat</h2>
-    <p>
-        Notre site dispose d'une section de Chat en direct.<br>
-        Vous ne devez pas envoyer de contenu illégal, à caractère sexuel ou explicite.<br>
-        Notre équipe de modération fait le plus possible pour modérer les messages.
-    </p>
-  
-    <h2>VI - Copyright</h2>
-    <p>
-        La police utilisée est la propriété de l'entreprise MultiCraft Studio OÜ et nous est proposée sous licence CC BY SA 3.0.<br>
-        L'intégralité des données présentes sur la page "Serveurs" sont la propriété de leurs propriétaires respectifs.<br>
-        Le logo est la propriété de l'entreprise MultiCraft Studio OÜ.<br><br>
-        Le site est la propriété intégrale de l'Équipe MultiCraft Info.<br>
-        Copyright 2026 - Tous droits réservés.
-    </p>
+      <h2>I — General Information</h2>
+      <p>
+        The site is managed by a team of volunteers and not by any company.<br>
+        We are not affiliated with, authorized by, or endorsed by MultiCraft Studio OÜ or any other company or organization.<br>
+        All services provided rely on our APIs, which are based on those of MultiCraft.<br>
+        Data displayed on the "Servers" page comes solely from the official game APIs.<br>
+        Therefore, we cannot be held responsible for their content.<br>
+        The site team can be contacted by email at <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a>.
+      </p>
 
+      <h2>II — How the Site and Its APIs Work</h2>
+      <p>
+        Our site uses a service developed by us to scan and save game servers at regular intervals.<br>
+        The following information is stored in our database:
+      </p>
+      <ul>
+        <li>Server name</li>
+        <li>Server description</li>
+        <li>Administrator username</li>
+        <li>Server invitation code</li>
+        <li>Number of connected players</li>
+        <li>Country</li>
+        <li>Miscellaneous information, such as Premium status, mode (creative/survival/hardcore)</li>
+      </ul>
+      <p>
+        This information is stored indefinitely in our database and is updated as necessary.<br>
+        The list of connected players is not stored and only transits through our APIs.
+      </p>
+
+      <h2>III — Data Deletion Requests</h2>
+      <p>
+        In accordance with the General Data Protection Regulation (GDPR), you have the right to request the deletion of your data.<br>
+        This request allows you to remove your server from our database, along with all related information.<br>
+        Your request must include:
+      </p>
+      <ul>
+        <li>Your username on the server</li>
+        <li>The invitation code of your server</li>
+      </ul>
+      <p>
+        To protect against fraud targeting other servers, you must also attach a video of at least 30 seconds.<br>
+        In this video, you must open the MultiCraft application, go to the "Server Hosting" section, and select your server.<br>
+        This video will help us verify that you are indeed the owner of the server.<br>
+        The request must be sent by email to <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a>.<br>
+        It will take a maximum of 30 days to process.
+      </p>
+
+      <h2>IV — Warranties</h2>
+      <p>The site is provided without any warranty of operation.</p>
+
+      <h2>V — Chat</h2>
+      <p>
+        Our site features a live chat section.<br>
+        You must not send illegal, sexual, or explicit content.<br>
+        Our moderation team does its best to moderate messages.
+      </p>
+
+      <h2>VI — Copyright</h2>
+      <p>
+        The font used is the property of MultiCraft Studio OÜ and is provided to us under the CC BY SA 3.0 license.<br>
+        All data displayed on the "Servers" page is the property of their respective owners.<br>
+        The logo is the property of MultiCraft Studio OÜ.<br><br>
+        The site is the sole property of the MultiCraft Info Team.<br>
+        Copyright 2026 — All rights reserved.
+      </p>
+    </section>
+
+    <hr class="legal-divider">
+
+    <!-- Deblock Account Privacy Policy -->
+    <section class="legal-section" id="deblock-privacy">
+      <h1>Deblock Account — Privacy Policy</h1>
+      <p class="legal-updated">Last updated: July 2026</p>
+
+      <p>
+        This Privacy Policy explains how MultiCraft Info ("we", "us", or "our") collects, uses, stores, and protects
+        the personal information you provide when you create or use a <strong>Deblock Account</strong>.
+        By registering for a Deblock Account, you agree to the practices described in this document.
+      </p>
+
+      <h2>1. Data Controller</h2>
+      <p>
+        MultiCraft Info is operated by an independent volunteer team and is not affiliated with any company or legal entity.
+        For any privacy-related requests, contact us at <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a>.
+      </p>
+
+      <h2>2. What Data We Collect</h2>
+      <p>When you create a Deblock Account, we collect and store the following information:</p>
+      <ul>
+        <li><strong>Email address</strong> — used to identify your account and send account-related messages (e.g., password reset).</li>
+        <li><strong>Username / Display name</strong> — the public name shown next to your messages and profile.</li>
+        <li><strong>Profile avatar</strong> — an optional image you may upload to personalize your account.</li>
+        <li><strong>Encrypted password</strong> — stored in hashed form via Supabase Auth; we never have access to your plain-text password.</li>
+        <li><strong>Account metadata</strong> — creation date, last sign-in date, and account role (regular user or administrator).</li>
+      </ul>
+      <p>When you use the site's chat feature, we additionally store:</p>
+      <ul>
+        <li>Your chat messages (content, timestamp, channel).</li>
+        <li>Your user ID and display name associated with each message.</li>
+        <li>Any reports you submit about other users' messages.</li>
+      </ul>
+
+      <h2>3. How We Use Your Data</h2>
+      <ul>
+        <li>To authenticate you and keep your session active.</li>
+        <li>To display your username and avatar in the chat.</li>
+        <li>To send transactional emails (password reset, email confirmation) — sent via Supabase's email service.</li>
+        <li>To moderate the chat and enforce these rules.</li>
+        <li>To process abuse reports you submit or that are submitted about you.</li>
+      </ul>
+      <p>We do <strong>not</strong> sell, rent, or share your personal data with third parties for marketing purposes.</p>
+
+      <h2>4. Third-Party Services</h2>
+      <p>
+        Deblock Accounts are powered by <strong>Supabase</strong> (supabase.com), a third-party authentication and database provider.
+        Your email address, hashed password, and profile metadata are stored on Supabase's infrastructure.
+        Supabase may be subject to its own privacy policy, which you can consult at
+        <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">supabase.com/privacy</a>.
+      </p>
+      <p>
+        This site also uses <strong>Simple Analytics</strong> for anonymous, privacy-friendly traffic statistics.
+        Simple Analytics does not use cookies and does not collect personal data.
+      </p>
+
+      <h2>5. Data Retention</h2>
+      <ul>
+        <li>Your account data is retained for as long as your account exists.</li>
+        <li>Chat messages are retained indefinitely unless deleted by you, an administrator, or upon account deletion.</li>
+        <li>When you delete your account, your email address, username, avatar, and authentication credentials are permanently erased. Chat messages may be anonymized or deleted at administrator discretion.</li>
+      </ul>
+
+      <h2>6. Your Rights (GDPR)</h2>
+      <p>If you are located in the European Economic Area, you have the following rights:</p>
+      <ul>
+        <li><strong>Right of access</strong> — you may request a copy of the data we hold about you.</li>
+        <li><strong>Right to rectification</strong> — you may update your username and email directly from your profile page.</li>
+        <li><strong>Right to erasure</strong> — you may delete your account at any time from your profile page. You may also contact us by email for manual deletion.</li>
+        <li><strong>Right to restrict processing</strong> — you may contact us to request that we limit the processing of your data.</li>
+        <li><strong>Right to data portability</strong> — you may request an export of the data linked to your account.</li>
+      </ul>
+      <p>
+        To exercise any of these rights, contact us at <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a>.
+        Requests will be handled within 30 days.
+      </p>
+
+      <h2>7. Security</h2>
+      <p>
+        Passwords are hashed using bcrypt and are never stored in plain text. All data is transmitted over HTTPS.
+        Access to the database is restricted to authenticated administrators via Supabase Row-Level Security (RLS) policies.
+        Despite these measures, no system is 100% secure, and we cannot guarantee absolute security of your data.
+      </p>
+
+      <h2>8. Children</h2>
+      <p>
+        Deblock Accounts are not intended for children under the age of 13. By creating an account, you confirm that you
+        are at least 13 years old.
+      </p>
+
+      <h2>9. Changes to This Policy</h2>
+      <p>
+        We may update this Privacy Policy from time to time. The "Last updated" date at the top of this page reflects the most recent revision.
+        Continued use of your Deblock Account after changes are published constitutes your acceptance of the revised policy.
+      </p>
+
+      <h2>10. Contact</h2>
+      <p>
+        For any questions about this Privacy Policy, email us at
+        <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a>.
+      </p>
+    </section>
+
+    <hr class="legal-divider">
+
+    <!-- Deblock Account Terms of Service -->
+    <section class="legal-section" id="deblock-tos">
+      <h1>Deblock Account — Terms of Service</h1>
+      <p class="legal-updated">Last updated: July 2026</p>
+
+      <p>
+        These Terms of Service ("Terms") govern your access to and use of a <strong>Deblock Account</strong> on MultiCraft Info.
+        By creating an account, you agree to be bound by these Terms. If you do not agree, do not create an account.
+      </p>
+
+      <h2>1. Eligibility</h2>
+      <p>
+        You must be at least 13 years old to create a Deblock Account.
+        By registering, you confirm that the information you provide is accurate and that you have the legal capacity to agree to these Terms.
+      </p>
+
+      <h2>2. Account Responsibility</h2>
+      <p>
+        You are responsible for maintaining the confidentiality of your password and for all activities that occur under your account.
+        You agree to notify us immediately at <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a> if you suspect
+        unauthorized use of your account. We are not liable for any loss or damage arising from your failure to protect your credentials.
+      </p>
+
+      <h2>3. Acceptable Use</h2>
+      <p>By using a Deblock Account, you agree <strong>not</strong> to:</p>
+      <ul>
+        <li>Send, post, or share any content that is illegal, hateful, discriminatory, threatening, or harassing.</li>
+        <li>Post sexually explicit or graphic content of any kind.</li>
+        <li>Impersonate another person, user, or member of the MultiCraft Info team.</li>
+        <li>Attempt to gain unauthorized access to other accounts, the database, or any part of the service.</li>
+        <li>Use automated bots, scripts, or tools to spam the chat or abuse the service.</li>
+        <li>Share or distribute malware, phishing links, or any content designed to harm others.</li>
+        <li>Attempt to circumvent moderation measures, bans, or restrictions.</li>
+        <li>Use the service for any commercial purpose without our written consent.</li>
+      </ul>
+
+      <h2>4. Chat and User-Generated Content</h2>
+      <p>
+        The chat feature is provided as a community space. You retain ownership of the content you post,
+        but you grant MultiCraft Info a non-exclusive, royalty-free license to store, display, and moderate that content
+        as part of operating the service.
+      </p>
+      <p>
+        We reserve the right to remove any message, edit content, or restrict your access to the chat
+        if we determine that you have violated these Terms or the spirit of the community.
+      </p>
+
+      <h2>5. Reports and Moderation</h2>
+      <p>
+        Any user may report a message or profile that they believe violates these Terms using the report feature.
+        Reports are reviewed by administrators. Submitting false or malicious reports is itself a violation of these Terms.
+        We are not obligated to take action on every report, but we take all reports seriously.
+      </p>
+
+      <h2>6. Bans and Account Termination</h2>
+      <p>
+        We reserve the right to suspend or permanently ban any account that violates these Terms, at our sole discretion,
+        without prior notice. Banned users may not create new accounts to circumvent a ban. In serious cases
+        (e.g., illegal content), we may report the matter to relevant authorities.
+      </p>
+      <p>
+        You may delete your own account at any time from your profile page. Account deletion is permanent and irreversible.
+      </p>
+
+      <h2>7. Availability</h2>
+      <p>
+        The Deblock Account service is provided on an "as-is" and "as-available" basis.
+        We do not guarantee uninterrupted access and may suspend or discontinue the service at any time, for any reason, without notice.
+      </p>
+
+      <h2>8. Limitation of Liability</h2>
+      <p>
+        To the fullest extent permitted by applicable law, MultiCraft Info and its team members shall not be liable for
+        any indirect, incidental, or consequential damages arising from your use or inability to use the service,
+        including but not limited to loss of data or account access.
+      </p>
+
+      <h2>9. Changes to These Terms</h2>
+      <p>
+        We may revise these Terms at any time. The "Last updated" date at the top of this section reflects the most recent change.
+        Continued use of your Deblock Account after changes are published constitutes your acceptance of the updated Terms.
+      </p>
+
+      <h2>10. Governing Law</h2>
+      <p>
+        These Terms are governed by and construed in accordance with French law, without regard to conflict of law principles.
+      </p>
+
+      <h2>11. Contact</h2>
+      <p>
+        Questions about these Terms? Contact us at
+        <a href="mailto:creatif.france@outlook.com">creatif.france@outlook.com</a>.
+      </p>
+    </section>
+
+  </div><!-- /.legal-wrap -->
 
   <script src="script.js"></script>
   <!-- 100% privacy-first analytics -->
-<script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
-
+  <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
 </body>
 
 </html>

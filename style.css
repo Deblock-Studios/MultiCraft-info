@@ -3146,3 +3146,91 @@ body.modal-open {
 [hidden] {
   display: none !important;
   }
+
+/* ── Photo de profil ── */
+.profile-avatar-section {
+  position: relative;
+}
+
+.profile-avatar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.profile-avatar-preview-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-card-hover);
+  display: block;
+}
+
+.profile-avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--green, #4ade80);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+  border: 2px solid var(--bg-card);
+}
+
+.profile-avatar-edit-btn:hover {
+  background: var(--green-muted, #86efac);
+  transform: scale(1.1);
+}
+
+.profile-avatar-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-avatar-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.profile-avatar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.profile-avatar-progress {
+  margin-top: 0.6rem;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.profile-avatar-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--green, #4ade80);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+@media (max-width: 480px) {
+  .profile-avatar-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

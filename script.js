@@ -1386,7 +1386,7 @@
   if (serverModal) serverModal.addEventListener('click', function (e) { if (e.target === serverModal) closeServerModal(); });
 
   /* ── Pop-up "Liste des joueurs" ── */
-  const PLAYERS_API_URL = 'https://goozkziidiwjjabnzbej.creatif-france.workers.dev';
+  const PLAYERS_API_URL = 'https://autumn-shadow-2f3a.creatif-france.workers.dev/';
   const playersModal = document.getElementById('players-modal');
   const playersModalTitle = document.getElementById('players-modal-title');
   const playersModalCount = document.getElementById('players-modal-count');

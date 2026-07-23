@@ -317,7 +317,7 @@
       'deblock.user':        'Account',
       'deblock.logout':      'Log out',
       'deblock.terms':       'By continuing, you agree to the ',
-      'deblock.termslink':    'Terms of Use and Privacy Policy for Deblock accounts.'
+      'deblock.termslink':    'Terms of Use and Privacy Policy for Deblock accounts.',
 
       /* Profile page */
       'nav.profile':        'Profile',

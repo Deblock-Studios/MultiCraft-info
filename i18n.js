@@ -140,9 +140,8 @@
       'deblock.loading':     'Chargement…',
       'deblock.user':        'Compte',
       'deblock.logout':      'Déconnexion',
-'deblock.terms':       'En continuant, vous acceptez les ' +
-'deblock.termslink':   'conditions d\'utilisations et la politique de confidentialité des comptes Deblock.'
-
+      'deblock.terms': 'En continuant, vous acceptez les ',
+      'deblock.termslink': "conditions d'utilisation et la politique de confidentialité des comptes Deblock.",
       /* Profile page */
       'nav.profile':        'Profil',
       'profile.title':      'Mon Profil',

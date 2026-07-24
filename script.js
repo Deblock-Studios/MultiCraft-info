@@ -980,7 +980,7 @@
   async function measureLatency(host) {
     try {
       const res = await fetch(
-        'https://lag-test.creatif-france.workers.dev/?url=' +
+        'https://lag-test.creatif-france.workers.dev/?server=1&url=' +
         encodeURIComponent(host)
       );
       if (!res.ok) return null;
@@ -2451,7 +2451,7 @@
         .then(function (r) { return r.text(); })
         .then(function (text) {
           var lines = text.trim().split('\n').filter(Boolean);
-          serverSelect.innerHTML = '<option value="" disabled selected>Choisir un serveur…</option>';
+          serverSelect.innerHTML = '<option value="" disabled selected>' + window.i18n.t('lagTest.selectDefault') + '</option>';
           lines.forEach(function (line) {
             var m = line.match(/^(\d+):\s*(.+)$/);
             if (!m) return;
@@ -2464,7 +2464,7 @@
           runBtn.disabled = true;
         })
         .catch(function () {
-          serverSelect.innerHTML = '<option value="" disabled selected>Erreur de chargement</option>';
+          serverSelect.innerHTML = '<option value="" disabled selected>' + window.i18n.t('lagTest.selectError') + '</option>';
         });
     }
 
@@ -2474,7 +2474,7 @@
       if (!serverId) return;
 
       runBtn.disabled = true;
-      runBtn.textContent = 'Test en cours…';
+      runBtn.textContent = window.i18n.t('lagTest.running');
       resultsGrid.innerHTML = '';
       resultsSection.hidden = false;
 
@@ -2514,7 +2514,7 @@
 
       Promise.all(promises).finally(function () {
         runBtn.disabled = false;
-        runBtn.textContent = 'Relancer le test';
+        runBtn.textContent = window.i18n.t('lagTest.runBtnAgain');
       });
     });
 

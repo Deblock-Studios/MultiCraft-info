@@ -178,6 +178,20 @@
       'chat.loginPrompt': 'Connectez-vous avec Deblock pour discuter.',
       'chat.send': 'Envoyer',
 
+      /* Lag test modal */
+      'lagTest.btnOpen':        '📡 Tester la latence',
+      'lagTest.eyebrow':        'Test de latence',
+      'lagTest.title':          '📡 Tester la latence',
+      'lagTest.subtitle':       'Veuillez choisir un serveur pour tester la latence.',
+      'lagTest.selectLabel':    'Serveur de test',
+      'lagTest.selectDefault':  'Choisir un serveur…',
+      'lagTest.selectLoading':  'Chargement des serveurs…',
+      'lagTest.selectError':    'Erreur de chargement',
+      'lagTest.runBtn':         'Effectuer le test',
+      'lagTest.runBtnAgain':    'Relancer le test',
+      'lagTest.running':        'Test en cours…',
+      'lagTest.resultsTitle':   'Résultats :',
+
       /* Meta */
       'meta.description': 'MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.',
     },
@@ -354,6 +368,20 @@
       'chat.placeholder': 'Type a message...',
       'chat.loginPrompt': 'Log in with Deblock to chat.',
       'chat.send': 'Send',
+
+      /* Lag test modal */
+      'lagTest.btnOpen':        '📡 Test latency',
+      'lagTest.eyebrow':        'Latency test',
+      'lagTest.title':          '📡 Test latency',
+      'lagTest.subtitle':       'Please choose a server to test latency.',
+      'lagTest.selectLabel':    'Test server',
+      'lagTest.selectDefault':  'Choose a server…',
+      'lagTest.selectLoading':  'Loading servers…',
+      'lagTest.selectError':    'Failed to load',
+      'lagTest.runBtn':         'Run test',
+      'lagTest.runBtnAgain':    'Run again',
+      'lagTest.running':        'Testing…',
+      'lagTest.resultsTitle':   'Results:',
 
       /* Meta */
       'meta.description': 'MultiCraft Info — News, updates and information about MultiCraft servers.',

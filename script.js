@@ -10,7 +10,7 @@
 { host: 'r7.multicraft.network', testHost: 'r7.multicraft.network', location: 'Naaldwijk, Pays-Bas', provider: 'WorldStream' },
 { host: 'r8.multicraft.network', testHost: 'r8.multicraft.network', location: 'Helsinki, Finlande', provider: 'Hetzner' },
 { host: 'r9.multicraft.network', testHost: 'r9.multicraft.network', location: 'Sydney, Australie', provider: 'OVH' },
-{ host: 'r9.multicraft.network', testHost: 'r1.multicraft-online.ru', location: 'Saint-Peterstburg, Russia', provider: 'JSC Timeweb' },
+{ host: 'r9.multicraft.network', testHost: 'r1.multicraft-online.ru', location: 'Saint-Peterstburg, Russia', provider: 'RegRU' },
 { host: 'menu1.multicraft.network', testHost: 'menu1.multicraft.network', location: 'Nuremberg, Allemagne', provider: 'Netcup' },
 { host: 'menu2.multicraft.network', testHost: 'menu2.multicraft.network', location: 'Nuremberg, Allemagne', provider: 'Netcup' },
 { host: 'menu3.multicraft.network', testHost: 'menu3.multicraft.network', location: 'Helsinki, Finlande', provider: 'Hetzner' },

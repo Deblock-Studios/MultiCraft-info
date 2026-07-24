@@ -5,11 +5,12 @@
   const DATACENTERS = [
 { host: 'r1.multicraft.network', testHost: 'r1.multicraft.network', location: 'Falkenstein, Allemagne', provider: 'Hetzner' },
 { host: 'r3.multicraft.network', testHost: 'r3.multicraft.network', location: 'Falkenstein, Allemagne', provider: 'Hetzner' },
-/* { host: 'r4.multicraft.network', testHost: 'r4.multicraft.network', location: 'Singapour', provider: 'Leaseweb' }, this url do not respond */
+{ host: 'r4.multicraft.network', testHost: 'r4.multicraft.network', location: 'Singapour', provider: 'Leaseweb' },
 { host: 'r6.multicraft.network', testHost: 'r6.multicraft.network', location: 'Hong Kong', provider: 'Hetzner' },
 { host: 'r7.multicraft.network', testHost: 'r7.multicraft.network', location: 'Naaldwijk, Pays-Bas', provider: 'WorldStream' },
 { host: 'r8.multicraft.network', testHost: 'r8.multicraft.network', location: 'Helsinki, Finlande', provider: 'Hetzner' },
 { host: 'r9.multicraft.network', testHost: 'r9.multicraft.network', location: 'Sydney, Australie', provider: 'OVH' },
+{ host: 'r9.multicraft.network', testHost: 'r1.multicraft-online.ru', location: 'Saint-Peterstburg, Russia', provider: 'JSC Timeweb' },
 { host: 'menu1.multicraft.network', testHost: 'menu1.multicraft.network', location: 'Nuremberg, Allemagne', provider: 'Netcup' },
 { host: 'menu2.multicraft.network', testHost: 'menu2.multicraft.network', location: 'Nuremberg, Allemagne', provider: 'Netcup' },
 { host: 'menu3.multicraft.network', testHost: 'menu3.multicraft.network', location: 'Helsinki, Finlande', provider: 'Hetzner' },

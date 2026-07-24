@@ -1,8 +1,8 @@
 ---
 isDisplayed: oui
-color: vert
+color: rouge
 ---
 
-**fr:** 🎉 Créez votre compte Deblock dès maintenant pour accéder au chat et aux avis !
+**fr:** Nous ne pouvons plus récupérer la liste des joueurs et leur nombre. Notre équipe est sur le problème.
 
-**en:** 🎉 Create your Deblock account now to access chat and reviews !
+**en:** We can't fetch players list and their number. Our team is working on the problem.

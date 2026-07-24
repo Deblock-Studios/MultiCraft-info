@@ -591,6 +591,12 @@
 
       </div>
 
+      <div class="lag-test-toolbar">
+        <button id="open-lag-test-btn" class="btn btn-primary lag-test-open-btn">
+          <span class="lag-test-icon">📡</span> Tester la latence
+        </button>
+      </div>
+
       <div id="datacenters-container" class="datacenters-grid"></div>
 
     </section>
@@ -1126,6 +1132,32 @@
 
   </div>
 
+
+  <!-- Modal test de latence / Lag test modal -->
+  <div id="lag-test-modal" class="modal-overlay" hidden>
+    <div class="modal-box lag-test-modal-box" role="dialog" aria-modal="true" aria-labelledby="lag-test-modal-title">
+      <button type="button" class="modal-close" id="lag-test-modal-close" aria-label="Fermer">✕</button>
+      <p class="modal-eyebrow">Test de latence</p>
+      <h2 id="lag-test-modal-title">📡 Tester la latence</h2>
+      <p class="lag-test-subtitle">Veuillez choisir un serveur pour tester la latence.</p>
+
+      <div class="lag-test-select-row">
+        <label for="lag-test-server-select" class="lag-test-label">Serveur de test</label>
+        <select id="lag-test-server-select" class="filter-select lag-test-select">
+          <option value="" disabled selected>Chargement des serveurs…</option>
+        </select>
+      </div>
+
+      <button id="lag-test-run-btn" class="btn btn-primary lag-test-run-btn" disabled>
+        Effectuer le test
+      </button>
+
+      <div id="lag-test-results" class="lag-test-results" hidden>
+        <p class="lag-test-results-title">Résultats :</p>
+        <div id="lag-test-results-grid" class="lag-test-results-grid"></div>
+      </div>
+    </div>
+  </div>
 
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="i18n.js"></script>

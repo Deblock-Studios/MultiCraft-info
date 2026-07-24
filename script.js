@@ -2408,6 +2408,146 @@
 
   })();
 
+  /* ── Modal : Test de latence depuis un serveur distant ── */
+  (function () {
+    const openBtn = document.getElementById('open-lag-test-btn');
+    const modal = document.getElementById('lag-test-modal');
+    const closeBtn = document.getElementById('lag-test-modal-close');
+    const serverSelect = document.getElementById('lag-test-server-select');
+    const runBtn = document.getElementById('lag-test-run-btn');
+    const resultsSection = document.getElementById('lag-test-results');
+    const resultsGrid = document.getElementById('lag-test-results-grid');
+
+    if (!openBtn || !modal) return;
+
+    /* Ouvrir la modal et charger la liste de serveurs */
+    openBtn.addEventListener('click', function () {
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+      loadLagServerList();
+    });
+
+    /* Fermer la modal */
+    closeBtn.addEventListener('click', closeLagModal);
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeLagModal();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) closeLagModal();
+    });
+
+    function closeLagModal() {
+      modal.hidden = true;
+      document.body.classList.remove('modal-open');
+      resultsSection.hidden = true;
+      resultsGrid.innerHTML = '';
+      runBtn.disabled = !serverSelect.value;
+    }
+
+    /* Activer le bouton dès qu'un serveur est sélectionné */
+    serverSelect.addEventListener('change', function () {
+      runBtn.disabled = !serverSelect.value;
+    });
+
+    /* Charger la liste de serveurs distants */
+    var lagServersLoaded = false;
+    function loadLagServerList() {
+      if (lagServersLoaded) return;
+      fetch('https://lag-test.creatif-france.workers.dev/?action=list')
+        .then(function (r) { return r.text(); })
+        .then(function (text) {
+          var lines = text.trim().split('\n').filter(Boolean);
+          serverSelect.innerHTML = '<option value="" disabled selected>Choisir un serveur…</option>';
+          lines.forEach(function (line) {
+            var m = line.match(/^(\d+):\s*(.+)$/);
+            if (!m) return;
+            var opt = document.createElement('option');
+            opt.value = m[1];
+            opt.textContent = line.trim();
+            serverSelect.appendChild(opt);
+          });
+          lagServersLoaded = true;
+          runBtn.disabled = true;
+        })
+        .catch(function () {
+          serverSelect.innerHTML = '<option value="" disabled selected>Erreur de chargement</option>';
+        });
+    }
+
+    /* Effectuer le test */
+    runBtn.addEventListener('click', function () {
+      var serverId = serverSelect.value;
+      if (!serverId) return;
+
+      runBtn.disabled = true;
+      runBtn.textContent = 'Test en cours…';
+      resultsGrid.innerHTML = '';
+      resultsSection.hidden = false;
+
+      /* Afficher une ligne par datacenter avec état "en cours" */
+      DATACENTERS.forEach(function (dc) {
+        var row = document.createElement('div');
+        row.className = 'lag-test-result-row';
+        row.id = 'lagrow-' + dc.host.replace(/\./g, '-');
+        row.innerHTML =
+          '<div>' +
+            '<div class="lag-test-result-host">' + escapeHtml(dc.host) + '</div>' +
+            '<div class="lag-test-result-loc">' + escapeHtml(dc.location) + ' · ' + escapeHtml(dc.provider) + '</div>' +
+          '</div>' +
+          '<span class="dc-latency-badge lag-test-result-badge" id="lagbadge-' + dc.host.replace(/\./g, '-') + '">' +
+            '<span class="dc-latency-dot"></span>' +
+            '<span class="dc-latency-val">Test…</span>' +
+          '</span>';
+        resultsGrid.appendChild(row);
+      });
+
+      /* Lancer les tests en parallèle */
+      var promises = DATACENTERS.map(function (dc) {
+        var badgeId = 'lagbadge-' + dc.host.replace(/\./g, '-');
+        return fetch(
+          'https://lag-test.creatif-france.workers.dev/?server=' +
+          encodeURIComponent(serverId) + '&url=' + encodeURIComponent(dc.host)
+        )
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            var ms = null;
+            var avg = data && data.results && data.results[0] && data.results[0].result && data.results[0].result.stats && data.results[0].result.stats.avg;
+            if (typeof avg === 'number') {
+              ms = Math.round(avg);
+            } else {
+              var timings = data && data.results && data.results[0] && data.results[0].result && data.results[0].result.timings;
+              if (Array.isArray(timings) && timings.length) {
+                var sum = timings.reduce(function (a, b) { return a + b.rtt; }, 0);
+                ms = Math.round(sum / timings.length);
+              } else if (typeof data === 'number') {
+                ms = Math.round(data);
+              }
+            }
+            updateLagBadge(badgeId, ms);
+          })
+          .catch(function () {
+            updateLagBadge(badgeId, null);
+          });
+      });
+
+      Promise.all(promises).finally(function () {
+        runBtn.disabled = false;
+        runBtn.textContent = 'Relancer le test';
+      });
+    });
+
+    function updateLagBadge(badgeId, ms) {
+      var badge = document.getElementById(badgeId);
+      if (!badge) return;
+      var dot = badge.querySelector('.dc-latency-dot');
+      var val = badge.querySelector('.dc-latency-val');
+      var cls = latencyClass(ms);
+      badge.className = 'dc-latency-badge lag-test-result-badge ' + cls;
+      if (dot) dot.className = 'dc-latency-dot';
+      if (val) val.textContent = ms !== null ? ms + ' ms' : 'N/A';
+    }
+  })();
+
   /* ── Init ── */
   const footerYear = document.getElementById('footer-year');
   if (footerYear) footerYear.textContent = new Date().getFullYear();

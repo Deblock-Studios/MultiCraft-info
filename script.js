@@ -3,13 +3,13 @@
 
   /* ── Datacenters ── */
   const DATACENTERS = [
-    { host: 'r1.multicraft.network', location: 'Falkenstein, Allemagne', provider: 'Hetzner' },
-    { host: 'r3.multicraft.network', location: 'Falkenstein Allemagne', provider: 'Hetzner' },
- /* { host: 'r4.multicraft.network', location: 'Singapour', provider: 'Leaseweb' }, this url do not respond */
-    { host: 'r6.multicraft.network', location: 'Hong Kong', provider: 'Hetzner' },
-    { host: 'r7.multicraft.network', location: 'Naaldwijk, Pays-Bas', provider: 'WorldStream' },
-    { host: 'r8.multicraft.network', location: 'Helsinki, Finlande', provider: 'Hetzner' },
-    { host: 'r9.multicraft.network', location: 'Sydney, Autralie', provider: 'OVH' }
+    { host: 'r1.multicraft.network', testHost: 'r1.multicraft.network', location: 'Falkenstein, Allemagne', provider: 'Hetzner' },
+    { host: 'r3.multicraft.network', testHost: 'r3.multicraft.network', location: 'Falkenstein Allemagne', provider: 'Hetzner' },
+ /* { host: 'r4.multicraft.network', testHost: 'r4.multicraft.network', location: 'Singapour', provider: 'Leaseweb' }, this url do not respond */
+    { host: 'r6.multicraft.network', testHost: 'r6.multicraft.network', location: 'Hong Kong', provider: 'Hetzner' },
+    { host: 'r7.multicraft.network', testHost: 'r7.multicraft.network', location: 'Naaldwijk, Pays-Bas', provider: 'WorldStream' },
+    { host: 'r8.multicraft.network', testHost: 'r8.multicraft.network', location: 'Helsinki, Finlande', provider: 'Hetzner' },
+    { host: 'r9.multicraft.network', testHost: 'r9.multicraft.network', location: 'Sydney, Autralie', provider: 'OVH' }
   ];
 
   /* ── Supabase ── */
@@ -964,8 +964,6 @@
       const safeHost = escapeHtml(dc.host);
       html += '<article class="dc-card"><div class="dc-header">' +
         '<span class="dc-name">' + safeHost + '</span>' +
-        '<span class="dc-latency-badge" id="lat-' + safeHost.replace(/\./g, '-') + '">' +
-        '<span class="dc-latency-dot"></span><span class="dc-latency-val">Test…</span></span>' +
         '</div><div class="dc-details">' +
         '<div class="dc-row"><span class="dc-label">Localisation</span><span class="dc-value">' +
         escapeHtml(window.i18n.loc(dc.location)) + '</span></div>' +
@@ -974,7 +972,6 @@
     }
     dcContainer.innerHTML = html;
     datacentersLoaded = true;
-    setTimeout(function () { runLatencyTests(); }, 100);
   }
 
   async function measureLatency(host) {
@@ -2500,7 +2497,7 @@
         var badgeId = 'lagbadge-' + dc.host.replace(/\./g, '-');
         return fetch(
           'https://lag-test.creatif-france.workers.dev/?server=' +
-          encodeURIComponent(serverId) + '&url=' + encodeURIComponent(dc.host)
+          encodeURIComponent(serverId) + '&url=' + encodeURIComponent(dc.testHost || dc.host)
         )
           .then(function (r) { return r.json(); })
           .then(function (data) {

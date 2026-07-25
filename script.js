@@ -1069,6 +1069,30 @@
   const filterCountrySelect = document.getElementById('filter-country');
 
   function getServerCountry(server) {
+    // Use country_code from API if available
+    const countryCodeMap = {
+      'FR': 'France', 'DE': 'Allemagne', 'US': 'États-Unis', 'GB': 'Royaume-Uni',
+      'CA': 'Canada', 'AU': 'Australie', 'SG': 'Singapour', 'HK': 'Hong Kong',
+      'FI': 'Finlande', 'NL': 'Pays-Bas', 'JP': 'Japon', 'KR': 'Corée du Sud',
+      'BR': 'Brésil', 'PL': 'Pologne', 'SE': 'Suède', 'BE': 'Belgique',
+      'CH': 'Suisse', 'ES': 'Espagne', 'PT': 'Portugal', 'IT': 'Italie',
+      'AT': 'Autriche', 'NO': 'Norvège', 'DK': 'Danemark', 'IE': 'Irlande',
+      'CZ': 'République tchèque', 'RO': 'Roumanie', 'HU': 'Hongrie',
+      'GR': 'Grèce', 'UA': 'Ukraine', 'RU': 'Russie', 'TR': 'Turquie',
+      'BG': 'Bulgarie', 'RS': 'Serbie', 'HR': 'Croatie', 'LT': 'Lituanie',
+      'LV': 'Lettonie', 'EE': 'Estonie', 'SK': 'Slovaquie', 'SI': 'Slovénie',
+      'IS': 'Islande', 'LU': 'Luxembourg', 'MA': 'Maroc', 'DZ': 'Algérie',
+      'TN': 'Tunisie', 'EG': 'Égypte', 'ZA': 'Afrique du Sud', 'NG': 'Nigéria',
+      'SN': 'Sénégal', 'CI': "Côte d'Ivoire", 'IN': 'Inde', 'CN': 'Chine',
+      'TW': 'Taïwan', 'ID': 'Indonésie', 'MY': 'Malaisie', 'TH': 'Thaïlande',
+      'VN': 'Vietnam', 'PH': 'Philippines', 'AE': 'Émirats arabes unis',
+      'SA': 'Arabie saoudite', 'IL': 'Israël', 'MX': 'Mexique', 'AR': 'Argentine',
+      'CL': 'Chili', 'CO': 'Colombie', 'PE': 'Pérou', 'NZ': 'Nouvelle-Zélande'
+    };
+    if (server.country_code && countryCodeMap[server.country_code.toUpperCase()]) {
+      return countryCodeMap[server.country_code.toUpperCase()];
+    }
+    // Fallback: guess from text patterns
     const text = (server.description || '') + ' ' + (server.server_name || '');
     const lowerText = text.toLowerCase();
     const countryPatterns = {

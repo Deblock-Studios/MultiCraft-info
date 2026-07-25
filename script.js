@@ -777,40 +777,6 @@
       document.getElementById('app').style.display = '';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    applyPageMeta(pageId);
-  }
-
-  /* ── Meta tags dynamiques (OG / Twitter) ── */
-  function updateMetaTags(title, description) {
-    const fullTitle = title + ' — MultiCraft Info';
-    document.title = fullTitle;
-    var descEl = document.getElementById('meta-description');
-    if (descEl) descEl.setAttribute('content', description);
-    var ogTitle = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) ogTitle.setAttribute('content', fullTitle);
-    var ogDesc = document.querySelector('meta[property="og:description"]');
-    if (ogDesc) ogDesc.setAttribute('content', description);
-    var twTitle = document.querySelector('meta[name="twitter:title"]');
-    if (twTitle) twTitle.setAttribute('content', fullTitle);
-    var twDesc = document.querySelector('meta[name="twitter:description"]');
-    if (twDesc) twDesc.setAttribute('content', description);
-    var ogUrl = document.querySelector('meta[property="og:url"]');
-    if (ogUrl) ogUrl.setAttribute('content', window.location.href);
-  }
-
-  /* ── Page descriptions pour les meta ── */
-  var pageMeta = {
-    accueil: { title: window.i18n.t('nav.home'), desc: 'MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.' },
-    serveurs: { title: window.i18n.t('nav.servers'), desc: 'Découvrez et rejoignez les meilleurs serveurs MultiCraft. Liste complète des serveurs, avis et statistiques.' },
-    'mises-a-jour': { title: window.i18n.t('nav.updates'), desc: 'Suivez les dernières mises à jour et actualités de MultiCraft et de ses serveurs.' },
-    'le-jeu': { title: window.i18n.t('nav.theGame'), desc: 'Téléchargez MultiCraft et découvrez les datacenters, versions disponibles et informations sur le jeu.' },
-    'info-du-site': { title: window.i18n.t('nav.siteInfo'), desc: 'Informations sur le site MultiCraft Info — fonctionnalités, objectifs et contact.' },
-    profil: { title: window.i18n.t('nav.profile'), desc: 'Gérez votre profil MultiCraft — historique, avis et statistiques.' },
-  };
-
-  function applyPageMeta(pageId) {
-    var meta = pageMeta[pageId] || pageMeta.accueil;
-    updateMetaTags(meta.title, meta.desc);
   }
 
   function handleRoute() {
@@ -1103,30 +1069,6 @@
   const filterCountrySelect = document.getElementById('filter-country');
 
   function getServerCountry(server) {
-    // Use country_code from API if available
-    const countryCodeMap = {
-      'FR': 'France', 'DE': 'Allemagne', 'US': 'États-Unis', 'GB': 'Royaume-Uni',
-      'CA': 'Canada', 'AU': 'Australie', 'SG': 'Singapour', 'HK': 'Hong Kong',
-      'FI': 'Finlande', 'NL': 'Pays-Bas', 'JP': 'Japon', 'KR': 'Corée du Sud',
-      'BR': 'Brésil', 'PL': 'Pologne', 'SE': 'Suède', 'BE': 'Belgique',
-      'CH': 'Suisse', 'ES': 'Espagne', 'PT': 'Portugal', 'IT': 'Italie',
-      'AT': 'Autriche', 'NO': 'Norvège', 'DK': 'Danemark', 'IE': 'Irlande',
-      'CZ': 'République tchèque', 'RO': 'Roumanie', 'HU': 'Hongrie',
-      'GR': 'Grèce', 'UA': 'Ukraine', 'RU': 'Russie', 'TR': 'Turquie',
-      'BG': 'Bulgarie', 'RS': 'Serbie', 'HR': 'Croatie', 'LT': 'Lituanie',
-      'LV': 'Lettonie', 'EE': 'Estonie', 'SK': 'Slovaquie', 'SI': 'Slovénie',
-      'IS': 'Islande', 'LU': 'Luxembourg', 'MA': 'Maroc', 'DZ': 'Algérie',
-      'TN': 'Tunisie', 'EG': 'Égypte', 'ZA': 'Afrique du Sud', 'NG': 'Nigéria',
-      'SN': 'Sénégal', 'CI': "Côte d'Ivoire", 'IN': 'Inde', 'CN': 'Chine',
-      'TW': 'Taïwan', 'ID': 'Indonésie', 'MY': 'Malaisie', 'TH': 'Thaïlande',
-      'VN': 'Vietnam', 'PH': 'Philippines', 'AE': 'Émirats arabes unis',
-      'SA': 'Arabie saoudite', 'IL': 'Israël', 'MX': 'Mexique', 'AR': 'Argentine',
-      'CL': 'Chili', 'CO': 'Colombie', 'PE': 'Pérou', 'NZ': 'Nouvelle-Zélande'
-    };
-    if (server.country_code && countryCodeMap[server.country_code.toUpperCase()]) {
-      return countryCodeMap[server.country_code.toUpperCase()];
-    }
-    // Fallback: guess from text patterns
     const text = (server.description || '') + ' ' + (server.server_name || '');
     const lowerText = text.toLowerCase();
     const countryPatterns = {
@@ -1561,13 +1503,10 @@
     serverModal.hidden = false;
     syncModalOpenState();
     renderReviewsSection(code);
-    /* Meta tags spécifiques au serveur */
-    var serverDesc = (description || 'Aucune description').substring(0, 200);
-    updateMetaTags(name, window.i18n.t('nav.servers') + ' — ' + name + ' (' + players + '/' + maxPlayers + ' joueurs) : ' + serverDesc);
     const shareBtn = document.getElementById('modal-share-btn');
     if (shareBtn) {
       shareBtn.onclick = function () {
-        const shareUrl = 'https://multicraf-info.netlify.app/preview/server?code=' + encodeURIComponent(code);
+        const shareUrl = window.location.origin + window.location.pathname + '#serveurs?server=' + encodeURIComponent(code);
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareUrl).then(function () { shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); }).catch(function () { fallbackCopyText(shareUrl); shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); });
         } else { fallbackCopyText(shareUrl); shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); }

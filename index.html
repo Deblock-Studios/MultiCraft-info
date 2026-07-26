@@ -1142,10 +1142,17 @@
       <p class="lag-test-subtitle" data-i18n="lagTest.subtitle">Veuillez choisir un serveur pour tester la latence.</p>
 
       <div class="lag-test-select-row">
-        <label for="lag-test-server-select" class="lag-test-label" data-i18n="lagTest.selectLabel">Serveur de test</label>
-        <select id="lag-test-server-select" class="filter-select lag-test-select">
-          <option value="" disabled selected data-i18n="lagTest.selectLoading">Chargement des serveurs…</option>
-        </select>
+        <label class="lag-test-label" data-i18n="lagTest.selectLabel">Serveur de test</label>
+        <div class="lag-test-popup-wrapper">
+          <button type="button" id="lag-test-popup-trigger" class="lag-test-popup-trigger">
+            <span id="lag-test-popup-text" data-i18n="lagTest.selectDefault">Choisir un serveur…</span>
+            <span class="lag-test-popup-arrow">▾</span>
+          </button>
+          <div id="lag-test-popup-dropdown" class="lag-test-popup-dropdown" hidden>
+            <input type="text" id="lag-test-popup-search" class="lag-test-popup-search" placeholder="Rechercher un serveur…" data-i18n-placeholder="lagTest.searchPlaceholder">
+            <div id="lag-test-popup-list" class="lag-test-popup-list"></div>
+          </div>
+        </div>
       </div>
 
       <button id="lag-test-run-btn" class="btn btn-primary lag-test-run-btn" disabled data-i18n="lagTest.runBtn">

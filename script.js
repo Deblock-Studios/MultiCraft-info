@@ -2434,12 +2434,19 @@
     const openBtn = document.getElementById('open-lag-test-btn');
     const modal = document.getElementById('lag-test-modal');
     const closeBtn = document.getElementById('lag-test-modal-close');
-    const serverSelect = document.getElementById('lag-test-server-select');
     const runBtn = document.getElementById('lag-test-run-btn');
     const resultsSection = document.getElementById('lag-test-results');
     const resultsGrid = document.getElementById('lag-test-results-grid');
 
+    const popupTrigger = document.getElementById('lag-test-popup-trigger');
+    const popupDropdown = document.getElementById('lag-test-popup-dropdown');
+    const popupSearch = document.getElementById('lag-test-popup-search');
+    const popupList = document.getElementById('lag-test-popup-list');
+    const popupText = document.getElementById('lag-test-popup-text');
+
     if (!openBtn || !modal) return;
+
+    var selectedServerId = null;
 
     /* Ouvrir la modal et charger la liste de serveurs */
     openBtn.addEventListener('click', function () {
@@ -2462,42 +2469,204 @@
       document.body.classList.remove('modal-open');
       resultsSection.hidden = true;
       resultsGrid.innerHTML = '';
-      runBtn.disabled = !serverSelect.value;
+      popupDropdown.hidden = true;
+      popupTrigger.removeAttribute('aria-expanded');
+      runBtn.disabled = !selectedServerId;
     }
 
-    /* Activer le bouton dès qu'un serveur est sélectionné */
-    serverSelect.addEventListener('change', function () {
-      runBtn.disabled = !serverSelect.value;
+    /* Toggle popup dropdown */
+    popupTrigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var opening = popupDropdown.hidden;
+      popupDropdown.hidden = !opening;
+      if (opening) {
+        popupTrigger.setAttribute('aria-expanded', 'true');
+        popupSearch.value = '';
+        filterPopupList('');
+        popupSearch.focus();
+      } else {
+        popupTrigger.removeAttribute('aria-expanded');
+      }
     });
+
+    /* Close popup on outside click */
+    document.addEventListener('click', function (e) {
+      if (!popupDropdown.hidden && !e.target.closest('.lag-test-popup-wrapper')) {
+        popupDropdown.hidden = true;
+        popupTrigger.removeAttribute('aria-expanded');
+      }
+    });
+
+    /* Search filtering */
+    popupSearch.addEventListener('input', function () {
+      filterPopupList(popupSearch.value);
+    });
+
+    function filterPopupList(query) {
+      var items = popupList.querySelectorAll('.lag-test-popup-item');
+      var lower = query.toLowerCase();
+      var visible = 0;
+      items.forEach(function (item) {
+        var text = item.textContent.toLowerCase();
+        var match = text.includes(lower);
+        item.hidden = !match;
+        if (match) visible++;
+      });
+    }
+
+    /* Flag emoji helper — comprehensive country mapping */
+    function getFlagForLocation(loc) {
+      var lower = loc.toLowerCase();
+      var countries = {
+        'allemagne': '🇩🇪', 'germany': '🇩🇪', 'nuremberg': '🇩🇪', 'falkenstein': '🇩🇪',
+        'france': '🇫🇷', 'paris': '🇫🇷', 'strasbourg': '🇫🇷', 'gravelines': '🇫🇷',
+        'singapour': '🇸🇬', 'singapore': '🇸🇬',
+        'hong kong': '🇭🇰',
+        'chine': '🇨🇳', 'china': '🇨🇳', 'shanghai': '🇨🇳', 'beijing': '🇨🇳',
+        'pays-bas': '🇳🇱', 'netherlands': '🇳🇱', 'naaldwijk': '🇳🇱', 'amsterdam': '🇳🇱',
+        'finlande': '🇫🇮', 'finland': '🇫🇮', 'helsinki': '🇫🇮',
+        'australie': '🇦🇺', 'australia': '🇦🇺', 'sydney': '🇦🇺',
+        'russie': '🇷🇺', 'russia': '🇷🇺', 'moscou': '🇷🇺', 'moscow': '🇷🇺',
+        'saint-petersburg': '🇷🇺', 'saint-peterstburg': '🇷🇺',
+        'états-unis': '🇺🇸', 'etats-unis': '🇺🇸', 'united states': '🇺🇸', 'usa': '🇺🇸',
+        'manassas': '🇺🇸', 'new york': '🇺🇸', 'virginie': '🇺🇸', 'virginia': '🇺🇸',
+        'royaume-uni': '🇬🇧', 'united kingdom': '🇬🇧', 'angleterre': '🇬🇧',
+        'england': '🇬🇧', 'londres': '🇬🇧', 'london': '🇬🇧',
+        'japon': '🇯🇵', 'japan': '🇯🇵', 'tokyo': '🇯🇵',
+        'canada': '🇨🇦', 'montreal': '🇨🇦', 'toronto': '🇨🇦',
+        'brésil': '🇧🇷', 'bresil': '🇧🇷', 'brazil': '🇧🇷',
+        'inde': '🇮🇳', 'india': '🇮🇳', 'mumbai': '🇮🇳',
+        'italie': '🇮🇹', 'italy': '🇮🇹', 'milan': '🇮🇹',
+        'espagne': '🇪🇸', 'spain': '🇪🇸', 'madrid': '🇪🇸',
+        'suède': '🇸🇪', 'sweden': '🇸🇪', 'stockholm': '🇸🇪',
+        'norvège': '🇳🇴', 'norvege': '🇳🇴', 'norway': '🇳🇴', 'oslo': '🇳🇴',
+        'danemark': '🇩🇰', 'denmark': '🇩🇰', 'copenhague': '🇩🇰',
+        'pologne': '🇵🇱', 'poland': '🇵🇱', 'varsovie': '🇵🇱',
+        'tchéquie': '🇨🇿', 'tchequie': '🇨🇿', 'czech': '🇨🇿', 'prague': '🇨🇿',
+        'autriche': '🇦🇹', 'austria': '🇦🇹', 'vienne': '🇦🇹',
+        'suisse': '🇨🇭', 'switzerland': '🇨🇭', 'zurich': '🇨🇭',
+        'belgique': '🇧🇪', 'belgium': '🇧🇪', 'bruxelles': '🇧🇪',
+        'portugal': '🇵🇹', 'lisbonne': '🇵🇹',
+        'ukraine': '🇺🇦', 'kyiv': '🇺🇦',
+        'roumanie': '🇷🇴', 'romania': '🇷🇴', 'bucharest': '🇷🇴',
+        'turquie': '🇹🇷', 'turkey': '🇹🇷', 'istanbul': '🇹🇷',
+        'grèce': '🇬🇷', 'grece': '🇬🇷', 'greece': '🇬🇷', 'athenes': '🇬🇷',
+        'irlande': '🇮🇪', 'ireland': '🇮🇪', 'dublin': '🇮🇪',
+        'nouvelle-zélande': '🇳🇿', 'nouvelle zelande': '🇳🇿', 'new zealand': '🇳🇿',
+        'afrique du sud': '🇿🇦', 'south africa': '🇿🇦',
+        'mexique': '🇲🇽', 'mexico': '🇲🇽',
+        'israël': '🇮🇱', 'israel': '🇮🇱',
+        'thailande': '🇹🇭', 'thailand': '🇹🇭', 'bangkok': '🇹🇭',
+        'viêt nam': '🇻🇳', 'vietnam': '🇻🇳',
+        'malaisie': '🇲🇾', 'malaysia': '🇲🇾',
+        'indonésie': '🇮🇩', 'indonesia': '🇮🇩', 'jakarta': '🇮🇩',
+        'corée': '🇰🇷', 'korea': '🇰🇷', 'séoul': '🇰🇷', 'seoul': '🇰🇷',
+        'argentine': '🇦🇷', 'argentina': '🇦🇷',
+        'égypte': '🇪🇬', 'egypte': '🇪🇬', 'egypt': '🇪🇬',
+        'nigeria': '🇳🇬',
+        'kenya': '🇰🇪',
+        'émirats': '🇦🇪', 'emirats': '🇦🇪', 'dubaï': '🇦🇪', 'dubai': '🇦🇪',
+        'arabie saoudite': '🇸🇦', 'saudi arabia': '🇸🇦',
+        'bulgarie': '🇧🇬', 'bulgaria': '🇧🇬',
+        'serbie': '🇷🇸', 'serbia': '🇷🇸',
+        'croatie': '🇭🇷', 'croatia': '🇭🇷',
+        'hongrie': '🇭🇺', 'hungary': '🇭🇺', 'budapest': '🇭🇺',
+        'slovaquie': '🇸🇰', 'slovakia': '🇸🇰',
+        'slovénie': '🇸🇮', 'slovenia': '🇸🇮',
+        'lituanie': '🇱🇹', 'lithuania': '🇱🇹',
+        'lettonie': '🇱🇻', 'latvia': '🇱🇻',
+        'estonie': '🇪🇪', 'estonia': '🇪🇪',
+        'islande': '🇮🇸', 'iceland': '🇮🇸',
+        'chypre': '🇨🇾', 'cyprus': '🇨🇾',
+        'luxembourg': '🇱🇺',
+        'monaco': '🇲🇨',
+        'malte': '🇲🇹', 'malta': '🇲🇹',
+        'géorgie': '🇬🇪', 'georgie': '🇬🇪',
+        'arménie': '🇦🇲', 'armenia': '🇦🇲',
+        'azerbaïdjan': '🇦🇿', 'azerbaidjan': '🇦🇿',
+        'kazakhstan': '🇰🇿',
+        'kirghizstan': '🇰🇬',
+        'usbékistan': '🇺🇿', 'ouzbekistan': '🇺🇿',
+        'iran': '🇮🇷',
+        'irak': '🇮🇶',
+        'pakistan': '🇵🇰',
+        'bangladesh': '🇧🇩',
+        'taiwan': '🇹🇼', 'taïwan': '🇹🇼',
+        'philippines': '🇵🇭',
+        'nepal': '🇳🇵',
+        'sri lanka': '🇱🇰',
+        'nouvelle-calédonie': '🇳🇨', 'nouvelle caledonie': '🇳🇨',
+        'polynésie': '🇵🇫', 'polynesie': '🇵🇫',
+        'maroc': '🇲🇦',
+        'algérie': '🇩🇿', 'algerie': '🇩🇿',
+        'tunisie': '🇹🇳',
+        'sénégal': '🇸🇳', 'senegal': '🇸🇳',
+        'côte d\'ivoire': '🇨🇮', 'cote d\'ivoire': '🇨🇮',
+        'ghana': '🇬🇭',
+        'cameroun': '🇨🇲',
+        'rdc': '🇨🇩',
+        'angola': '🇦🇴',
+        'mozambique': '🇲🇿',
+        'madagascar': '🇲🇬',
+        'maurice': '🇲🇺',
+        'chili': '🇨🇱', 'chile': '🇨🇱',
+        'colombie': '🇨🇴', 'colombia': '🇨🇴',
+        'pérou': '🇵🇪', 'perou': '🇵🇪',
+        'venezuela': '🇻🇪',
+      };
+      for (var key in countries) {
+        if (lower.includes(key)) return countries[key];
+      }
+      return '🌍';
+    }
 
     /* Charger la liste de serveurs distants */
     var lagServersLoaded = false;
+
     function loadLagServerList() {
       if (lagServersLoaded) return;
       fetch('https://lag-test.creatif-france.workers.dev/?action=list')
         .then(function (r) { return r.text(); })
         .then(function (text) {
           var lines = text.trim().split('\n').filter(Boolean);
-          serverSelect.innerHTML = '<option value="" disabled selected>' + window.i18n.t('lagTest.selectDefault') + '</option>';
+          popupList.innerHTML = '';
           lines.forEach(function (line) {
             var m = line.match(/^(\d+):\s*(.+)$/);
             if (!m) return;
-            var opt = document.createElement('option');
-            opt.value = m[1];
-            opt.textContent = line.trim();
-            serverSelect.appendChild(opt);
+            var id = m[1];
+            var desc = m[2];
+            var flag = getFlagForLocation(desc);
+
+            var item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'lag-test-popup-item';
+            item.dataset.value = id;
+            item.dataset.search = line;
+            item.innerHTML = '<span class="lag-test-popup-flag">' + flag + '</span><span class="lag-test-popup-desc">' + escapeHtml(line.trim()) + '</span>';
+            item.addEventListener('click', function () {
+              selectServer(id, line.trim());
+            });
+            popupList.appendChild(item);
           });
           lagServersLoaded = true;
-          runBtn.disabled = true;
+          runBtn.disabled = !selectedServerId;
         })
         .catch(function () {
-          serverSelect.innerHTML = '<option value="" disabled selected>' + window.i18n.t('lagTest.selectError') + '</option>';
+          popupList.innerHTML = '<div class="lag-test-popup-error">' + window.i18n.t('lagTest.selectError') + '</div>';
         });
+    }
+
+    function selectServer(id, displayText) {
+      selectedServerId = id;
+      popupText.textContent = displayText;
+      popupDropdown.hidden = true;
+      popupTrigger.removeAttribute('aria-expanded');
+      runBtn.disabled = false;
     }
 
     /* Effectuer le test */
     runBtn.addEventListener('click', function () {
-      var serverId = serverSelect.value;
+      var serverId = selectedServerId;
       if (!serverId) return;
 
       runBtn.disabled = true;

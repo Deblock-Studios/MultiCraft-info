@@ -191,6 +191,8 @@
       'lagTest.runBtnAgain':    'Relancer le test',
       'lagTest.running':        'Test en cours…',
       'lagTest.resultsTitle':   'Résultats :',
+      'lagTest.searchPlaceholder': 'Rechercher un serveur…',
+      'lagTest.noResults':    'Aucun serveur trouvé',
 
       /* Meta */
       'meta.description': 'MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.',
@@ -382,6 +384,8 @@
       'lagTest.runBtnAgain':    'Run again',
       'lagTest.running':        'Testing…',
       'lagTest.resultsTitle':   'Results:',
+      'lagTest.searchPlaceholder': 'Search servers…',
+      'lagTest.noResults':    'No servers found',
 
       /* Meta */
       'meta.description': 'MultiCraft Info — News, updates and information about MultiCraft servers.',

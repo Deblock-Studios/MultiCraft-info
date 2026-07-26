@@ -3439,6 +3439,8 @@ body.modal-open {
 .lag-test-results {
   border-top: 1px solid var(--border);
   padding-top: 1.25rem;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .lag-test-results-title {

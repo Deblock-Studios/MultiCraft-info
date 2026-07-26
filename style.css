@@ -3255,6 +3255,7 @@ body.modal-open {
 
 .lag-test-modal-box {
   max-width: 540px;
+  overflow-y: visible;
 }
 
 .lag-test-subtitle {
@@ -3362,7 +3363,7 @@ body.modal-open {
 }
 
 .lag-test-popup-list {
-  max-height: 220px;
+  max-height: 350px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

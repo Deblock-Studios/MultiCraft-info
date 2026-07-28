@@ -1,0 +1,5 @@
+Mise à jour concernant le bloc de slime : le bloc de slime original s'appelle désormais « bloc de colle », mais il rebondit toujours.
+
+Ils sont exactement identiques ;_;
+
+Idem pour le piston…

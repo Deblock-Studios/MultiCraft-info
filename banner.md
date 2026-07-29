@@ -1,8 +1,8 @@
 ---
 isDisplayed: oui
-color: rouge
+color: vert
 ---
 
-**fr:** Nous ne pouvons plus récupérer la liste des joueurs et leur nombre. Notre équipe est sur le problème.
+**fr:** La liste des serveurs est de retour ! Le système de liste des joueuers le sera bientôt.
 
-**en:** We can't fetch players list and their number. Our team is working on the problem.
+**en:** The server list is back ! The players list will be back soon.

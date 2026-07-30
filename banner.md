@@ -1,8 +1,8 @@
 ---
 isDisplayed: oui
-color: vert
+color: rouge
 ---
 
-**fr:** La liste des serveurs est de retour ! Le système de liste des joueuers le sera bientôt.
+**fr:** MultiCraft à de nouveau bloqué nos appels API. Nous essayons de trouver une solution 
 
-**en:** The server list is back ! The players list will be back soon.
+**en:** Multicraft has once again blocked our API calls. We're trying to find a solution.

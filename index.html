@@ -16,6 +16,9 @@
 
   <title>MultiCraft Info</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
   <style>
@@ -62,7 +65,7 @@
 
       padding: 3px 8px;
 
-      border-radius: 14px;
+      border-radius: var(--radius-sm, 6px);
 
       transition: background 0.18s, color 0.18s;
 
@@ -74,7 +77,7 @@
 
     .lang-btn.active {
 
-      background: var(--accent, #7c3aed);
+      background: var(--green-dim, #16a34a);
 
       color: #fff;
 
@@ -151,9 +154,8 @@
 
 
     .footer-deblock-btn {
-      margin-top: 14px;
       font-size: 0.82rem;
-      padding: 0.5rem 1.2rem;
+      padding: 0.4rem 1rem;
     }
 
     /* ── Deblock Auth Modal ── */
@@ -223,9 +225,11 @@
 
 
 
-  <div id="cursor-halo" aria-hidden="true"></div>
-
-  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="ambient-orb"></div>
+    <div class="ambient-orb"></div>
+    <div class="ambient-orb"></div>
+  </div>
 
 
 
@@ -260,8 +264,6 @@
         <a href="#serveurs" class="nav-link" data-nav="serveurs" data-i18n="nav.servers">Serveurs</a>
 
         <a href="#le-jeu" class="nav-link" data-nav="le-jeu" data-i18n="nav.theGame">Le jeu</a>
-
-        <a href="#info-du-site" class="nav-link" data-nav="info-du-site" data-i18n="nav.siteInfo">Info du site</a>
 
         <a href="https://multidb.vercel.app/#/" class="nav-link">MultiDB</a>
 
@@ -319,23 +321,21 @@
 
       <div class="hero">
 
-        <h1 data-i18n="home.title">Bienvenue sur <span class="gradient-text">MultiCraft Info</span></h1>
+        <span class="hero-badge">MultiCraft Info</span>
+
+        <h1 data-i18n="home.title">Tout sur <span class="gradient-text">MultiCraft</span></h1>
 
         <p class="hero-subtitle" data-i18n="home.subtitle">
 
-          Retrouvez ici la liste des mises à jour du jeu ainsi que tous leurs serveurs.
+          Suivez les mises à jour, explorez les serveurs et rejoignez la communauté.
 
         </p>
 
         <div class="hero-actions">
 
-          <a href="#serveurs" class="btn btn-primary" data-nav="serveurs" data-i18n="home.btnServers">Liste des
+          <a href="#serveurs" class="btn btn-primary" data-nav="serveurs" data-i18n="home.btnServers">🎮 Serveurs</a>
 
-            serveurs</a>
-
-          <a href="#mises-a-jour" class="btn btn-ghost" data-nav="mises-a-jour" data-i18n="home.btnUpdates">Voir les
-
-            mises à jour</a>
+          <a href="#mises-a-jour" class="btn btn-ghost" data-nav="mises-a-jour" data-i18n="home.btnUpdates">📋 Mises à jour</a>
 
         </div>
 
@@ -343,31 +343,15 @@
 
 
 
-      <div class="cards-grid">
+      <div class="hero-stats" id="hero-stats">
 
-        <article class="info-card">
+        <div class="stat-item">
 
-          <div class="card-icon">📋</div>
+          <span class="stat-value" id="stat-servers">—</span>
 
-          <h2 data-i18n="home.card1Title">Mises à jour</h2>
+          <span class="stat-label" data-i18n="home.statServers">serveurs répertoriés</span>
 
-          <p data-i18n="home.card1Desc">Consultez l'historique des ajouts et corrections.</p>
-
-          <a href="#mises-a-jour" class="card-link" data-nav="mises-a-jour" data-i18n="home.card1Link">Consulter →</a>
-
-        </article>
-
-        <article class="info-card">
-
-          <div class="card-icon">🌐</div>
-
-          <h2 data-i18n="home.card2Title">Serveurs</h2>
-
-          <p data-i18n="home.card2Desc">Liste des différents serveurs de MultiCraft.</p>
-
-          <a href="#serveurs" class="card-link" data-nav="serveurs" data-i18n="home.card2Link">Explorer →</a>
-
-        </article>
+        </div>
 
       </div>
 
@@ -423,11 +407,15 @@
 
         <div class="search-bar" id="search-bar-wrapper">
 
+          <span class="search-icon" aria-hidden="true">🔍</span>
+
           <input type="search" id="server-search" placeholder="Rechercher un serveur…"
 
             aria-label="Rechercher un serveur" data-i18n-placeholder="servers.searchPlaceholder">
 
-          <button type="button" id="search-btn" class="search-submit-btn" aria-label="Rechercher">🔍</button>
+          <button type="button" id="clear-search-btn" class="btn-clear" aria-label="Effacer la recherche">✕</button>
+
+          <button type="button" id="search-btn" class="btn-search" aria-label="Rechercher">Rechercher</button>
 
         </div>
 
@@ -479,35 +467,6 @@
 
     </section>
 
-
-
-    <!-- Info du site / Site Info -->
-
-    <section id="page-info-du-site" class="page">
-
-      <div class="page-header">
-
-        <h1 data-i18n="nav.siteInfo">Info du site</h1>
-
-        <div class="info-site-content">
-
-          <p data-i18n="siteInfo.createdBy">Ce site web a été créé par <a href="Nathmatt22">Aurelmattnath</a> et <a
-
-              href="https://github.com/lulu76450">Lucas76</a>.</p>
-
-          <p data-i18n="siteInfo.source">Le code source du site est disponible <a
-
-              href="https://github.com/Nathmatt22/MultiCraft-info">ici</a>.</p>
-
-          <p data-i18n="siteInfo.notAffiliated">Nous ne sommes pas affiliés à MultiCraft</p>
-
-          <p>Version 1.0</p>
-
-        </div>
-
-      </div>
-
-    </section>
 
 
 
@@ -735,13 +694,16 @@
 
 <footer class="site-footer">
 
-    <p>MultiCraft Info — <span id="footer-year"></span></p>
+    <div class="footer-info">
+      <p>MultiCraft Info — <span id="footer-year"></span></p>
+      <p class="footer-credits"><span data-i18n="footer.createdBy">Créé par</span> <a href="https://github.com/Nathmatt22">Aurelmattnath</a> et <a href="https://github.com/lulu76450">Lucas76</a>. <span data-i18n="footer.notAffiliated">Nous ne sommes pas affiliés à MultiCraft.</span></p>
+      <p class="footer-source"><span data-i18n="footer.sourceCode">Code source :</span> <a href="https://github.com/Deblock-Studios/MultiCraft-Info" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+    </div>
 
-   <a href="https://multicraf-info.netlify.app/legal.html" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">Legal</a>
-
-    <a href="https://deblock-studios.vercel.app/" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">Deblock Studios</a>
-     <a href="https://github.com/Deblock-Studios/MultiCraft-Info" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">GitHub</a>
-
+    <div class="footer-links">
+      <a href="https://multicraf-info.netlify.app/legal.html" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">Legal</a>
+      <a href="https://deblock-studios.vercel.app/" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">Deblock Studios</a>
+    </div>
 
   </footer>
 

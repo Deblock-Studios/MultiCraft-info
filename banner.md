@@ -3,6 +3,6 @@ isDisplayed: oui
 color: rouge
 ---
 
-**fr:** MultiCraft à de nouveau bloqué nos appels API. Suivez notre blog : https://blog-deblock-studios.vercel.app
+**fr:** Nous ne pouvons plus récupérer la liste des joueurs et leur nombre. Notre équipe est sur le problème.
 
-**en:** Multicraft has once again blocked our API calls. Follow our blog : https://blog-deblock-studios.vercel.app
+**en:** We can't fetch players list and their number. Our team is working on the problem.

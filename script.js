@@ -747,7 +747,6 @@
     'mises-a-jour': document.getElementById('page-mises-a-jour'),
     serveurs: document.getElementById('page-serveurs'),
     'le-jeu': document.getElementById('page-le-jeu'),
-    'info-du-site': document.getElementById('page-info-du-site'),
     profil: document.getElementById('page-profil'),
   };
   const legacyPageRedirects = { 'info-du-jeu': 'le-jeu', telecharger: 'le-jeu' };
@@ -1260,7 +1259,7 @@
     const adminHtml = adminName ? '<div class="server-admin">👑 ' + adminName + '</div>' : '';
     const ratingHtml = server._avgRating != null ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1) + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>' : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
     const serverDataAttr = escapeHtml(JSON.stringify(server));
-    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<button type="button" class="btn btn-players" data-server="' + serverDataAttr + '">' + window.i18n.t('servers.playersList') + '</button><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
+    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span></div>' + adminHtml + '<div class="server-card-meta">' + ratingHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<button type="button" class="btn btn-players" data-server="' + serverDataAttr + '">' + window.i18n.t('servers.playersList') + '</button><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
   }
 
   function bindServerCardActions() {
@@ -2702,10 +2701,69 @@
     }
   })();
 
+  /* ── Compact Header on Scroll ── */
+  (function () {
+    var header = document.querySelector('.site-header');
+    if (!header) return;
+    var lastScrollY = 0;
+    var ticking = false;
+
+    function onScroll() {
+      var scrollY = window.scrollY;
+      if (scrollY > 30) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+      if (scrollY > 80 && scrollY > lastScrollY) {
+        header.classList.add('compact');
+      } else if (scrollY < lastScrollY - 5) {
+        header.classList.remove('compact');
+      }
+      lastScrollY = scrollY;
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        requestAnimationFrame(onScroll);
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+
+  /* ── Hero Stats ── */
+  (function () {
+    var serversEl = document.getElementById('stat-servers');
+    if (!serversEl) return;
+
+    function animateValue(el, end) {
+      if (!el || end === null || end === undefined) return;
+      var start = 0;
+      var duration = 800;
+      var startTime = null;
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(start + (end - start) * eased);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    fetch(SERVERS_API_URL)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var servers = extractServers(data);
+        animateValue(serversEl, servers.length);
+      })
+      .catch(function () {});
+  })();
+
   /* ── Init ── */
   const footerYear = document.getElementById('footer-year');
   if (footerYear) footerYear.textContent = new Date().getFullYear();
-  initCursorHalo();
   initDeblockAuth();
   handleRoute();
 

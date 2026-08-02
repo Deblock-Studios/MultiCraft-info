@@ -154,11 +154,12 @@
     }
   }
 
+  /* Roles: 1=user, 2=moderator, 3=admin, 4=owner (table 'roles') */
   function isAdminUser(userId) {
     if (!userId) return false;
-    // Check if user has role 'admin' in user_roles
+    // Check if user has role 'admin' or 'owner' in user_roles
     if (!rolesCache) return false;
-    return rolesCache.some(function (r) { return r.user_id === userId && r.role_id === 1; });
+    return rolesCache.some(function (r) { return r.user_id === userId && (r.role_id === 3 || r.role_id === 4); });
   }
 
   function getUserRole(userId) {
@@ -170,7 +171,7 @@
   function canModerate(userId) {
     if (!userId) return false;
     const role = getUserRole(userId);
-    return role === 'admin' || role === 'moderator';
+    return role === 2 || role === 3 || role === 4;
   }
 
   async function isUserBanned(userId) {

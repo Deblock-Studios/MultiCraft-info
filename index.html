@@ -117,7 +117,7 @@
 
       text-align: center;
 
-      padding: 10px 16px;
+      padding: 10px 12px;
 
       font-size: 0.88rem;
 
@@ -137,7 +137,13 @@
 
     #alert-banner.visible {
 
-      display: block;
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      gap: 10px;
 
     }
 
@@ -148,6 +154,64 @@
       color: #fde68a;
 
       text-decoration: underline;
+
+    }
+
+
+
+    .alert-banner-msg {
+
+      flex: 1 1 auto;
+
+      text-align: center;
+
+    }
+
+
+
+    .alert-banner-close {
+
+      flex: 0 0 auto;
+
+      background: rgba(255, 255, 255, 0.15);
+
+      border: none;
+
+      border-radius: 50%;
+
+      color: inherit;
+
+      font-size: 1.15rem;
+
+      line-height: 1;
+
+      width: 28px;
+
+      height: 28px;
+
+      padding: 0;
+
+      margin-left: auto;
+
+      cursor: pointer;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      transition: background 0.15s ease;
+
+      flex-shrink: 0;
+
+    }
+
+
+
+    .alert-banner-close:hover {
+
+      background: rgba(255, 255, 255, 0.3);
 
     }
 
@@ -320,8 +384,6 @@
     <section id="page-accueil" class="page active">
 
       <div class="hero">
-
-        <span class="hero-badge">MultiCraft Info</span>
 
         <h1 data-i18n="home.title">Tout sur <span class="gradient-text">MultiCraft</span></h1>
 

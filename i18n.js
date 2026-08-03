@@ -12,12 +12,11 @@
       'nav.updates':  'Mises à jour',
       'nav.servers':  'Serveurs',
       'nav.gameInfo': 'Serveurs physiques',
-      'nav.siteInfo': 'Info du site',
       'nav.download': 'Télécharger',
       'nav.theGame':  'Le jeu',
 
       /* Home */
-      'home.title':    'Bienvenue sur <span class="gradient-text">MultiCraft Info</span>',
+      'home.title':    'Tout sur <span class="gradient-text">MultiCraft</span>',
       'home.subtitle': 'Retrouvez ici la liste des mises à jour du jeu ainsi que tous leurs serveurs.',
       'home.btnServers': 'Liste des serveurs',
       'home.btnUpdates': 'Voir les mises à jour',
@@ -27,6 +26,12 @@
       'home.card2Title': 'Serveurs',
       'home.card2Desc':  'Liste des différents serveurs de MultiCraft.',
       'home.card2Link':  'Explorer →',
+      'home.statServers': 'serveurs répertoriés',
+
+      /* Footer */
+      'footer.createdBy': 'Créé par',
+      'footer.notAffiliated': 'Nous ne sommes pas affiliés à MultiCraft.',
+      'footer.sourceCode': 'Code source :',
 
       /* Updates page */
       'updates.subtitle': 'Les dernières nouveautés du jeu, classées de la plus récente à la plus ancienne.',
@@ -52,6 +57,11 @@
       'servers.count1':         'serveur',
       'servers.countN':         'serveurs',
       'servers.playersList':    '👥 Liste des joueurs',
+      'servers.addMyServer':    'Ajouter mon serveur',
+
+      /* Modal */
+      'modal.addServer':    'Ajouter mon serveur',
+      'modal.addServerMsg': 'Si vous souhaitez ajouter votre serveur sur cette liste, contactez .lucas76. sur Discord.',
 
       /* Game Info page */
       'gameInfo.subtitle': 'Liste des serveurs physiques de MultiCraft.',
@@ -65,10 +75,6 @@
         'Sydney, Autralie':       'Sydney, Australie',
       },
 
-      /* Site Info page */
-      'siteInfo.createdBy':    'Ce site web a été créé par <a href="https://github.com/NattMath22">Aurelmattnath</a> et <a href="https://github.com/lulu76450">Lucas76</a>.',
-      'siteInfo.source':       'Le code source du site est disponible <a href="https://github.com/Deblock-Studios/MultiCraft-Info">ici</a>.',
-      'siteInfo.notAffiliated':'Nous ne sommes pas affiliés à MultiCraft',
 
       /* Download page */
       'download.subtitle':     'Téléchargez MultiCraft pour Android et choisissez la version de votre choix.',
@@ -140,8 +146,8 @@
       'deblock.loading':     'Chargement…',
       'deblock.user':        'Compte',
       'deblock.logout':      'Déconnexion',
-      'deblock.terms': 'En continuant, vous acceptez les ',
-      'deblock.termslink': "conditions d'utilisation et la politique de confidentialité des comptes Deblock.",
+      'deblock.consent': 'J\'accepte la <a href="legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">politique de confidentialité</a> et les <a href="legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">conditions d\'utilisation</a>.',
+      'deblock.consentRequired': 'Veuillez accepter la politique de confidentialité et les conditions d\'utilisation.',
       /* Profile page */
       'nav.profile':        'Profil',
       'profile.title':      'Mon Profil',
@@ -204,12 +210,11 @@
       'nav.updates':  'Updates',
       'nav.servers':  'Servers',
       'nav.gameInfo': 'Physical servers',
-      'nav.siteInfo': 'Site Info',
       'nav.download': 'Download',
       'nav.theGame':  'The Game',
 
       /* Home */
-      'home.title':    'Welcome to <span class="gradient-text">MultiCraft Info</span>',
+      'home.title':    'All about <span class="gradient-text">MultiCraft</span>',
       'home.subtitle': 'Find the list of game updates and all their servers right here.',
       'home.btnServers': 'Server List',
       'home.btnUpdates': 'View Updates',
@@ -219,6 +224,12 @@
       'home.card2Title': 'Servers',
       'home.card2Desc':  'List of MultiCraft servers.',
       'home.card2Link':  'Explore →',
+      'home.statServers': 'servers listed',
+
+      /* Footer */
+      'footer.createdBy': 'Created by',
+      'footer.notAffiliated': 'We are not affiliated with MultiCraft.',
+      'footer.sourceCode': 'Source code:',
 
       /* Updates page */
       'updates.subtitle': 'Latest game news, sorted from most recent to oldest.',
@@ -244,6 +255,11 @@
       'servers.count1':         'server',
       'servers.countN':         'servers',
       'servers.playersList':    '👥 Player list',
+      'servers.addMyServer':    'Add my server',
+
+      /* Modal */
+      'modal.addServer':    'Add my server',
+      'modal.addServerMsg': 'If you would like to add your server to this list, contact .lucas76. on Discord.',
 
       /* Game Info page */
       'gameInfo.subtitle': 'List of MultiCraft physical servers.',
@@ -257,10 +273,6 @@
         'Sydney, Autralie':       'Sydney, Australia',
       },
 
-      /* Site Info page */
-      'siteInfo.createdBy':    'This website was created by <a href="https://github.com/NattMath22">Aurelmattnath</a> and <a href="https://github.com/lulu76450">Lucas76</a>.',
-      'siteInfo.source':       'The site\'s source code is available <a href="https://github.com/Deblock-Studios/MultiCraft-Info">here</a>.',
-      'siteInfo.notAffiliated':'We are not affiliated with MultiCraft',
 
       /* Download page */
       'download.subtitle':     'Download MultiCraft for Android and pick the version you want.',
@@ -332,8 +344,8 @@
       'deblock.loading':     'Loading…',
       'deblock.user':        'Account',
       'deblock.logout':      'Log out',
-      'deblock.terms':       'By continuing, you agree to the ',
-      'deblock.termslink':    'Terms of Use and Privacy Policy for Deblock accounts.',
+      'deblock.consent': 'I accept the <a href="legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Privacy Policy</a> and the <a href="legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Terms of Use</a>.',
+      'deblock.consentRequired': 'Please accept the Privacy Policy and the Terms of Use.',
 
       /* Profile page */
       'nav.profile':        'Profile',

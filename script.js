@@ -58,6 +58,19 @@
     };
   }
 
+  /* ── Helper: fetch with a timeout, so a stalled network can never leave
+     the page stuck on "Chargement…" forever. ── */
+  function fetchWithTimeout(url, options, timeoutMs) {
+    const controller = new AbortController();
+    const timer = setTimeout(function () { controller.abort(); }, timeoutMs || 12000);
+    return fetch(url, Object.assign({}, options, { signal: controller.signal }))
+      .then(function (res) { clearTimeout(timer); return res; })
+      .catch(function (err) {
+        clearTimeout(timer);
+        throw err;
+      });
+  }
+
   /* ── Dictionnaire des mots interdits ── */
   const BAD_WORDS = {
     'connard': 'insulte', 'con': 'insulte', 'pute': 'insulte', 'prostituée': 'insulte',
@@ -154,11 +167,12 @@
     }
   }
 
+  /* Roles: 1=user, 2=moderator, 3=admin, 4=owner (table 'roles') */
   function isAdminUser(userId) {
     if (!userId) return false;
-    // Check if user has role 'admin' in user_roles
+    // Check if user has role 'admin' or 'owner' in user_roles
     if (!rolesCache) return false;
-    return rolesCache.some(function (r) { return r.user_id === userId && r.role_id === 1; });
+    return rolesCache.some(function (r) { return r.user_id === userId && (r.role_id === 3 || r.role_id === 4); });
   }
 
   function getUserRole(userId) {
@@ -170,7 +184,7 @@
   function canModerate(userId) {
     if (!userId) return false;
     const role = getUserRole(userId);
-    return role === 'admin' || role === 'moderator';
+    return role === 2 || role === 3 || role === 4;
   }
 
   async function isUserBanned(userId) {
@@ -403,6 +417,11 @@
       if (!email || !password) { showLoginError('Veuillez remplir tous les champs.'); return; }
       if (password.length < 6) { showLoginError('Le mot de passe doit contenir au moins 6 caractères.'); return; }
       if (password !== confirm) { showLoginError('Les mots de passe ne correspondent pas.'); return; }
+      const consent = document.getElementById('deblock-signup-consent');
+      if (consent && !consent.checked) {
+        showLoginError(window.i18n ? window.i18n.t('deblock.consentRequired') : 'Veuillez accepter la politique de confidentialité et les conditions d\'utilisation.');
+        return;
+      }
       showAuthLoading(true);
       try {
         await Deblock.signUp(email, password, pseudo || null);
@@ -747,7 +766,6 @@
     'mises-a-jour': document.getElementById('page-mises-a-jour'),
     serveurs: document.getElementById('page-serveurs'),
     'le-jeu': document.getElementById('page-le-jeu'),
-    'info-du-site': document.getElementById('page-info-du-site'),
     profil: document.getElementById('page-profil'),
   };
   const legacyPageRedirects = { 'info-du-jeu': 'le-jeu', telecharger: 'le-jeu' };
@@ -1185,7 +1203,7 @@
     const ratings = new Map();
     try {
       const url = SUPABASE_URL + '/rest/v1/reviews?select=server_id,rating&limit=10000';
-      const res = await fetch(url, { headers: getApiHeaders() });
+      const res = await fetchWithTimeout(url, { headers: getApiHeaders() }, 12000);
       if (!res.ok) throw new Error('Erreur chargement des notes (' + res.status + ')');
       const rows = await res.json();
       const totals = new Map();
@@ -1338,7 +1356,7 @@
 
   async function loadServers() {
     try {
-      const [res, ratings] = await Promise.all([fetch(SERVERS_API_URL), fetchAllServerRatings()]);
+      const [res, ratings] = await Promise.all([fetchWithTimeout(SERVERS_API_URL, {}, 12000), fetchAllServerRatings()]);
       if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
       const data = await res.json();
       allServers = extractServers(data);
@@ -2702,10 +2720,69 @@
     }
   })();
 
+  /* ── Compact Header on Scroll ── */
+  (function () {
+    var header = document.querySelector('.site-header');
+    if (!header) return;
+    var ticking = false;
+
+    // Hysteresis thresholds: the header only shrinks after scrolling far
+    // enough (>120px) and only grows back after returning near the top
+    // (<60px). This prevents the jitter when slightly scrolling up/down.
+    var COMPACT_ADD = 120;
+    var COMPACT_REMOVE = 60;
+
+    function onScroll() {
+      var scrollY = window.scrollY;
+      header.classList.toggle('scrolled', scrollY > 30);
+      if (scrollY > COMPACT_ADD) {
+        header.classList.add('compact');
+      } else if (scrollY < COMPACT_REMOVE) {
+        header.classList.remove('compact');
+      }
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        requestAnimationFrame(onScroll);
+        ticking = true;
+      }
+    }, { passive: true });
+  })();
+
+  /* ── Hero Stats ── */
+  (function () {
+    var serversEl = document.getElementById('stat-servers');
+    if (!serversEl) return;
+
+    function animateValue(el, end) {
+      if (!el || end === null || end === undefined) return;
+      var start = 0;
+      var duration = 800;
+      var startTime = null;
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(start + (end - start) * eased);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    fetch(SERVERS_API_URL)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var servers = extractServers(data);
+        animateValue(serversEl, servers.length);
+      })
+      .catch(function () {});
+  })();
+
   /* ── Init ── */
   const footerYear = document.getElementById('footer-year');
   if (footerYear) footerYear.textContent = new Date().getFullYear();
-  initCursorHalo();
   initDeblockAuth();
   handleRoute();
 

@@ -16,7 +16,7 @@
       'nav.theGame':  'Le jeu',
 
       /* Home */
-      'home.title':    'Bienvenue sur <span class="gradient-text">MultiCraft Info</span>',
+      'home.title':    'Tout sur <span class="gradient-text">MultiCraft</span>',
       'home.subtitle': 'Retrouvez ici la liste des mises à jour du jeu ainsi que tous leurs serveurs.',
       'home.btnServers': 'Liste des serveurs',
       'home.btnUpdates': 'Voir les mises à jour',
@@ -146,8 +146,8 @@
       'deblock.loading':     'Chargement…',
       'deblock.user':        'Compte',
       'deblock.logout':      'Déconnexion',
-      'deblock.terms': 'En continuant, vous acceptez les ',
-      'deblock.termslink': "conditions d'utilisation et la politique de confidentialité des comptes Deblock.",
+      'deblock.consent': 'J\'accepte la <a href="legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">politique de confidentialité</a> et les <a href="legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">conditions d\'utilisation</a>.',
+      'deblock.consentRequired': 'Veuillez accepter la politique de confidentialité et les conditions d\'utilisation.',
       /* Profile page */
       'nav.profile':        'Profil',
       'profile.title':      'Mon Profil',
@@ -214,7 +214,7 @@
       'nav.theGame':  'The Game',
 
       /* Home */
-      'home.title':    'Welcome to <span class="gradient-text">MultiCraft Info</span>',
+      'home.title':    'All about <span class="gradient-text">MultiCraft</span>',
       'home.subtitle': 'Find the list of game updates and all their servers right here.',
       'home.btnServers': 'Server List',
       'home.btnUpdates': 'View Updates',
@@ -344,8 +344,8 @@
       'deblock.loading':     'Loading…',
       'deblock.user':        'Account',
       'deblock.logout':      'Log out',
-      'deblock.terms':       'By continuing, you agree to the ',
-      'deblock.termslink':    'Terms of Use and Privacy Policy for Deblock accounts.',
+      'deblock.consent': 'I accept the <a href="legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Privacy Policy</a> and the <a href="legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Terms of Use</a>.',
+      'deblock.consentRequired': 'Please accept the Privacy Policy and the Terms of Use.',
 
       /* Profile page */
       'nav.profile':        'Profile',

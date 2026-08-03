@@ -48,17 +48,29 @@
 
   var DISMISS_KEY = 'mc_banner_dismissed';
 
-  function isDismissed() {
+  // Signature of the current announcement content. Storing the signature
+  // (instead of a plain "1") means the banner reappears whenever the
+  // announcement is changed — it is only hidden for content already seen.
+  function signature(data) {
+    var s = (data.fr || '') + '|' + (data.en || '') + '|' + (data.color || '');
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) {
+      h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+    }
+    return h.toString(36);
+  }
+
+  function isDismissed(data) {
     try {
-      return localStorage.getItem(DISMISS_KEY) === '1';
+      return localStorage.getItem(DISMISS_KEY) === signature(data);
     } catch (e) {
       return false;
     }
   }
 
-  function dismissBanner() {
+  function dismissBanner(data) {
     try {
-      localStorage.setItem(DISMISS_KEY, '1');
+      localStorage.setItem(DISMISS_KEY, signature(data));
     } catch (e) { /* storage unavailable — just hide for this visit */ }
   }
 
@@ -66,7 +78,7 @@
     var banner = document.getElementById('alert-banner');
     if (!banner) return;
 
-    if (!data.isDisplayed || isDismissed()) {
+    if (!data.isDisplayed || isDismissed(data)) {
       banner.classList.remove('visible');
       return;
     }
@@ -86,7 +98,7 @@
     closeBtn.textContent = '\u00D7';
     closeBtn.addEventListener('click', function () {
       banner.classList.remove('visible');
-      dismissBanner();
+      dismissBanner(data);
     });
     banner.appendChild(msgEl);
     banner.appendChild(closeBtn);

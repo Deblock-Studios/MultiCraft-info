@@ -58,6 +58,19 @@
     };
   }
 
+  /* ── Helper: fetch with a timeout, so a stalled network can never leave
+     the page stuck on "Chargement…" forever. ── */
+  function fetchWithTimeout(url, options, timeoutMs) {
+    const controller = new AbortController();
+    const timer = setTimeout(function () { controller.abort(); }, timeoutMs || 12000);
+    return fetch(url, Object.assign({}, options, { signal: controller.signal }))
+      .then(function (res) { clearTimeout(timer); return res; })
+      .catch(function (err) {
+        clearTimeout(timer);
+        throw err;
+      });
+  }
+
   /* ── Dictionnaire des mots interdits ── */
   const BAD_WORDS = {
     'connard': 'insulte', 'con': 'insulte', 'pute': 'insulte', 'prostituée': 'insulte',
@@ -404,6 +417,11 @@
       if (!email || !password) { showLoginError('Veuillez remplir tous les champs.'); return; }
       if (password.length < 6) { showLoginError('Le mot de passe doit contenir au moins 6 caractères.'); return; }
       if (password !== confirm) { showLoginError('Les mots de passe ne correspondent pas.'); return; }
+      const consent = document.getElementById('deblock-signup-consent');
+      if (consent && !consent.checked) {
+        showLoginError(window.i18n ? window.i18n.t('deblock.consentRequired') : 'Veuillez accepter la politique de confidentialité et les conditions d\'utilisation.');
+        return;
+      }
       showAuthLoading(true);
       try {
         await Deblock.signUp(email, password, pseudo || null);
@@ -1185,7 +1203,7 @@
     const ratings = new Map();
     try {
       const url = SUPABASE_URL + '/rest/v1/reviews?select=server_id,rating&limit=10000';
-      const res = await fetch(url, { headers: getApiHeaders() });
+      const res = await fetchWithTimeout(url, { headers: getApiHeaders() }, 12000);
       if (!res.ok) throw new Error('Erreur chargement des notes (' + res.status + ')');
       const rows = await res.json();
       const totals = new Map();
@@ -1260,7 +1278,7 @@
     const adminHtml = adminName ? '<div class="server-admin">👑 ' + adminName + '</div>' : '';
     const ratingHtml = server._avgRating != null ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1) + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>' : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
     const serverDataAttr = escapeHtml(JSON.stringify(server));
-    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span></div>' + adminHtml + '<div class="server-card-meta">' + ratingHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<button type="button" class="btn btn-players" data-server="' + serverDataAttr + '">' + window.i18n.t('servers.playersList') + '</button><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
+    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<button type="button" class="btn btn-players" data-server="' + serverDataAttr + '">' + window.i18n.t('servers.playersList') + '</button><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
   }
 
   function bindServerCardActions() {
@@ -1338,7 +1356,7 @@
 
   async function loadServers() {
     try {
-      const [res, ratings] = await Promise.all([fetch(SERVERS_API_URL), fetchAllServerRatings()]);
+      const [res, ratings] = await Promise.all([fetchWithTimeout(SERVERS_API_URL, {}, 12000), fetchAllServerRatings()]);
       if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
       const data = await res.json();
       allServers = extractServers(data);
@@ -2706,22 +2724,22 @@
   (function () {
     var header = document.querySelector('.site-header');
     if (!header) return;
-    var lastScrollY = 0;
     var ticking = false;
+
+    // Hysteresis thresholds: the header only shrinks after scrolling far
+    // enough (>120px) and only grows back after returning near the top
+    // (<60px). This prevents the jitter when slightly scrolling up/down.
+    var COMPACT_ADD = 120;
+    var COMPACT_REMOVE = 60;
 
     function onScroll() {
       var scrollY = window.scrollY;
-      if (scrollY > 30) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
-      if (scrollY > 80 && scrollY > lastScrollY) {
+      header.classList.toggle('scrolled', scrollY > 30);
+      if (scrollY > COMPACT_ADD) {
         header.classList.add('compact');
-      } else if (scrollY < lastScrollY - 5) {
+      } else if (scrollY < COMPACT_REMOVE) {
         header.classList.remove('compact');
       }
-      lastScrollY = scrollY;
       ticking = false;
     }
 

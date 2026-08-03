@@ -18,7 +18,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="style.css">
 
   <style>
@@ -477,7 +477,7 @@
 
           <button type="button" id="clear-search-btn" class="btn-clear" aria-label="Effacer la recherche">✕</button>
 
-          <button type="button" id="search-btn" class="btn-search" aria-label="Rechercher">Rechercher</button>
+          <button type="button" id="search-btn" class="search-submit-btn" aria-label="Rechercher">🔍</button>
 
         </div>
 
@@ -763,7 +763,7 @@
     </div>
 
     <div class="footer-links">
-      <a href="https://multicraf-info.netlify.app/legal.html" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">Legal</a>
+      <a href="legal.html" class="btn btn-ghost footer-deblock-btn">Legal</a>
       <a href="https://deblock-studios.vercel.app/" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">Deblock Studios</a>
     </div>
 
@@ -968,7 +968,10 @@
           <input type="password" id="deblock-signup-confirm" class="review-input" placeholder="••••••••" autocomplete="new-password">
 
         </div>
-        <span data-i18n="deblock.terms">En continuant, vous acceptez les <a href="legal.html" id="deblock-legal" style="color:var(--text-dim);" data-i18n="deblock.termslink">conditions d'utilisations et la politique de confidentialité des comptes Deblock.</a></span>
+        <label class="deblock-consent" style="display:flex;align-items:flex-start;gap:0.5rem;margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);line-height:1.45;cursor:pointer;">
+          <input type="checkbox" id="deblock-signup-consent" style="margin-top:0.15rem;flex-shrink:0;width:1rem;height:1rem;accent-color:var(--green);">
+          <span data-i18n="deblock.consent">J'accepte la <a href="legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">politique de confidentialité</a> et les <a href="legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">conditions d'utilisation</a>.</span>
+        </label>
 
         <button id="deblock-signup-submit" class="btn btn-primary" style="width:100%;margin-top:0.75rem;" data-i18n="deblock.signUpBtn">Créer mon compte</button>
 

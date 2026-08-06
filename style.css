@@ -3181,7 +3181,6 @@ body.modal-open {
   }
 
   .server-desc {
-<<<<<<< HEAD
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -3207,9 +3206,6 @@ body.modal-open {
     padding: 0.45rem 0.6rem;
     font-size: 0.75rem;
     line-height: 1.3;
-=======
-    display: none;
->>>>>>> 9d50639f5e3b5561a3d6b0a57e87340ef40ef77e
   }
 
   .datacenters-grid {

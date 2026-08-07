@@ -1,227 +1,105 @@
 <!DOCTYPE html>
-
 <html lang="fr">
-
-
-
 <head>
-
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <meta name="description" id="meta-description"
-
-    content="MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.">
-
+  <meta name="description" id="meta-description"content="MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.">
   <title>MultiCraft Info</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="style.css">
-
   <style>
-
     /* ── Language Switcher ── */
-
     .lang-switcher {
-
       display: flex;
-
       align-items: center;
-
       gap: 4px;
-
       background: rgba(255, 255, 255, 0.06);
-
       border: 1px solid rgba(255, 255, 255, 0.12);
-
       border-radius: 20px;
-
       padding: 3px 5px;
-
       flex-shrink: 0;
-
     }
-
-
-
     .lang-btn {
-
       background: none;
-
       border: none;
-
       cursor: pointer;
-
       font-size: 0.72rem;
-
       font-weight: 700;
-
       letter-spacing: 0.04em;
-
       color: var(--text-dim, #888);
-
       padding: 3px 8px;
-
       border-radius: var(--radius-sm, 6px);
-
       transition: background 0.18s, color 0.18s;
-
       line-height: 1;
-
     }
-
-
-
     .lang-btn.active {
-
       background: var(--green-dim, #16a34a);
-
       color: #fff;
-
     }
-
-
-
     .lang-btn:hover:not(.active) {
-
       background: rgba(255, 255, 255, 0.08);
-
       color: var(--text, #eee);
-
     }
-
-
-
     .header-inner {
-
       gap: 10px;
-
     }
-
-
-
     /* ── Alert Banner ── */
-
     #alert-banner {
-
       display: none;
-
       width: 100%;
-
       background: #dc2626;
-
       color: #fff;
-
       text-align: center;
-
       padding: 10px 12px;
-
       font-size: 0.88rem;
-
       font-weight: 600;
-
       line-height: 1.4;
-
       position: relative;
-
       z-index: 1100;
-
       box-sizing: border-box;
-
     }
-
-
-
     #alert-banner.visible {
-
       display: flex;
-
       align-items: center;
-
       justify-content: center;
-
       gap: 10px;
-
     }
-
-
-
     #alert-banner a {
-
       color: #fde68a;
-
       text-decoration: underline;
-
     }
-
-
-
     .alert-banner-msg {
-
       flex: 1 1 auto;
-
       text-align: center;
-
     }
-
-
-
     .alert-banner-close {
-
       flex: 0 0 auto;
-
       background: rgba(255, 255, 255, 0.15);
-
       border: none;
-
       border-radius: 50%;
-
       color: inherit;
-
       font-size: 1.15rem;
-
       line-height: 1;
-
       width: 28px;
-
       height: 28px;
-
       padding: 0;
-
       margin-left: auto;
-
       cursor: pointer;
-
       display: flex;
-
       align-items: center;
-
       justify-content: center;
-
       transition: background 0.15s ease;
-
       flex-shrink: 0;
-
     }
-
-
-
     .alert-banner-close:hover {
-
       background: rgba(255, 255, 255, 0.3);
-
     }
-
-
-
     .footer-deblock-btn {
       font-size: 0.82rem;
       padding: 0.4rem 1rem;
     }
-
     /* ── Deblock Auth Modal ── */
     .deblock-form-group label {
       display: block;
@@ -262,390 +140,171 @@
       padding: 2rem 0;
     }
     @media (max-width: 600px) {
-
       #alert-banner {
-
         font-size: 0.80rem;
-
         padding: 8px 12px;
-
       }
-
     }
-
   </style>
-
   <meta name="google-site-verification" content="If98To2pKMns-o4FCo6x8w-t75vmph2r2wvS86j1RGo" />
-
 </head>
-
-
-
 <body>
-
   <!-- Alert Banner — content loaded from banner.md -->
-
   <div id="alert-banner" role="alert" aria-live="polite"></div>
-
-
-
   <div class="ambient-bg" aria-hidden="true">
     <div class="ambient-orb"></div>
     <div class="ambient-orb"></div>
     <div class="ambient-orb"></div>
   </div>
-
-
-
   <header class="site-header">
-
     <div class="header-inner">
-
       <a href="#accueil" class="logo" data-nav="accueil">
-
         <span class="logo-icon">⛏</span>
-
         <span class="logo-text">MultiCraft <em>Info</em></span>
-
       </a>
-
       <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
-
         <span></span>
-
         <span></span>
-
         <span></span>
-
       </button>
-
       <nav class="main-nav">
-
         <a href="#accueil" class="nav-link active" data-nav="accueil" data-i18n="nav.home">Accueil</a>
-
         <a href="#mises-a-jour" class="nav-link" data-nav="mises-a-jour" data-i18n="nav.updates">Mises à jour</a>
-
         <a href="#serveurs" class="nav-link" data-nav="serveurs" data-i18n="nav.servers">Serveurs</a>
-
         <a href="#le-jeu" class="nav-link" data-nav="le-jeu" data-i18n="nav.theGame">Le jeu</a>
-
         <a href="https://multidb.vercel.app/#/" class="nav-link">MultiDB</a>
-
       </nav>
-
       <!-- Language Switcher -->
-
       <div class="lang-switcher" aria-label="Language / Langue">
-
         <button class="lang-btn" id="lang-fr" onclick="setLang('fr')">FR</button>
-
         <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
-
       </div>
-
       <div id="deblock-auth-widget" class="deblock-auth-widget">
-
         <button id="deblock-login-btn" class="btn btn-deblock-auth" aria-label="Se connecter avec Deblock">
-
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
-
           </svg>
-
           <span id="deblock-btn-label" data-i18n="deblock.login">Connexion</span>
-
         </button>
-
         <div id="deblock-user-info" class="deblock-user-info" hidden>
-
           <img id="deblock-avatar" class="deblock-avatar" src="" alt="" width="28" height="28">
-
           <span id="deblock-username" class="deblock-username"></span>
-
           <a href="#profil" class="deblock-profile-link" data-nav="profil" aria-label="Profil">
             <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true"><path d="M9.6,3.32a3.86,3.86,0,1,0,3.86,3.85A3.85,3.85,0,0,0,9.6,3.32M16.35,11a.26.26,0,0,0-.25.21l-.18,1.27a4.63,4.63,0,0,0-.82.45l-1.2-.48a.3.3,0,0,0-.3.13l-1,1.66a.24.24,0,0,0,.06.31l1,.79a3.94,3.94,0,0,0,0,1l-1,.79a.23.23,0,0,0-.06.3l1,1.67c.06.13.19.13.3.13l1.2-.49a3.85,3.85,0,0,0,.82.46l.18,1.27a.24.24,0,0,0,.25.2h1.93a.24.24,0,0,0,.23-.2l.18-1.27a5,5,0,0,0,.81-.46l1.19.49c.12,0,.25,0,.32-.13l1-1.67a.23.23,0,0,0-.06-.3l-1-.79a4,4,0,0,0,0-.49,2.67,2.67,0,0,0,0-.48l1-.79a.25.25,0,0,0,.06-.31l-1-1.66c-.06-.13-.19-.13-.31-.13L19.5,13a4.07,4.07,0,0,0-.82-.45l-.18-1.27a.23.23,0,0,0-.22-.21H16.46M9.71,13C5.45,13,2,14.7,2,16.83v1.92h9.33a6.65,6.65,0,0,1,0-5.69A13.56,13.56,0,0,0,9.71,13m7.6,1.43a1.45,1.45,0,1,1,0,2.89,1.45,1.45,0,0,1,0-2.89Z"/></svg>
           </a>
-
         </div>
-
       </div>
-
     </div>
-
   </header>
-
-
-
   <main id="app">
-
     <!-- Accueil / Home -->
-
     <section id="page-accueil" class="page active">
-
       <div class="hero">
-
         <h1 data-i18n="home.title">Tout sur <span class="gradient-text">MultiCraft</span></h1>
-
         <p class="hero-subtitle" data-i18n="home.subtitle">
-
-          Suivez les mises à jour, explorez les serveurs et rejoignez la communauté.
-
-        </p>
-
+          Suivez les mises à jour, explorez les serveurs et rejoignez la communauté. </p>
         <div class="hero-actions">
-
           <a href="#serveurs" class="btn btn-primary" data-nav="serveurs" data-i18n="home.btnServers">🎮 Serveurs</a>
-
           <a href="#mises-a-jour" class="btn btn-ghost" data-nav="mises-a-jour" data-i18n="home.btnUpdates">📋 Mises à jour</a>
-
         </div>
-
       </div>
-
-
-
       <div class="hero-stats" id="hero-stats">
-
         <div class="stat-item">
-
           <span class="stat-value" id="stat-servers">—</span>
-
           <span class="stat-label" data-i18n="home.statServers">serveurs répertoriés</span>
-
         </div>
-
       </div>
-
     </section>
-
-
-
     <!-- Mises à jour / Updates -->
-
     <section id="page-mises-a-jour" class="page">
-
       <div class="page-header">
-
         <h1 data-i18n="nav.updates">Mises à jour</h1>
-
-        <p data-i18n="updates.subtitle">Les dernières nouveautés du jeu, classées de la plus récente à la plus ancienne.
-
-        </p>
-
+        <p data-i18n="updates.subtitle">Les dernières nouveautés du jeu, classées de la plus récente à la plus ancienne. </p>
       </div>
-
       <div id="updates-container" class="updates-list">
-
         <div class="loading-state">
-
           <div class="spinner"></div>
-
           <p data-i18n="updates.loading">Chargement des mises à jour…</p>
-
         </div>
-
       </div>
-
     </section>
-
-
-
     <!-- Serveurs / Servers -->
-
     <section id="page-serveurs" class="page">
-
       <div class="page-header">
-
         <h1 data-i18n="nav.servers">Serveurs</h1>
-
         <p data-i18n="servers.subtitle">Liste des serveurs. Trouvez un serveur et rejoignez-le en un clic.</p>
-
       </div>
-
-
-
       <div class="servers-toolbar">
-
         <div class="search-bar" id="search-bar-wrapper">
-
           <span class="search-icon" aria-hidden="true">🔍</span>
-
-          <input type="search" id="server-search" placeholder="Rechercher un serveur…"
-
-            aria-label="Rechercher un serveur" data-i18n-placeholder="servers.searchPlaceholder">
-
+          <input type="search" id="server-search" placeholder="Rechercher un serveur…"aria-label="Rechercher un serveur" data-i18n-placeholder="servers.searchPlaceholder">
           <button type="button" id="clear-search-btn" class="btn-clear" aria-label="Effacer la recherche">✕</button>
-
           <button type="button" id="search-btn" class="search-submit-btn" aria-label="Rechercher">🔍</button>
-
         </div>
-
-
-
         <div class="filters-group">
-
           <select id="sort-by" class="filter-select" aria-label="Trier les serveurs">
-
             <option value="players-desc" data-i18n="servers.sortPlayersDesc">Joueurs (décroissant)</option>
-
             <option value="players-asc" data-i18n="servers.sortPlayersAsc">Joueurs (croissant)</option>
-
             <option value="rating-desc" data-i18n="servers.sortRatingDesc">Note (décroissant)</option>
-
             <option value="rating-asc" data-i18n="servers.sortRatingAsc">Note ()croissant)</option>
-
           </select>
-
-
-
           <select id="filter-country" class="filter-select" aria-label="Filtrer par pays">
-
             <option value="all" data-i18n="servers.allCountries">🌍 Tous les pays</option>
-
           </select>
-
         </div>
-
-
-
         <span id="servers-count" class="servers-count"></span>
-
       </div>
-
-
-
       <div id="servers-container" class="servers-grid">
-
         <div class="loading-state">
-
           <div class="spinner"></div>
-
           <p data-i18n="servers.loading">Chargement des serveurs…</p>
-
         </div>
-
       </div>
-
     </section>
-
-
-
-
     <!-- Le jeu / The Game (Télécharger + Info du jeu) -->
-
     <section id="page-le-jeu" class="page">
-
       <div class="page-header">
-
         <h1 data-i18n="nav.theGame">Le jeu</h1>
-
-        <p data-i18n="download.subtitle">Téléchargez MultiCraft pour Android ou Windows et choisissez la version de
-
-          votre choix.</p>
-
+        <p data-i18n="download.subtitle">Téléchargez MultiCraft pour Android ou Windows et choisissez la version de votre choix.</p>
       </div>
-
-
-
       <div class="download-grid">
-
         <article class="download-card">
-
           <div class="download-icon" aria-hidden="true">🤖</div>
-
           <h2 data-i18n="download.androidTitle">Android</h2>
-
           <p data-i18n="download.androidDesc">Fichier APK à installer sur votre appareil Android.</p>
-
-
-
-          <label class="download-version-label" for="android-version-select" data-i18n="download.chooseVersion">Choisir
-
-            la version</label>
-
+          <label class="download-version-label" for="android-version-select" data-i18n="download.chooseVersion">Choisir la version</label>
           <select id="android-version-select" class="filter-select download-version-select"></select>
-
-
-
-          <a id="android-download-btn" href="#" class="btn btn-primary download-btn"
-
-            data-i18n="download.btnAndroid">Télécharger pour Android</a>
-
+          <a id="android-download-btn" href="#" class="btn btn-primary download-btn"data-i18n="download.btnAndroid">Télécharger pour Android</a>
         </article>
-
-
 <!-- In comment because MultiCraft removed their Windows version... -->
      <!--   <article class="download-card">
-
           <div class="download-icon" aria-hidden="true">🪟</div>
-
           <h2 data-i18n="download.windowsTitle">Windows</h2>
-
           <p data-i18n="download.windowsDesc">Installateur à exécuter sur votre PC Windows.</p>
-
-
-
-          <label class="download-version-label" for="windows-version-select" data-i18n="download.chooseVersion">Choisir
-
-            la version</label>
-
+          <label class="download-version-label" for="windows-version-select" data-i18n="download.chooseVersion">Choisir la version</label>
           <select id="windows-version-select" class="filter-select download-version-select"></select>
-
-
-
-          <a id="windows-download-btn" href="#" class="btn btn-primary download-btn"
-
-            data-i18n="download.btnWindows">Télécharger pour Windows</a>
-
+          <a id="windows-download-btn" href="#" class="btn btn-primary download-btn"data-i18n="download.btnWindows">Télécharger pour Windows</a>
         </article> -->
-
       </div>
-
-
-
       <div class="page-header page-header-secondary">
-
         <h2 data-i18n="nav.gameInfo">Serveurs physiques</h2>
-
         <p data-i18n="gameInfo.subtitle">Liste des serveurs physiques de MultiCraft.</p>
-
       </div>
-
       <div class="lag-test-toolbar">
         <button id="open-lag-test-btn" class="btn btn-primary lag-test-open-btn" data-i18n="lagTest.btnOpen">
-          <span class="lag-test-icon">📡</span> Tester la latence
-        </button>
+          <span class="lag-test-icon">📡</span> Tester la latence </button>
       </div>
-
       <div id="datacenters-container" class="datacenters-grid"></div>
-
     </section>
-
   </main>
-
-
-
-  
-
-
-
 <!-- Page Profil / Profile page -->
-
   <section id="page-profil" class="page">
-
       <div class="page-header">
-
         <h1 data-i18n="profile.title">Mon Profil</h1>
-
         <p class="page-subtitle" data-i18n="profile.subtitle">Gérez vos informations personnelles</p>
-
       </div>
-
       <div id="profile-status-msg" class="review-error-msg" style="margin-bottom:1rem;" hidden></div>
-
       <!-- Pseudo / Username -->
-
       <!-- ── Photo de profil ── -->
       <div class="profile-section profile-avatar-section">
         <h3 data-i18n="profile.avatar">Photo de profil</h3>
@@ -669,497 +328,235 @@
           </div>
         </div>
       </div>
-
       <div class="profile-section">
-
         <h3 data-i18n="profile.pseudo">Pseudo</h3>
-
         <div class="profile-input-row">
-
           <input type="text" id="profile-pseudo" class="review-input" placeholder="Votre pseudo" autocomplete="username" style="flex:1;">
-
           <button id="profile-save-pseudo" class="btn btn-primary" data-i18n="profile.save">Enregistrer</button>
-
         </div>
-
       </div>
-
       <!-- Email -->
-
       <div class="profile-section">
-
         <h3 data-i18n="profile.email">Email</h3>
-
         <div class="profile-input-row">
-
           <input type="email" id="profile-email" class="review-input" placeholder="email@example.com" autocomplete="email" style="flex:1;">
-
           <button id="profile-save-email" class="btn btn-primary" data-i18n="profile.save">Enregistrer</button>
-
         </div>
-
       </div>
-
       <!-- Password -->
-
       <div class="profile-section">
-
         <h3 data-i18n="profile.password">Mot de passe</h3>
-
         <div class="profile-input-row" style="flex-direction:column;gap:0.5rem;">
-
           <input type="password" id="profile-new-password" class="review-input" placeholder="Nouveau mot de passe (6 caractères minimum)" autocomplete="new-password" style="width:100%;">
-
           <input type="password" id="profile-confirm-password" class="review-input" placeholder="Confirmer le mot de passe" autocomplete="new-password" style="width:100%;">
-
           <button id="profile-save-password" class="btn btn-primary" data-i18n="profile.save" style="align-self:flex-start;">Enregistrer</button>
-
         </div>
-
       </div>
-
       <!-- Déconnexion -->
-
       <div class="profile-section">
-
         <h3 data-i18n="profile.logout">Déconnexion</h3>
-
         <button id="deblock-logout-btn" class="btn btn-secondary" data-i18n="profile.logoutBtn">Se déconnecter</button>
-
       </div>
-
       <!-- Danger zone -->
-
       <div class="profile-section profile-danger">
-
         <h3 data-i18n="profile.deleteAccount">Supprimer mon compte</h3>
-
         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem;" data-i18n="profile.deleteConfirm">
-
-          Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.
-
-        </p>
-
+          Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible. </p>
         <div class="profile-delete-actions">
-
           <button id="profile-delete-btn" class="btn btn-danger" data-i18n="profile.deleteAccount">Supprimer mon compte</button>
-
           <button id="profile-delete-cancel" class="btn btn-secondary" data-i18n="profile.deleteCancel" hidden>Annuler</button>
-
           <button id="profile-delete-confirm" class="btn btn-danger" data-i18n="profile.deleteConfirmBtn" hidden>Oui, supprimer</button>
-
         </div>
-
       </div>
-
   </section>
-
 <footer class="site-footer">
-
     <div class="footer-info">
       <p>MultiCraft Info — <span id="footer-year"></span></p>
       <p class="footer-credits"><span data-i18n="footer.createdBy">Créé par</span> <a href="https://github.com/Nathmatt22">Aurelmattnath</a> et <a href="https://github.com/lulu76450">Lucas76</a>. <span data-i18n="footer.notAffiliated">Nous ne sommes pas affiliés à MultiCraft.</span></p>
       <p class="footer-source"><span data-i18n="footer.sourceCode">Code source :</span> <a href="https://github.com/Deblock-Studios/MultiCraft-Info" target="_blank" rel="noopener noreferrer">GitHub</a></p>
     </div>
-
     <div class="footer-links">
       <a href="legal.html" class="btn btn-ghost footer-deblock-btn">Legal</a>
       <a href="https://deblock-studios.vercel.app/" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">Deblock Studios</a>
     </div>
-
   </footer>
-
   <!-- Pop-up code d'invitation / Server modal -->
-
   <div id="server-modal" class="modal-overlay" hidden>
-
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-server-name">
-
       <button type="button" class="modal-close" id="modal-close-btn" aria-label="Fermer">✕</button>
-
       <p class="modal-eyebrow" data-i18n="modal.serverInfo">Informations du serveur</p>
-
       <h2 id="modal-server-name" data-i18n="modal.server">Serveur</h2>
-
-
-
       <div class="modal-body">
-
         <!-- Filled dynamically by JS -->
-
       </div>
-
-
-
       <p class="modal-label" data-i18n="modal.inviteCode">Code d'invitation</p>
-
       <div class="modal-code-row">
-
         <code id="modal-code" class="modal-code"></code>
-
-        <button type="button" id="modal-copy-btn" class="btn btn-primary btn-copy"
-
-          data-i18n="modal.copy">Copier</button>
-
+        <button type="button" id="modal-copy-btn" class="btn btn-primary btn-copy"data-i18n="modal.copy">Copier</button>
       </div>
-
-
-
       <div class="modal-actions">
-
         <button type="button" id="modal-share-btn" class="btn btn-ghost" data-i18n="modal.share">🔗 Partager</button>
-
-        <button type="button" id="modal-close-btn-2" class="btn btn-ghost modal-close-bottom"
-
-          data-i18n="modal.close">Fermer</button>
-
+        <button type="button" id="modal-close-btn-2" class="btn btn-ghost modal-close-bottom"data-i18n="modal.close">Fermer</button>
       </div>
-
-
-
       <div id="modal-reviews-section" class="modal-reviews-section"></div>
-
     </div>
-
   </div>
-
-
-
   <!-- Pop-up liste des joueurs / Players modal -->
-
   <div id="players-modal" class="modal-overlay" hidden>
-
     <div class="modal-box players-modal-box" role="dialog" aria-modal="true" aria-labelledby="players-modal-title">
-
       <button type="button" class="modal-close" id="players-modal-close-btn" aria-label="Fermer">✕</button>
-
       <p class="modal-eyebrow" data-i18n="modal.connectedPlayers">Joueurs connectés</p>
-
       <h2 id="players-modal-title" data-i18n="modal.server">Serveur</h2>
-
       <span id="players-modal-count" class="players-modal-count"></span>
-
-
-
       <label class="search-bar players-search-bar" for="players-search-input">
-
         <span class="search-icon" aria-hidden="true">🔍</span>
-
-        <input type="search" id="players-search-input" placeholder="Rechercher un joueur…"
-
-          aria-label="Rechercher un joueur" data-i18n-placeholder="modal.searchPlayer">
-
+        <input type="search" id="players-search-input" placeholder="Rechercher un joueur…"aria-label="Rechercher un joueur" data-i18n-placeholder="modal.searchPlayer">
       </label>
-
-
-
       <div id="players-list-container" class="players-list-container">
-
         <!-- Filled dynamically by JS -->
-
       </div>
-
-
-
       <div class="modal-actions">
-
-        <button type="button" id="players-modal-close-btn-2" class="btn btn-ghost modal-close-bottom"
-
-          data-i18n="modal.close">Fermer</button>
-
+        <button type="button" id="players-modal-close-btn-2" class="btn btn-ghost modal-close-bottom"data-i18n="modal.close">Fermer</button>
       </div>
-
     </div>
-
   </div>
-
-
-
   <!-- Pop-up connexion Deblock / Login modal -->
-
   <div id="deblock-login-modal" class="modal-overlay" hidden>
-
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="deblock-login-title">
-
       <button type="button" class="modal-close" id="deblock-login-close" aria-label="Fermer">✕</button>
-
       <p class="modal-eyebrow">Deblock Account</p>
-
       <h2 id="deblock-login-title" data-i18n="deblock.loginTitle">Connexion Deblock</h2>
-
       <div id="deblock-login-error" class="review-error-msg" style="margin-bottom:0.75rem;" hidden></div>
-
       <!-- Login mode -->
-
       <div id="deblock-login-mode">
-
         <div class="deblock-form-group">
-
           <label for="deblock-email">Email</label>
-
           <input type="email" id="deblock-email" class="review-input" placeholder="email@example.com" autocomplete="email">
-
         </div>
-
         <div class="deblock-form-group" style="margin-top:0.5rem;">
-
           <label for="deblock-password">Mot de passe</label>
-
           <div class="deblock-password-row">
-
             <input type="password" id="deblock-password" class="review-input" placeholder="••••••••" autocomplete="current-password">
-
             <button type="button" id="deblock-password-toggle" class="deblock-password-toggle" aria-label="Afficher le mot de passe">👁</button>
-
           </div>
-
         </div>
-
         <button id="deblock-login-submit" class="btn btn-primary" style="width:100%;margin-top:0.75rem;" data-i18n="deblock.loginBtn">Se connecter</button>
-
         <p class="deblock-auth-switch" style="margin-top:0.75rem;font-size:0.82rem;color:var(--text-muted);text-align:center;">
-
           <span data-i18n="deblock.noAccount">Pas encore de compte ?</span>
-
           <a href="#" id="deblock-show-signup" style="color:var(--green);" data-i18n="deblock.createAccount">Créer un compte</a>
-
         </p>
-
         <p style="margin-top:0.4rem;font-size:0.75rem;text-align:center;">
-
           <a href="#" id="deblock-show-forgot" style="color:var(--text-dim);" data-i18n="deblock.forgotPassword">Mot de passe oublié ?</a>
-
         </p>
-
       </div>
-
       <!-- Signup mode -->
-
       <div id="deblock-signup-mode" hidden>
-
         <div class="deblock-form-group">
-
           <label for="deblock-signup-pseudo" data-i18n="deblock.pseudo">Pseudo</label>
-
           <input type="text" id="deblock-signup-pseudo" class="review-input" placeholder="Votre pseudo" autocomplete="username">
-
         </div>
-
         <div class="deblock-form-group" style="margin-top:0.5rem;">
-
           <label for="deblock-signup-email">Email</label>
-
           <input type="email" id="deblock-signup-email" class="review-input" placeholder="email@example.com" autocomplete="email">
-
         </div>
-
         <div class="deblock-form-group" style="margin-top:0.5rem;">
-
           <label for="deblock-signup-password">Mot de passe</label>
-
           <input type="password" id="deblock-signup-password" class="review-input" placeholder="•••••••• (6 caractères minimum)" autocomplete="new-password">
-
         </div>
-
         <div class="deblock-form-group" style="margin-top:0.5rem;">
-
           <label for="deblock-signup-confirm">Confirmer le mot de passe</label>
-
           <input type="password" id="deblock-signup-confirm" class="review-input" placeholder="••••••••" autocomplete="new-password">
-
         </div>
         <label class="deblock-consent" style="display:flex;align-items:flex-start;gap:0.5rem;margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);line-height:1.45;cursor:pointer;">
           <input type="checkbox" id="deblock-signup-consent" style="margin-top:0.15rem;flex-shrink:0;width:1rem;height:1rem;accent-color:var(--green);">
           <span data-i18n="deblock.consent">J'accepte la <a href="legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">politique de confidentialité</a> et les <a href="legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">conditions d'utilisation</a>.</span>
         </label>
-
         <button id="deblock-signup-submit" class="btn btn-primary" style="width:100%;margin-top:0.75rem;" data-i18n="deblock.signUpBtn">Créer mon compte</button>
-
         <p class="deblock-auth-switch" style="margin-top:0.75rem;font-size:0.82rem;color:var(--text-muted);text-align:center;">
-
           <span data-i18n="deblock.hasAccount">Déjà un compte ?</span>
-
           <a href="#" id="deblock-show-login" style="color:var(--green);" data-i18n="deblock.login">Se connecter</a>
-
         </p>
-
       </div>
-
       <!-- Forgot password mode -->
-
       <div id="deblock-forgot-mode" hidden>
-
         <div class="deblock-form-group">
-
           <label for="deblock-forgot-email">Email</label>
-
           <input type="email" id="deblock-forgot-email" class="review-input" placeholder="email@example.com" autocomplete="email">
-
         </div>
-
         <button id="deblock-forgot-submit" class="btn btn-primary" style="width:100%;margin-top:0.75rem;" data-i18n="deblock.sendReset">Envoyer le lien de réinitialisation</button>
-
         <p class="deblock-auth-switch" style="margin-top:0.75rem;font-size:0.82rem;text-align:center;">
-
           <a href="#" id="deblock-back-to-login" style="color:var(--green);" data-i18n="deblock.backToLogin">← Retour à la connexion</a>
-
         </p>
-
       </div>
-
       <!-- Loading spinner for auth -->
-
       <div id="deblock-auth-loading" class="deblock-auth-loading" hidden>
-
         <div class="spinner"></div>
-
         <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-muted);" data-i18n="deblock.loading">Chargement…</p>
-
       </div>
-
     </div>
-
   </div>
-
   <!-- Widget Chat Flottant -->
-
   <div id="chat-widget" class="chat-widget">
-
     <!-- Bulle de chat -->
-
     <button id="chat-bubble" class="chat-bubble" aria-label="Ouvrir le chat global" title="Chat Global">
-
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-
         <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z" />
-
       </svg>
-
       <span id="chat-badge" class="chat-badge" hidden></span>
-
     </button>
-
-
-
     <!-- Fenêtre de chat -->
-
     <div id="chat-window" class="chat-window" hidden>
-
       <!-- Header -->
-
       <div class="chat-header">
-
         <div class="chat-header-left">
-
-          <span class="chat-header-title" id="chat-title">Global <span
-
-              class="chat-header-title-accent">Chat</span></span>
-
+          <span class="chat-header-title" id="chat-title">Global <span class="chat-header-title-accent">Chat</span></span>
         </div>
-
         <div class="chat-header-actions">
-
           <button id="chat-refresh-btn" class="chat-refresh-btn" aria-label="Recharger les messages" title="Recharger">
-
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
               <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-
             </svg>
-
           </button>
-
           <button id="chat-close-btn" class="chat-close-btn" aria-label="Fermer le chat">✕</button>
-
         </div>
-
       </div>
-
-
-
       <!-- Tab bar -->
-
       <div class="chat-tabs" id="chat-tabs">
-
         <button class="chat-tab active" data-tab="global" onclick="switchChatTab('global')">🌍 GLOBAL</button>
-
         <button class="chat-tab" data-tab="french" onclick="switchChatTab('french')">🇫🇷 FR</button>
-
         <button class="chat-tab" data-tab="english" onclick="switchChatTab('english')">🇬🇧 EN</button>
-
-        <button class="chat-tab" data-tab="private" onclick="switchChatTab('private')" id="private-tab" hidden>💬
-
-          PRIVÉ</button>
-
+        <button class="chat-tab" data-tab="private" onclick="switchChatTab('private')" id="private-tab" hidden>💬 PRIVÉ</button>
       </div>
-
-
-
       <!-- Messages -->
-
       <div id="chat-messages" class="chat-messages">
-
         <!-- Rempli dynamiquement -->
-
       </div>
-
-
-
       <!-- Footer -->
-
       <div class="chat-footer">
-
         <!-- Zone de saisie si connecté -->
-
         <div id="chat-input-area" hidden>
-
           <div class="chat-input-row">
-
             <textarea id="chat-input" placeholder="Écrire un message..." maxlength="500" rows="1"></textarea>
-
             <button id="chat-send-btn" class="chat-send-btn" aria-label="Envoyer">
-
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-
               </svg>
-
             </button>
-
           </div>
-
         </div>
-
         <!-- Message de connexion si non connecté -->
-
         <div id="chat-login-area">
-
           <p class="chat-login-prompt" data-i18n="deblock.loginPrompt">Connectez-vous avec Deblock pour discuter.</p>
-
           <button id="chat-widget-login-btn" class="btn btn-deblock-auth btn-sm" aria-label="Se connecter avec Deblock">
-
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
-
-              style="margin-right: 4px; vertical-align: middle;">
-
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"style="margin-right: 4px; vertical-align: middle;">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
-
             </svg>
-
             <span data-i18n="deblock.login">Connexion</span>
-
           </button>
-
         </div>
-
       </div>
-
     </div>
-
   </div>
-
-
   <!-- Modal test de latence / Lag test modal -->
   <div id="lag-test-modal" class="modal-overlay" hidden>
     <div class="modal-box lag-test-modal-box" role="dialog" aria-modal="true" aria-labelledby="lag-test-modal-title">
@@ -1167,7 +564,6 @@
       <p class="modal-eyebrow" data-i18n="lagTest.eyebrow">Test de latence</p>
       <h2 id="lag-test-modal-title" data-i18n="lagTest.title">📡 Tester la latence</h2>
       <p class="lag-test-subtitle" data-i18n="lagTest.subtitle">Veuillez choisir un serveur pour tester la latence.</p>
-
       <div class="lag-test-select-row">
         <label class="lag-test-label" data-i18n="lagTest.selectLabel">Serveur de test</label>
         <div class="lag-test-popup-wrapper">
@@ -1181,31 +577,22 @@
           </div>
         </div>
       </div>
-
       <button id="lag-test-run-btn" class="btn btn-primary lag-test-run-btn" disabled data-i18n="lagTest.runBtn">
-        Effectuer le test
-      </button>
-
+        Effectuer le test </button>
       <div id="lag-test-results" class="lag-test-results" hidden>
         <p class="lag-test-results-title" data-i18n="lagTest.resultsTitle">Résultats :</p>
         <div id="lag-test-results-grid" class="lag-test-results-grid"></div>
       </div>
     </div>
   </div>
-
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="i18n.js"></script>
 <script defer src="js/deblock-auth.js"></script>
 <script defer src="script.js"></script>
 <script defer src="banner.js"></script>
   <!-- 100% privacy-first analytics -->
-
   <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
-
-
-
+  <script data-goatcounter="https://multicraft-info.goatcounter.com/count"async src="//gc.zgo.at/count.js"></script>
 </body>
-
-
-
 </html>
+

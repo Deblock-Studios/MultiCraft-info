@@ -159,7 +159,6 @@
   <header class="site-header">
     <div class="header-inner">
       <a href="#accueil" class="logo" data-nav="accueil">
-        <span class="logo-icon">⛏</span>
         <span class="logo-text">MultiCraft <em>Info</em></span>
       </a>
       <button class="nav-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
@@ -247,6 +246,8 @@
             <option value="players-asc" data-i18n="servers.sortPlayersAsc">Joueurs (croissant)</option>
             <option value="rating-desc" data-i18n="servers.sortRatingDesc">Note (décroissant)</option>
             <option value="rating-asc" data-i18n="servers.sortRatingAsc">Note ()croissant)</option>
+            <option value="name-asc" data-i18n="servers.sortNameAsc">Nom (A-Z)</option>
+            <option value="name-desc" data-i18n="servers.sortNameDesc">Nom (Z-A)</option>
           </select>
           <select id="filter-country" class="filter-select" aria-label="Filtrer par pays">
             <option value="all" data-i18n="servers.allCountries">🌍 Tous les pays</option>
@@ -407,7 +408,7 @@
       <button type="button" class="modal-close" id="players-modal-close-btn" aria-label="Fermer">✕</button>
       <p class="modal-eyebrow" data-i18n="modal.connectedPlayers">Joueurs connectés</p>
       <h2 id="players-modal-title" data-i18n="modal.server">Serveur</h2>
-      <span id="players-modal-count" class="players-modal-count"></span>
+      <!-- <span id="players-modal-count" class="players-modal-count"></span> -->
       <label class="search-bar players-search-bar" for="players-search-input">
         <span class="search-icon" aria-hidden="true">🔍</span>
         <input type="search" id="players-search-input" placeholder="Rechercher un joueur…"aria-label="Rechercher un joueur" data-i18n-placeholder="modal.searchPlayer">

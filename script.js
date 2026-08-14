@@ -1241,6 +1241,13 @@
       const unrated = filtered.filter(function (s) { return s._avgRating == null; });
       rated.sort(function (a, b) { return sortType === 'rating-desc' ? b._avgRating - a._avgRating : a._avgRating - b._avgRating; });
       filtered = rated.concat(unrated);
+    } else if (sortType === 'name-asc' || sortType === 'name-desc') {
+      filtered.sort(function (a, b) {
+        const aName = (a.server_name || '').toLowerCase();
+        const bName = (b.server_name || '').toLowerCase();
+        const cmp = aName.localeCompare(bName);
+        return sortType === 'name-asc' ? cmp : -cmp;
+      });
     } else {
       filtered.sort(function (a, b) {
         const aPlayers = a.online ? (a.connected_players || 0) : -1;
@@ -1278,7 +1285,7 @@
     const adminHtml = adminName ? '<div class="server-admin">👑 ' + adminName + '</div>' : '';
     const ratingHtml = server._avgRating != null ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1) + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>' : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
     const serverDataAttr = escapeHtml(JSON.stringify(server));
-    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<button type="button" class="btn btn-players" data-server="' + serverDataAttr + '">' + window.i18n.t('servers.playersList') + '</button><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
+    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><!-- <span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span> --></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<!-- <button type="button" class="btn btn-players">' + window.i18n.t('servers.playersList') + '</button> --><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
   }
 
   function bindServerCardActions() {
@@ -1507,7 +1514,6 @@
     const code = server.server_id || '';
     const players = server.online ? (server.connected_players || 0) : 0;
     const maxPlayers = server.max_players != null ? server.max_players : '?';
-    const onlineStatus = server.online ? '🟢 En ligne' : '🔴 Hors ligne';
     const url = server.url || null;
     const adminName = server.admin_name || 'Non spécifié';
     const country = getServerCountry(server);
@@ -1516,7 +1522,7 @@
     if (modalCode) modalCode.textContent = code;
     const modalBody = document.querySelector('.modal-body');
     if (modalBody) {
-      modalBody.innerHTML = '<div class="modal-details"><div class="modal-status ' + (server.online ? 'online' : 'offline') + '"><span class="status-dot"></span>' + onlineStatus + '</div><div class="modal-description"><h3>Description</h3><p>' + escapeHtml(description) + '</p></div><div class="modal-info-grid"><div class="modal-info-item"><span class="modal-info-label">👥 Joueurs</span><span class="modal-info-value">' + players + ' / ' + maxPlayers + '</span></div><div class="modal-info-item"><span class="modal-info-label">👑 Administrateur</span><span class="modal-info-value">' + escapeHtml(adminName) + '</span></div><div class="modal-info-item"><span class="modal-info-label">📍 Localisation</span><span class="modal-info-value">' + escapeHtml(location) + '</span></div></div>' + (url ? '<div class="modal-deblock-link"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-deblock">Rejoindre Discord</a></div>' : '') + '</div>';
+      modalBody.innerHTML = '<div class="modal-details"><div class="modal-description"><h3>Description</h3><p>' + escapeHtml(description) + '</p></div><div class="modal-info-grid"><!-- <div class="modal-info-item"><span class="modal-info-label">👥 Joueurs</span><span class="modal-info-value">' + players + ' / ' + maxPlayers + '</span></div> --><div class="modal-info-item"><span class="modal-info-label">👑 Administrateur</span><span class="modal-info-value">' + escapeHtml(adminName) + '</span></div><div class="modal-info-item"><span class="modal-info-label">📍 Localisation</span><span class="modal-info-value">' + escapeHtml(location) + '</span></div></div>' + (url ? '<div class="modal-deblock-link"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-deblock">Rejoindre Discord</a></div>' : '') + '</div>';
     }
     serverModal.hidden = false;
     syncModalOpenState();

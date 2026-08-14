@@ -1,8 +1,8 @@
 ---
-isDisplayed: non
+isDisplayed: oui
 color: rouge
 ---
 
-**fr:** Nous ne pouvons plus récupérer la liste des joueurs et leur nombre. Notre équipe est sur le problème.
-
-**en:** We can't fetch players list and their number. Our team is working on the problem.
+**fr:** Suite aux ajouts de MultiCraft, nous avons écrit un article de blog. Lisez le ici : de-blog.pages.dev
+**en:** Following the additions to MultiCraft, we've written a blog post. Read it here : de-blog.pages.dev
+ 

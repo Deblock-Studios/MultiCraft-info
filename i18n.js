@@ -451,6 +451,12 @@
     const metaDesc = document.getElementById('meta-description');
     if (metaDesc) metaDesc.setAttribute('content', window.i18n.t('meta.description'));
 
+    // Keep Open Graph / Twitter descriptions in sync
+    const ogDesc = document.getElementById('meta-og-description');
+    if (ogDesc) ogDesc.setAttribute('content', window.i18n.t('meta.description'));
+    const twDesc = document.getElementById('meta-twitter-description');
+    if (twDesc) twDesc.setAttribute('content', window.i18n.t('meta.description'));
+
     // Update nav toggle aria-label
     const navToggle = document.querySelector('.nav-toggle');
     if (navToggle) navToggle.setAttribute('aria-label', lang === 'fr' ? 'Ouvrir le menu' : 'Open menu');

@@ -1296,6 +1296,65 @@
 
   function countLabel(n) { return n + ' ' + (n === 1 ? window.i18n.t('servers.count1') : window.i18n.t('servers.countN')); }
 
+  // Convertit une valeur « flag » en booléen, quelle que soit sa forme
+  // (true, 1, "true", "yes", "on"…).
+  function toFlagBoolean(value) {
+    if (value === true || value === 1 || value === '1') return true;
+    if (typeof value === 'string') {
+      const v = value.trim().toLowerCase();
+      return v === 'true' || v === 'yes' || v === '1' || v === 'on';
+    }
+    return false;
+  }
+
+  // Cherche une clé (insensible à la casse) dans l'objet serveur, en direct
+  // ou à n'importe quelle profondeur. Retourne la valeur brute ou undefined.
+  function findServerValue(server, keyName) {
+    if (!server || typeof server !== 'object') return undefined;
+    const target = String(keyName).toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(server, keyName)) return server[keyName];
+    function search(node) {
+      if (!node || typeof node !== 'object') return undefined;
+      if (Array.isArray(node)) {
+        for (let i = 0; i < node.length; i++) {
+          const r = search(node[i]);
+          if (r !== undefined) return r;
+        }
+        return undefined;
+      }
+      const keys = Object.keys(node);
+      for (let i = 0; i < keys.length; i++) {
+        if (keys[i].toLowerCase() === target) return node[keys[i]];
+      }
+      for (let i = 0; i < keys.length; i++) {
+        const r = search(node[keys[i]]);
+        if (r !== undefined) return r;
+      }
+      return undefined;
+    }
+    return search(server);
+  }
+
+  function isServerAdult(server) {
+    return toFlagBoolean(findServerValue(server, 'adult'));
+  }
+
+  // Retourne true/false selon creative_mode, ou null si la clé est absente.
+  function getCreativeMode(server) {
+    const value = findServerValue(server, 'creative_mode');
+    if (value === undefined) return null;
+    return toFlagBoolean(value);
+  }
+
+  const MODE_LABELS = { creative: 'Créatif', survival: 'Survie', pvp: 'PvP' };
+
+  // Détermine le mode affiché du serveur : créatif > pvp > survie.
+  function getServerMode(server) {
+    if (getCreativeMode(server) === true) return 'creative';
+    if (toFlagBoolean(findServerValue(server, 'pvp'))) return 'pvp';
+    return 'survival';
+  }
+
   function renderServerCard(server) {
     const online = !!server.online;
     const players = (online ? (server.connected_players || 0) : 0) + ' / ' + (server.max_players != null ? server.max_players : '?');
@@ -1306,9 +1365,13 @@
     const location = extractServerLocation(server) || country;
     const discordBtn = server.url ? '<a href="' + escapeHtml(server.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-discord">Discord</a>' : '';
     const adminHtml = adminName ? '<div class="server-admin">👑 ' + adminName + '</div>' : '';
+    const adultHtml = isServerAdult(server) ? '<span class="server-adult" title="18+">🔞</span>' : '';
+    const mode = getServerMode(server);
+    const modeLabel = MODE_LABELS[mode];
+    const modeHtml = '<span class="server-mode" title="' + modeLabel + '"><img src="files/logos/server_' + mode + '_icon.png" alt="' + modeLabel + '" width="16" height="16"></span>';
     const ratingHtml = server._avgRating != null ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1) + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>' : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
     const serverDataAttr = escapeHtml(JSON.stringify(server));
-    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><!-- <span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span> --></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<!-- <button type="button" class="btn btn-players">' + window.i18n.t('servers.playersList') + '</button> --><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
+    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><!-- <span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span> --></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + adultHtml + modeHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<!-- <button type="button" class="btn btn-players">' + window.i18n.t('servers.playersList') + '</button> --><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
   }
 
   function bindServerCardActions() {

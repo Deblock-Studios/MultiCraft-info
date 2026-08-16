@@ -329,12 +329,6 @@
         }
       }
 
-      // Profile link
-      if (e.target.closest('.deblock-profile-link')) {
-        e.preventDefault();
-        location.hash = 'profil';
-      }
-
       // Close modal buttons
       if (e.target.closest('#deblock-login-close')) {
         closeLoginModal();
@@ -747,7 +741,7 @@
           await Deblock.deleteAccount();
           showProfileMsg(window.i18n ? window.i18n.t('profile.deleted') : '\u2713 Compte supprim\u00e9.', true);
           setTimeout(function () {
-            navigateTo('accueil');
+            navigate('accueil');
             updateDeblockUI();
           }, 1500);
         } catch (err) {
@@ -797,18 +791,39 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  function pagePath(pageId) {
+    return pageId === 'accueil' ? '/' : '/' + pageId;
+  }
+
+  function currentPageFromPath() {
+    const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
+    if (path === '/') return 'accueil';
+    const slug = path.split('/').pop();
+    return legacyPageRedirects[slug] || slug;
+  }
+
+  function navigate(pageId) {
+    const target = legacyPageRedirects[pageId] || pageId;
+    if (!pages[target]) return navigateTo('accueil');
+    history.pushState({ page: target }, '', pagePath(target));
+    navigateTo(target);
+  }
+
   function handleRoute() {
-    const hash = location.hash.slice(1) || 'accueil';
-    const target = legacyPageRedirects[hash] || hash;
+    const target = currentPageFromPath();
     if (pages[target]) navigateTo(target);
     else navigateTo('accueil');
   }
 
   navLinks.forEach(function (el) {
-    el.addEventListener('click', function (e) { e.preventDefault(); const page = el.dataset.nav; location.hash = page; });
+    el.addEventListener('click', function (e) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      navigate(el.dataset.nav);
+    });
   });
 
-  window.addEventListener('hashchange', handleRoute);
+  window.addEventListener('popstate', handleRoute);
 
   if (navToggle && mainNav) {
     navToggle.addEventListener('click', function () {
@@ -1616,7 +1631,7 @@
     const shareBtn = document.getElementById('modal-share-btn');
     if (shareBtn) {
       shareBtn.onclick = function () {
-        const shareUrl = window.location.origin + window.location.pathname + '#serveurs?server=' + encodeURIComponent(code);
+        const shareUrl = window.location.origin + '/serveurs?server=' + encodeURIComponent(code);
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareUrl).then(function () { shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); }).catch(function () { fallbackCopyText(shareUrl); shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); });
         } else { fallbackCopyText(shareUrl); shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); }
@@ -1628,10 +1643,16 @@
 
   function handleServerShare() {
     let serverId = null;
-    const hash = window.location.hash;
-    if (hash && hash.includes('?server=')) { const hashParts = hash.split('?'); if (hashParts.length > 1) { const params = new URLSearchParams(hashParts[1]); serverId = params.get('server'); } }
-    if (!serverId) { const params = new URLSearchParams(window.location.search); serverId = params.get('server'); }
-    if (serverId && allServers.length > 0) { const server = allServers.find(function (s) { return s.server_id === serverId; }); if (server) { if (!document.getElementById('page-serveurs').classList.contains('active')) navigateTo('serveurs'); setTimeout(function () { openServerDetailsModal(server); }, 300); } }
+    const params = new URLSearchParams(window.location.search);
+    serverId = params.get('server');
+    if (!serverId) {
+      const hash = window.location.hash || '';
+      if (hash.includes('?server=')) {
+        const hashParams = new URLSearchParams(hash.split('?')[1] || '');
+        serverId = hashParams.get('server');
+      }
+    }
+    if (serverId && allServers.length > 0) { const server = allServers.find(function (s) { return s.server_id === serverId; }); if (server) { if (!document.getElementById('page-serveurs').classList.contains('active')) navigate('serveurs'); setTimeout(function () { openServerDetailsModal(server); }, 300); } }
   }
 
   function openServerModal(name, code) { if (!serverModal) return; if (modalServerName) modalServerName.textContent = name || window.i18n.t('modal.server'); if (modalCode) modalCode.textContent = code || '—'; if (modalCopyBtn) modalCopyBtn.textContent = window.i18n.t('modal.copy'); serverModal.hidden = false; syncModalOpenState(); }
@@ -2876,15 +2897,24 @@
   const footerYear = document.getElementById('footer-year');
   if (footerYear) footerYear.textContent = new Date().getFullYear();
   initDeblockAuth();
+
+  // Migrate legacy hash URLs (#serveurs → /serveurs) without reloading the page.
+  (function migrateLegacyHash() {
+    const rawHash = location.hash || '';
+    if (!rawHash) return;
+    const hash = rawHash.replace(/^#/, '');
+    const slug = (hash.split('?')[0] || '').trim();
+    const legacyPage = legacyPageRedirects[slug] || slug;
+    if (!pages[legacyPage]) return;
+    if (location.pathname !== '/' && location.pathname !== '/accueil') return;
+    const query = hash.indexOf('?') !== -1 ? hash.slice(hash.indexOf('?')) : '';
+    history.replaceState(null, '', pagePath(legacyPage) + query);
+  })();
+
   handleRoute();
 
-  if (location.hash === '#mises-a-jour') loadUpdates();
-  if (location.hash === '#le-jeu' || location.hash === '#info-du-jeu') renderDatacenters();
-  if (location.hash === '#serveurs') loadServers();
-  if (location.hash === '#le-jeu' || location.hash === '#telecharger') loadDownloads();
-
   const urlParams = new URLSearchParams(window.location.search);
-  const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+  const hashParams = new URLSearchParams((window.location.hash || '').split('?')[1] || '');
   if (urlParams.get('server') || hashParams.get('server')) {
     if (!document.getElementById('page-serveurs').classList.contains('active')) {
       if (!serversLoaded) loadServers();

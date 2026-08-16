@@ -745,6 +745,10 @@ body {
   flex-wrap: wrap;
 }
 
+.servers-toolbar .search-bar {
+  flex: 1 1 100%;
+}
+
 .search-bar {
   flex: 1;
   min-width: 200px;

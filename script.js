@@ -1120,6 +1120,8 @@
   const serverSearchInput = document.getElementById('server-search');
   const serversCountEl = document.getElementById('servers-count');
   const sortBySelect = document.getElementById('sort-by');
+  const filterModeSelect = document.getElementById('filter-mode');
+  const filterAdultSelect = document.getElementById('filter-adult');
   const filterCountrySelect = document.getElementById('filter-country');
 
   let regionNames = null;
@@ -1289,9 +1291,17 @@
   function applyFiltersAndSort() {
     if (!allServers.length) return;
     const searchQuery = serverSearchInput ? serverSearchInput.value : '';
-    const sortType = sortBySelect ? sortBySelect.value : 'players-desc';
+    const sortType = sortBySelect ? sortBySelect.value : 'rating-desc';
+    const modeFilter = filterModeSelect ? filterModeSelect.value : 'all';
+    const adultFilter = filterAdultSelect ? filterAdultSelect.value : 'all';
     const countryFilter = filterCountrySelect ? filterCountrySelect.value : 'all';
     let filtered = filterServers(searchQuery);
+    if (modeFilter !== 'all') {
+      filtered = filtered.filter(function (server) { return getServerMode(server) === modeFilter; });
+    }
+    if (adultFilter !== 'all') {
+      filtered = filtered.filter(function (server) { return adultFilter === 'adult' ? isServerAdult(server) : !isServerAdult(server); });
+    }
     if (countryFilter !== 'all') {
       filtered = filtered.filter(function (server) { return getServerCountry(server) === countryFilter; });
     }
@@ -1306,12 +1316,6 @@
         const bName = (b.server_name || '').toLowerCase();
         const cmp = aName.localeCompare(bName);
         return sortType === 'name-asc' ? cmp : -cmp;
-      });
-    } else {
-      filtered.sort(function (a, b) {
-        const aPlayers = a.online ? (a.connected_players || 0) : -1;
-        const bPlayers = b.online ? (b.connected_players || 0) : -1;
-        return sortType === 'players-asc' ? aPlayers - bPlayers : bPlayers - aPlayers;
       });
     }
     filteredServers = filtered;
@@ -1382,7 +1386,8 @@
     return toFlagBoolean(value);
   }
 
-  const MODE_LABELS = { creative: 'Créatif', survival: 'Survie', pvp: 'PvP' };
+  const MODE_KEYS = { creative: 'servers.modeCreative', survival: 'servers.modeSurvival', pvp: 'servers.modePvp' };
+  function getModeLabel(mode) { return window.i18n.t(MODE_KEYS[mode] || 'servers.modeSurvival'); }
 
   // Détermine le mode affiché du serveur : créatif > pvp > survie.
   function getServerMode(server) {
@@ -1403,7 +1408,7 @@
     const adminHtml = adminName ? '<div class="server-admin">👑 ' + adminName + '</div>' : '';
     const adultHtml = isServerAdult(server) ? '<span class="server-adult" title="18+">🔞</span>' : '';
     const mode = getServerMode(server);
-    const modeLabel = MODE_LABELS[mode];
+    const modeLabel = getModeLabel(mode);
     const modeHtml = '<span class="server-mode" title="' + modeLabel + '"><img src="files/logos/server_' + mode + '_icon.png" alt="' + modeLabel + '" width="16" height="16"></span>';
     const ratingHtml = server._avgRating != null ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1) + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>' : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
     const serverDataAttr = escapeHtml(JSON.stringify(server));
@@ -1511,6 +1516,8 @@
   }
   if (searchBtn) searchBtn.addEventListener('click', triggerServerSearch);
   if (sortBySelect) sortBySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
+  if (filterModeSelect) filterModeSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
+  if (filterAdultSelect) filterAdultSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterCountrySelect) filterCountrySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
 
   /* ══════════════════════════════════════════════════════

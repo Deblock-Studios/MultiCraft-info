@@ -256,12 +256,21 @@
         </div>
         <div class="filters-group">
           <select id="sort-by" class="filter-select" aria-label="Trier les serveurs">
-            <option value="players-desc" data-i18n="servers.sortPlayersDesc">Joueurs (décroissant)</option>
-            <option value="players-asc" data-i18n="servers.sortPlayersAsc">Joueurs (croissant)</option>
             <option value="rating-desc" data-i18n="servers.sortRatingDesc">Note (décroissant)</option>
-            <option value="rating-asc" data-i18n="servers.sortRatingAsc">Note ()croissant)</option>
+            <option value="rating-asc" data-i18n="servers.sortRatingAsc">Note (croissant)</option>
             <option value="name-asc" data-i18n="servers.sortNameAsc">Nom (A-Z)</option>
             <option value="name-desc" data-i18n="servers.sortNameDesc">Nom (Z-A)</option>
+          </select>
+          <select id="filter-mode" class="filter-select" aria-label="Filtrer par mode">
+            <option value="all" data-i18n="servers.filterAll">Tous les serveurs</option>
+            <option value="creative" data-i18n="servers.modeCreative">Créatif</option>
+            <option value="survival" data-i18n="servers.modeSurvival">Survie</option>
+            <option value="pvp" data-i18n="servers.modePvp">PvP</option>
+          </select>
+          <select id="filter-adult" class="filter-select" aria-label="Filtrer par âge">
+            <option value="all" data-i18n="servers.filterAllAges">Tous les âges</option>
+            <option value="adult" data-i18n="servers.filterAdult">18+</option>
+            <option value="minor" data-i18n="servers.filterMinor">-18</option>
           </select>
           <select id="filter-country" class="filter-select" aria-label="Filtrer par pays">
             <option value="all" data-i18n="servers.allCountries">🌍 Tous les pays</option>

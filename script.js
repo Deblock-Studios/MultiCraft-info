@@ -764,12 +764,31 @@
   };
   const legacyPageRedirects = { 'info-du-jeu': 'le-jeu', telecharger: 'le-jeu' };
 
+  // Titre de l'onglet du navigateur, dérivé des libellés i18n (FR/EN).
+  // (Les aperçus serveur de netlify/edge-functions/meta.js restent en français.)
+  const PAGE_TITLE_KEYS = {
+    accueil: null,
+    'mises-a-jour': 'nav.updates',
+    serveurs: 'nav.servers',
+    'le-jeu': 'nav.theGame',
+    profil: 'nav.profile',
+  };
+
+  function getPageTitle(pageId) {
+    const base = 'MultiCraft Info';
+    const key = PAGE_TITLE_KEYS[pageId];
+    if (!key) return base;
+    const label = (window.i18n && window.i18n.t(key)) || '';
+    return label ? base + ' - ' + label : base;
+  }
+
   const navLinks = document.querySelectorAll('[data-nav]');
   const navToggle = document.querySelector('.nav-toggle');
   const mainNav = document.querySelector('.main-nav');
 
   function navigateTo(pageId) {
     if (!pages[pageId]) return;
+    document.title = getPageTitle(pageId);
     Object.values(pages).forEach(function (p) { if (p) p.classList.remove('active'); });
     if (pages[pageId]) pages[pageId].classList.add('active');
     document.querySelectorAll('.nav-link').forEach(function (link) {
@@ -792,12 +811,14 @@
   }
 
   function pagePath(pageId) {
-    return pageId === 'accueil' ? '/' : '/' + pageId;
+    const langPrefix = (window.i18n && window.i18n.lang === 'en') ? '/en' : '';
+    if (pageId === 'accueil') return langPrefix || '/';
+    return langPrefix + '/' + pageId;
   }
 
   function currentPageFromPath() {
     const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
-    if (path === '/') return 'accueil';
+    if (path === '/' || /^\/(en|fr)$/.test(path)) return 'accueil';
     const slug = path.split('/').pop();
     return legacyPageRedirects[slug] || slug;
   }
@@ -1631,7 +1652,7 @@
     const shareBtn = document.getElementById('modal-share-btn');
     if (shareBtn) {
       shareBtn.onclick = function () {
-        const shareUrl = window.location.origin + '/serveurs?server=' + encodeURIComponent(code);
+        const shareUrl = window.location.origin + pagePath('serveurs') + '?server=' + encodeURIComponent(code);
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareUrl).then(function () { shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); }).catch(function () { fallbackCopyText(shareUrl); shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); });
         } else { fallbackCopyText(shareUrl); shareBtn.textContent = '✅ Lien copié !'; setTimeout(function () { shareBtn.textContent = window.i18n.t('modal.share'); }, 2000); }
@@ -1747,7 +1768,7 @@
   document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (playersModal && !playersModal.hidden) { closePlayersModal(); return; } if (serverModal && !serverModal.hidden) closeServerModal(); });
 
   /* ── Language change ── */
-  document.addEventListener('langchange', function () { if (serversLoaded) renderServers(); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); });
+  document.addEventListener('langchange', function () { if (serversLoaded) renderServers(); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath())); });
 
   /* ── Son ── */
   document.addEventListener('click', function (e) { const target = e.target.closest('a, button, [role="button"]'); if (target) { const audio = new Audio('btn_press.ogg'); audio.play().catch(function (err) { console.warn('Impossible de jouer le son :', err); }); } });
@@ -2906,7 +2927,7 @@
     const slug = (hash.split('?')[0] || '').trim();
     const legacyPage = legacyPageRedirects[slug] || slug;
     if (!pages[legacyPage]) return;
-    if (location.pathname !== '/' && location.pathname !== '/accueil') return;
+    if (currentPageFromPath() !== 'accueil') return;
     const query = hash.indexOf('?') !== -1 ? hash.slice(hash.indexOf('?')) : '';
     history.replaceState(null, '', pagePath(legacyPage) + query);
   })();

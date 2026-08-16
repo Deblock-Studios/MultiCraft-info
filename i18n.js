@@ -412,11 +412,16 @@
      Language detection & persistence
   ──────────────────────────────────────── */
   function detectLang() {
-    // 1. Check localStorage preference
+    // 1. Check URL prefix (/en/ or /fr/) — explicit language in the link
+    const path = (window.location.pathname || '').toLowerCase();
+    const prefixMatch = path.match(/^\/(en|fr)(\/|$)/);
+    if (prefixMatch) return prefixMatch[1];
+
+    // 2. Check localStorage preference
     const stored = localStorage.getItem('mc_lang');
     if (stored === 'fr' || stored === 'en') return stored;
 
-    // 2. Auto-detect from browser
+    // 3. Auto-detect from browser
     const browserLang = (navigator.language || navigator.userLanguage || 'fr').toLowerCase();
     return browserLang.startsWith('fr') ? 'fr' : 'en';
   }

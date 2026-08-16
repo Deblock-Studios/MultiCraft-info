@@ -1086,7 +1086,30 @@
   const sortBySelect = document.getElementById('sort-by');
   const filterCountrySelect = document.getElementById('filter-country');
 
+  let regionNames = null;
+  try { regionNames = new Intl.DisplayNames(['fr'], { type: 'region' }); } catch (e) { regionNames = null; }
+
+  // Convertit le code ISO à deux lettres (country_code) en nom de pays français.
+  function countryCodeToName(code) {
+    if (!code || typeof code !== 'string') return null;
+    const normalized = code.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(normalized)) return null;
+    if (regionNames) {
+      try {
+        const name = regionNames.of(normalized);
+        if (name && name !== normalized) return name;
+      } catch (e) { /* ignore */ }
+    }
+    return normalized;
+  }
+
   function getServerCountry(server) {
+    // Priorité au code pays fourni par l'API (position aléatoire dans le JSON,
+    // mais accessible directement une fois l'objet parsé).
+    if (server && server.country_code) {
+      const fromCode = countryCodeToName(server.country_code);
+      if (fromCode) return fromCode;
+    }
     const text = (server.description || '') + ' ' + (server.server_name || '');
     const lowerText = text.toLowerCase();
     const countryPatterns = {

@@ -801,6 +801,7 @@
     if (pageId === 'le-jeu' && !datacentersLoaded) renderDatacenters();
     if (pageId === 'serveurs' && !serversLoaded) loadServers();
     if (pageId === 'le-jeu' && !downloadsLoaded) loadDownloads();
+    if (pageId === 'le-jeu') loadUserLocation();
     if (pageId === 'profil') {
       document.getElementById('app').style.display = 'none';
       refreshProfileData();
@@ -1010,6 +1011,49 @@
         document.body.appendChild(lb);
       });
     });
+  }
+
+  /* ── Géolocalisation (ipinfo.io) ── */
+  let userGeo = null;
+  let userGeoFetched = false;
+  let regionNamesEn = null;
+  try { regionNamesEn = new Intl.DisplayNames(['en'], { type: 'region' }); } catch (e) { regionNamesEn = null; }
+
+  function normalizeGeoText(str) {
+    return String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  }
+
+  function countryCodeToEnglishName(code) {
+    if (!code || typeof code !== 'string') return null;
+    const c = code.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(c)) return null;
+    if (regionNamesEn) {
+      try {
+        const name = regionNamesEn.of(c);
+        if (name && name !== c) return name;
+      } catch (e) { /* ignore */ }
+    }
+    return null;
+  }
+
+  function loadUserLocation() {
+    if (userGeoFetched) return;
+    userGeoFetched = true;
+    fetchWithTimeout('https://ipinfo.io/json', {}, 8000)
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        const city = data && data.city ? data.city : '';
+        const country = data && data.country ? countryCodeToEnglishName(data.country) : '';
+        if (!city && !country) return;
+        userGeo = { city: city, country: country || '' };
+        document.dispatchEvent(new CustomEvent('usergeo'));
+      })
+      .catch(function (err) {
+        console.warn('Géolocalisation indisponible:', err);
+      });
   }
 
   /* ── Datacenters ── */
@@ -2640,13 +2684,14 @@
     function filterPopupList(query) {
       var items = popupList.querySelectorAll('.lag-test-popup-item');
       var lower = query.toLowerCase();
-      var visible = 0;
       items.forEach(function (item) {
         var text = item.textContent.toLowerCase();
         var match = text.includes(lower);
         item.hidden = !match;
-        if (match) visible++;
       });
+      /* Masque la section recommandée pendant la recherche */
+      var rec = document.getElementById('lag-test-recommended');
+      if (rec) rec.hidden = query.trim().length > 0 ? true : !recommendedAvailable;
     }
 
     /* Flag emoji helper — comprehensive country mapping */
@@ -2757,6 +2802,78 @@
 
     /* Charger la liste de serveurs distants */
     var lagServersLoaded = false;
+    var lagServers = [];
+    var recommendedAvailable = false;
+
+    function parseLagServer(line) {
+      var m = line.match(/^(\d+):\s*(.+)$/);
+      if (!m) return null;
+      var id = m[1];
+      var desc = m[2];
+      var dash = desc.lastIndexOf(' — ');
+      var loc = dash === -1 ? desc : desc.slice(0, dash);
+      var provider = dash === -1 ? '' : desc.slice(dash + 3).trim();
+      var comma = loc.indexOf(', ');
+      var city = comma === -1 ? loc.trim() : loc.slice(0, comma).trim();
+      var country = comma === -1 ? '' : loc.slice(comma + 2).trim();
+      return { id: id, desc: desc, city: city, country: country, provider: provider, full: line.trim() };
+    }
+
+    function buildLagServerButton(server) {
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'lag-test-popup-item';
+      item.dataset.value = server.id;
+      item.dataset.search = server.full;
+      item.innerHTML = '<span class="lag-test-popup-flag">' + getFlagForLocation(server.desc) + '</span><span class="lag-test-popup-desc">' + escapeHtml(server.full) + '</span>';
+      item.addEventListener('click', function () {
+        selectServer(server.id, server.full);
+      });
+      return item;
+    }
+
+    function renderRecommendedServers() {
+      var section = document.getElementById('lag-test-recommended');
+      var sub = document.getElementById('lag-test-recommended-sub');
+      var list = document.getElementById('lag-test-recommended-list');
+      if (!section || !list) return;
+      recommendedAvailable = false;
+      if (!userGeo || !lagServers.length) {
+        section.hidden = true;
+        list.innerHTML = '';
+        return;
+      }
+
+      var city = normalizeGeoText(userGeo.city);
+      var country = normalizeGeoText(userGeo.country);
+      var matches = [];
+      var mode = null;
+
+      if (city) {
+        matches = lagServers.filter(function (s) { return normalizeGeoText(s.city) === city; });
+        if (matches.length) mode = 'city';
+      }
+      if (!matches.length && country) {
+        matches = lagServers.filter(function (s) { return normalizeGeoText(s.country) === country; });
+        if (matches.length) mode = 'country';
+      }
+
+      if (!matches.length) {
+        section.hidden = true;
+        list.innerHTML = '';
+        return;
+      }
+
+      recommendedAvailable = true;
+      if (sub) {
+        var locationLabel = mode === 'city' ? (userGeo.city || '') : (userGeo.country || '');
+        sub.textContent = '📍 ' + locationLabel + ' · ' + window.i18n.t('lagTest.recommendedNear');
+        sub.hidden = false;
+      }
+      list.innerHTML = '';
+      matches.forEach(function (s) { list.appendChild(buildLagServerButton(s)); });
+      section.hidden = false;
+    }
 
     function loadLagServerList() {
       if (lagServersLoaded) return;
@@ -2764,32 +2881,26 @@
         .then(function (r) { return r.text(); })
         .then(function (text) {
           var lines = text.trim().split('\n').filter(Boolean);
+          lagServers = [];
           popupList.innerHTML = '';
           lines.forEach(function (line) {
-            var m = line.match(/^(\d+):\s*(.+)$/);
-            if (!m) return;
-            var id = m[1];
-            var desc = m[2];
-            var flag = getFlagForLocation(desc);
-
-            var item = document.createElement('button');
-            item.type = 'button';
-            item.className = 'lag-test-popup-item';
-            item.dataset.value = id;
-            item.dataset.search = line;
-            item.innerHTML = '<span class="lag-test-popup-flag">' + flag + '</span><span class="lag-test-popup-desc">' + escapeHtml(line.trim()) + '</span>';
-            item.addEventListener('click', function () {
-              selectServer(id, line.trim());
-            });
-            popupList.appendChild(item);
+            var server = parseLagServer(line);
+            if (!server) return;
+            lagServers.push(server);
+            popupList.appendChild(buildLagServerButton(server));
           });
           lagServersLoaded = true;
           runBtn.disabled = !selectedServerId;
+          renderRecommendedServers();
         })
         .catch(function () {
           popupList.innerHTML = '<div class="lag-test-popup-error">' + window.i18n.t('lagTest.selectError') + '</div>';
         });
     }
+
+    /* Re-render des recommandations quand la géolocalisation arrive (après la liste) ou que la langue change */
+    document.addEventListener('usergeo', renderRecommendedServers);
+    document.addEventListener('langchange', renderRecommendedServers);
 
     function selectServer(id, displayText) {
       selectedServerId = id;

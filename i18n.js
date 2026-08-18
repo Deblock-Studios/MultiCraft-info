@@ -195,7 +195,7 @@
       'lagTest.btnOpen':        '📡 Tester la latence',
       'lagTest.eyebrow':        'Test de latence',
       'lagTest.title':          '📡 Tester la latence',
-      'lagTest.subtitle':       'Veuillez choisir un serveur pour tester la latence.',
+      'lagTest.subtitle':       'Veuillez choisir un lieu pour faire le test.',
       'lagTest.selectLabel':    'Serveur de test',
       'lagTest.selectDefault':  'Choisir un serveur…',
       'lagTest.selectLoading':  'Chargement des serveurs…',
@@ -206,6 +206,8 @@
       'lagTest.resultsTitle':   'Résultats :',
       'lagTest.searchPlaceholder': 'Rechercher un serveur…',
       'lagTest.noResults':    'Aucun serveur trouvé',
+      'lagTest.recommended':  'Serveurs recommandés',
+      'lagTest.recommendedNear': 'Près de vous',
 
       /* Meta */
       'meta.description': 'MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.',
@@ -401,7 +403,7 @@
       'lagTest.btnOpen':        '📡 Test latency',
       'lagTest.eyebrow':        'Latency test',
       'lagTest.title':          '📡 Test latency',
-      'lagTest.subtitle':       'Please choose a server to test latency.',
+      'lagTest.subtitle':       'Please choose a location to run the test.',
       'lagTest.selectLabel':    'Test server',
       'lagTest.selectDefault':  'Choose a server…',
       'lagTest.selectLoading':  'Loading servers…',
@@ -412,6 +414,8 @@
       'lagTest.resultsTitle':   'Results:',
       'lagTest.searchPlaceholder': 'Search servers…',
       'lagTest.noResults':    'No servers found',
+      'lagTest.recommended':  'Recommended servers',
+      'lagTest.recommendedNear': 'Near you',
 
       /* Meta */
       'meta.description': 'MultiCraft Info — News, updates and information about MultiCraft servers.',

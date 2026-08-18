@@ -587,7 +587,7 @@
       <button type="button" class="modal-close" id="lag-test-modal-close" aria-label="Fermer">✕</button>
       <p class="modal-eyebrow" data-i18n="lagTest.eyebrow">Test de latence</p>
       <h2 id="lag-test-modal-title" data-i18n="lagTest.title">📡 Tester la latence</h2>
-      <p class="lag-test-subtitle" data-i18n="lagTest.subtitle">Veuillez choisir un serveur pour tester la latence.</p>
+      <p class="lag-test-subtitle" data-i18n="lagTest.subtitle">Veuillez choisir un lieu pour faire le test.</p>
       <div class="lag-test-select-row">
         <label class="lag-test-label" data-i18n="lagTest.selectLabel">Serveur de test</label>
         <div class="lag-test-popup-wrapper">
@@ -597,7 +597,14 @@
           </button>
           <div id="lag-test-popup-dropdown" class="lag-test-popup-dropdown" hidden>
             <input type="text" id="lag-test-popup-search" class="lag-test-popup-search" placeholder="Rechercher un serveur…" data-i18n-placeholder="lagTest.searchPlaceholder">
-            <div id="lag-test-popup-list" class="lag-test-popup-list"></div>
+            <div id="lag-test-popup-scroll" class="lag-test-popup-scroll">
+              <div id="lag-test-recommended" class="lag-test-recommended" hidden>
+                <div class="lag-test-recommended-title" data-i18n="lagTest.recommended">Serveurs recommandés</div>
+                <div id="lag-test-recommended-sub" class="lag-test-recommended-sub" hidden></div>
+                <div id="lag-test-recommended-list" class="lag-test-recommended-list"></div>
+              </div>
+              <div id="lag-test-popup-list" class="lag-test-popup-list"></div>
+            </div>
           </div>
         </div>
       </div>

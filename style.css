@@ -2762,7 +2762,7 @@ body.modal-open {
   overflow-y: visible;
 }
 
-/* Desktop: large 2-column lag test modal (URLs right, server selection left) */
+/* Desktop: large 2-column lag test modal (run button left, server selection + results right) */
 @media (min-width: 769px) {
   .lag-test-modal-box {
     max-width: 960px;
@@ -2774,7 +2774,7 @@ body.modal-open {
       "eyebrow eyebrow"
       "title title"
       "subtitle subtitle"
-      "select results"
+      "run select"
       "run results";
     gap: 0.1rem 2rem;
     align-items: start;
@@ -2784,8 +2784,8 @@ body.modal-open {
   .lag-test-modal-box > h2 { grid-area: title; margin-bottom: 0.15rem; }
   .lag-test-modal-box > .lag-test-subtitle { grid-area: subtitle; }
 
-  .lag-test-select-row { grid-area: select; margin-bottom: 0.8rem; }
-  .lag-test-run-btn { grid-area: run; margin-bottom: 0; align-self: end; }
+  .lag-test-select-row { grid-area: select; margin-bottom: 0.8rem; border-left: 1px solid var(--border); padding-left: 1.5rem; }
+  .lag-test-run-btn { grid-area: run; margin-bottom: 0; align-self: start; }
 
   .lag-test-results {
     grid-area: results;
@@ -2909,18 +2909,21 @@ body.modal-open {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.lag-test-popup-list {
+.lag-test-popup-scroll {
   max-height: 340px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
 }
 
-.lag-test-popup-list::-webkit-scrollbar { width: 5px; }
-.lag-test-popup-list::-webkit-scrollbar-track { background: transparent; }
-.lag-test-popup-list::-webkit-scrollbar-thumb {
+.lag-test-popup-scroll::-webkit-scrollbar { width: 5px; }
+.lag-test-popup-scroll::-webkit-scrollbar-track { background: transparent; }
+.lag-test-popup-scroll::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 3px;
+}
+
+.lag-test-popup-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .lag-test-popup-item {
@@ -2965,6 +2968,40 @@ body.modal-open {
   color: var(--text-dim);
   font-size: 0.82rem;
   text-align: center;
+}
+
+.lag-test-recommended {
+  border-bottom: 1px solid var(--border);
+  padding: 0.3rem 0 0.45rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lag-test-recommended[hidden] {
+  display: none;
+}
+
+.lag-test-recommended-title {
+  padding: 0.45rem 0.8rem 0.1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--green);
+}
+
+.lag-test-recommended-sub {
+  padding: 0.1rem 0.8rem 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.lag-test-recommended-sub[hidden] {
+  display: none;
+}
+
+.lag-test-recommended-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .lag-test-run-btn {

@@ -56,6 +56,7 @@
       'servers.filterAllAges':  'Tous les âges',
       'servers.filterAdult':    '18+',
       'servers.filterMinor':    '-18',
+      'servers.dataDate':       'Date des données : 30/07/2026',
       'servers.empty':          'Aucun serveur ne correspond à votre recherche.',
       'servers.errorLoad':      'Impossible de charger la liste des serveurs.',
       'servers.noDesc':         'Aucune description disponible.',
@@ -163,7 +164,7 @@
       'profile.pseudoPlaceholder': 'Votre pseudo',
       'profile.email':      'Email',
       'profile.password':   'Mot de passe',
-      'profile.newPassword': 'Nouveau mot de passe',
+      'profile.newPassword': 'Nouveau mot de passe (6 caractères minimum)',
       'profile.confirmPassword': 'Confirmer le mot de passe',
       'profile.save':       'Enregistrer',
       'profile.saved':      '✓ Enregistré !',
@@ -184,6 +185,8 @@
       'profile.avatarSaved':   '✓ Photo de profil mise à jour !',
       'profile.avatarRemoved': '✓ Photo supprimée.',
       'profile.avatarTooBig':  '❌ Image trop lourde (max 2 Mo).',
+      'profile.logout':       'Déconnexion',
+      'profile.logoutBtn':    'Se déconnecter',
 
       /* Chat */
       'chat.title': 'Chat Global',
@@ -208,6 +211,19 @@
       'lagTest.noResults':    'Aucun serveur trouvé',
       'lagTest.recommended':  'Serveurs recommandés',
       'lagTest.recommendedNear': 'Près de vous',
+      'lagTest.testingTitle':   'Test en cours',
+      'lagTest.usingServer':    'Serveur utilisé :',
+      'lagTest.fastest':        'Serveur le plus rapide :',
+      'lagTest.colUrl':         'URL',
+      'lagTest.colLatency':     'Latence',
+
+      'deblock.heroTitle':    'COMPTE DEBLOCK',
+      'deblock.tagline':      'Un seul compte pour tout un univers',
+      'deblock.signUpTitle':  'Créer un compte',
+      'deblock.forgotTitle':  'Mot de passe oublié',
+      'deblock.email':        'Email',
+      'deblock.password':     'Mot de passe',
+      'deblock.confirmPassword': 'Confirmer le mot de passe',
 
       /* Meta */
       'meta.description': 'MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.',
@@ -263,6 +279,7 @@
       'servers.filterAllAges':  'All ages',
       'servers.filterAdult':    '18+',
       'servers.filterMinor':    '-18',
+      'servers.dataDate':       'Data date: 30/07/2026',
       'servers.empty':          'No server matches your search.',
       'servers.errorLoad':      'Could not load the server list.',
       'servers.noDesc':         'No description available.',
@@ -371,7 +388,7 @@
       'profile.pseudoPlaceholder': 'Your username',
       'profile.email':      'Email',
       'profile.password':   'Password',
-      'profile.newPassword': 'New password',
+      'profile.newPassword': 'New password (6 characters minimum)',
       'profile.confirmPassword': 'Confirm password',
       'profile.save':       'Save',
       'profile.saved':      '✓ Saved!',
@@ -392,6 +409,8 @@
       'profile.avatarSaved':   '✓ Profile picture updated!',
       'profile.avatarRemoved': '✓ Picture removed.',
       'profile.avatarTooBig':  '❌ Image too large (max 2 MB).',
+      'profile.logout':       'Log out',
+      'profile.logoutBtn':    'Log out',
 
       /* Chat */
       'chat.title': 'Global Chat',
@@ -416,6 +435,19 @@
       'lagTest.noResults':    'No servers found',
       'lagTest.recommended':  'Recommended servers',
       'lagTest.recommendedNear': 'Near you',
+      'lagTest.testingTitle':   'Test in progress',
+      'lagTest.usingServer':    'Server used:',
+      'lagTest.fastest':        'Fastest server:',
+      'lagTest.colUrl':         'URL',
+      'lagTest.colLatency':     'Latency',
+
+      'deblock.heroTitle':    'DEBLOCK ACCOUNT',
+      'deblock.tagline':      'One account for a whole universe',
+      'deblock.signUpTitle':  'Create an account',
+      'deblock.forgotTitle':  'Forgot password',
+      'deblock.email':        'Email',
+      'deblock.password':     'Password',
+      'deblock.confirmPassword': 'Confirm password',
 
       /* Meta */
       'meta.description': 'MultiCraft Info — News, updates and information about MultiCraft servers.',

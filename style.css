@@ -848,6 +848,12 @@ body {
   flex-shrink: 0;
 }
 
+.servers-data-date {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  margin: -0.9rem 0 1.25rem;
+}
+
 .servers-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2758,50 +2764,14 @@ body.modal-open {
 }
 
 .lag-test-modal-box {
-  max-width: 520px;
-  overflow-y: visible;
+  max-width: 560px;
+  max-height: none;
+  overflow: visible;
 }
 
-/* Desktop: large 2-column lag test modal (run button left, server selection + results right) */
 @media (min-width: 769px) {
   .lag-test-modal-box {
-    max-width: 960px;
-    width: 94vw;
-    display: grid;
-    grid-template-columns: minmax(280px, 340px) 1fr;
-    grid-template-rows: auto auto auto auto minmax(0, 1fr);
-    grid-template-areas:
-      "eyebrow eyebrow"
-      "title title"
-      "subtitle subtitle"
-      "run select"
-      "run results";
-    gap: 0.1rem 2rem;
-    align-items: start;
-  }
-
-  .lag-test-modal-box > .modal-eyebrow { grid-area: eyebrow; margin-bottom: 0; }
-  .lag-test-modal-box > h2 { grid-area: title; margin-bottom: 0.15rem; }
-  .lag-test-modal-box > .lag-test-subtitle { grid-area: subtitle; }
-
-  .lag-test-select-row { grid-area: select; margin-bottom: 0.8rem; border-left: 1px solid var(--border); padding-left: 1.5rem; }
-  .lag-test-run-btn { grid-area: run; margin-bottom: 0; align-self: start; }
-
-  .lag-test-results {
-    grid-area: results;
-    border-top: none;
-    border-left: 1px solid var(--border);
-    padding-top: 0;
-    padding-left: 1.5rem;
-    max-height: none;
-    min-height: 0;
-    overflow-y: auto;
-  }
-
-  .lag-test-modal-box .lag-test-results-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem;
+    max-width: 640px;
   }
 }
 
@@ -3016,53 +2986,182 @@ body.modal-open {
 
 .lag-test-results {
   border-top: 1px solid var(--border);
-  padding-top: 1.1rem;
-  max-height: 300px;
+  padding-top: 1.2rem;
+  margin-top: 0.4rem;
+  max-height: 340px;
   overflow-y: auto;
 }
 
-.lag-test-results-title {
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
-  margin-bottom: 0.8rem;
-}
-
-.lag-test-results-grid {
+/* État « test en cours » : cercle qui tourne */
+.lag-test-loading {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.lag-test-result-row {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.6rem 0.9rem;
-  gap: 0.65rem;
+  gap: 0.85rem;
+  text-align: center;
+  padding: 1.4rem 0.5rem;
 }
 
-.lag-test-result-host {
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  color: var(--green);
+.lag-test-loading[hidden] {
+  display: none;
+}
+
+.lag-test-spinner {
+  width: 46px;
+  height: 46px;
+  border: 4px solid rgba(255, 255, 255, 0.14);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: lag-spin 0.8s linear infinite;
+}
+
+@keyframes lag-spin {
+  to { transform: rotate(360deg); }
+}
+
+.lag-test-loading-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.lag-test-loading-server {
+  font-size: 0.85rem;
+}
+
+.lag-test-loading-server-label {
+  color: var(--text-muted);
+}
+
+.lag-test-loading-server-value {
+  color: var(--text);
   font-weight: 600;
+}
+
+/* Résultats */
+.lag-test-done[hidden] {
+  display: none;
+}
+
+.lag-test-fastest {
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   word-break: break-word;
 }
 
-.lag-test-result-loc {
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  margin-top: 0.1rem;
+.lag-test-fastest-label {
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
-.lag-test-result-badge {
-  flex-shrink: 0;
+.lag-test-fastest-host {
+  color: var(--green);
+  font-weight: 700;
+  font-family: var(--mono);
+  word-break: break-all;
+}
+
+.lag-test-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.lag-test-table th,
+.lag-test-table td {
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.lag-test-table th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.lag-test-table th:last-child,
+.lag-test-table td:last-child {
+  text-align: right;
+}
+
+.lag-test-table-host {
+  font-family: var(--mono);
+  color: var(--text);
+  word-break: break-all;
+}
+
+.lag-test-table-latency {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lag-test-table-latency.lag-lat-good  { color: var(--green); }
+.lag-test-table-latency.lag-lat-mid   { color: #f97316; }
+.lag-test-table-latency.lag-lat-high  { color: #ef4444; }
+.lag-test-table-latency.lag-lat-error { color: var(--text-dim); }
+
+/* ── Auth page (Compte Deblock) ── */
+.auth-page {
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 5vw, 3.5rem);
+}
+
+.auth-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+  min-height: 60vh;
+}
+
+.auth-hero-title {
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin-bottom: 0.75rem;
+}
+
+.auth-hero-sub {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+}
+
+.auth-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 2rem 1.75rem;
+}
+
+.auth-panel-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    min-height: 0;
+  }
+
+  .auth-hero {
+    text-align: center;
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -3510,12 +3609,6 @@ body.modal-open {
 
   .modal-info-value {
     font-size: 0.75rem;
-  }
-
-  .lag-test-result-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.35rem;
   }
 
   .profile-avatar-wrapper {

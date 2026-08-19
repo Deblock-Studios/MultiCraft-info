@@ -50,7 +50,6 @@
     lastSeenChatTimestamp = new Date().toISOString();
     localStorage.setItem('mc_chat_last_seen', lastSeenChatTimestamp);
   }
-  let unreadCheckInterval = null;
 
   /* ── Helper: get authenticated headers for Supabase REST calls ── */
   function getApiHeaders() {
@@ -155,7 +154,7 @@
       const now = Date.now();
       if (rolesCache && (now - rolesCacheTime) < ROLES_CACHE_DURATION) return rolesCache;
       const url = SUPABASE_URL + '/rest/v1/user_roles?select=user_id,role_id';
-      const res = await fetch(url, { headers: getApiHeaders() });
+      const res = await fetchWithTimeout(url, { headers: getApiHeaders() }, 15000);
       if (res.status === 404) { rolesCache = []; rolesCacheTime = now; userRoles = []; return []; }
       if (!res.ok) throw new Error('Erreur chargement rôles (' + res.status + ')');
       const roles = await res.json();
@@ -1184,44 +1183,6 @@
     datacentersLoaded = true;
   }
 
-  async function measureLatency(host) {
-    try {
-      const res = await fetch(
-        'https://lag-test.creatif-france.workers.dev/?server=1&url=' +
-        encodeURIComponent(host)
-      );
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (typeof data.avg_ms === 'number') return Math.round(data.avg_ms);
-      return null;
-    } catch (e) {
-      console.error(e);
-      return null;
-    }
-  }
-
-  function latencyClass(ms) {
-    if (ms === null) return 'latency-error';
-    if (ms < 250) return 'latency-good';
-    if (ms < 500) return 'latency-medium';
-    return 'latency-high';
-  }
-
-  async function runLatencyTests() {
-    DATACENTERS.forEach(async function (dc) {
-      const id = 'lat-' + dc.host.replace(/\./g, '-');
-      const badge = document.getElementById(id);
-      if (!badge) return;
-      const dot = badge.querySelector('.dc-latency-dot');
-      const val = badge.querySelector('.dc-latency-val');
-      const ms = await measureLatency(dc.host);
-      const cls = latencyClass(ms);
-      badge.className = 'dc-latency-badge ' + cls;
-      if (dot) dot.className = 'dc-latency-dot';
-      if (val) val.textContent = ms !== null ? ms + ' ms' : '—';
-    });
-  }
-
   /* ── Téléchargements ── */
   let downloadsLoaded = false;
   let downloadsData = null;
@@ -1261,11 +1222,15 @@
 
   /* ── Serveurs ── */
   const SERVERS_API_URL = 'https://multicraft-servers.creatif-france.workers.dev';
-  const SERVERS_PER_PAGE = 50;
+  const SERVERS_PER_PAGE = 35;
   let serversLoaded = false;
   let allServers = [];
   let filteredServers = [];
   let serversDisplayedCount = 0;
+  let serversActiveList = null;
+  let serversSentinel = null;
+  let serversObserver = null;
+  let serversScrollHandler = null;
   const serversContainer = document.getElementById('servers-container');
   const serverSearchInput = document.getElementById('server-search');
   const serversCountEl = document.getElementById('servers-count');
@@ -1477,7 +1442,12 @@
     if (sortType === 'rating-desc' || sortType === 'rating-asc') {
       const rated = filtered.filter(function (s) { return s._avgRating != null; });
       const unrated = filtered.filter(function (s) { return s._avgRating == null; });
-      rated.sort(function (a, b) { return sortType === 'rating-desc' ? b._avgRating - a._avgRating : a._avgRating - b._avgRating; });
+      rated.sort(function (a, b) {
+        const diff = sortType === 'rating-desc' ? b._avgRating - a._avgRating : a._avgRating - b._avgRating;
+        if (diff !== 0) return diff;
+        // Égalité de note : on départage par le nombre de notes (plus de notes en premier)
+        return (b._reviewsCount || 0) - (a._reviewsCount || 0);
+      });
       filtered = rated.concat(unrated);
     } else if (sortType === 'name-asc' || sortType === 'name-desc') {
       filtered.sort(function (a, b) {
@@ -1615,8 +1585,8 @@
   function renderServers(list) {
     if (!serversContainer) return;
     if (!list) list = filteredServers;
-    var oldBtn = document.getElementById('load-more-servers-btn');
-    if (oldBtn) oldBtn.remove();
+    serversActiveList = list;
+    removeServersSentinel();
     serversDisplayedCount = 0;
     if (!list || !list.length) {
       serversContainer.innerHTML = '<div class="empty-state"><p>' + window.i18n.t('servers.empty') + '</p></div>';
@@ -1626,28 +1596,16 @@
       serversContainer.innerHTML = firstBatch.map(renderServerCard).join('');
       bindServerCardActions();
       if (serversDisplayedCount < list.length) {
-        renderLoadMoreButton(list);
+        ensureServersSentinel();
       }
     }
     if (serversCountEl) serversCountEl.textContent = countLabel((list || []).length);
   }
 
-  function renderLoadMoreButton(list) {
-    var existingBtn = document.getElementById('load-more-servers-btn');
-    if (existingBtn) existingBtn.remove();
-    if (serversDisplayedCount >= list.length) return;
-    var remaining = list.length - serversDisplayedCount;
-    var nextCount = Math.min(SERVERS_PER_PAGE, remaining);
-    var wrap = document.createElement('div');
-    wrap.id = 'load-more-servers-btn';
-    wrap.className = 'load-more-wrap';
-    wrap.innerHTML = '<button class="btn btn-ghost load-more-btn">Charger ' + nextCount + ' serveurs de plus <span class="load-more-count">(' + remaining + ' restants)</span></button>';
-    wrap.querySelector('button').addEventListener('click', function () { loadMoreServers(list); });
-    serversContainer.after(wrap);
-  }
-
-  function loadMoreServers(list) {
-    if (!serversContainer) return;
+  function loadMoreServers() {
+    const list = serversActiveList || filteredServers;
+    if (!serversContainer || !list || serversDisplayedCount >= list.length) return;
+    removeServersSentinel();
     var nextBatch = list.slice(serversDisplayedCount, serversDisplayedCount + SERVERS_PER_PAGE);
     serversDisplayedCount += nextBatch.length;
     var fragment = document.createDocumentFragment();
@@ -1658,7 +1616,40 @@
     });
     serversContainer.appendChild(fragment);
     bindServerCardActions();
-    renderLoadMoreButton(list);
+    if (serversDisplayedCount < list.length) ensureServersSentinel();
+  }
+
+  function ensureServersSentinel() {
+    if (!serversContainer || serversSentinel) return;
+    serversSentinel = document.createElement('div');
+    serversSentinel.id = 'servers-sentinel';
+    serversSentinel.className = 'servers-sentinel';
+    serversSentinel.setAttribute('aria-hidden', 'true');
+    serversSentinel.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+    serversContainer.after(serversSentinel);
+
+    if ('IntersectionObserver' in window) {
+      if (!serversObserver) {
+        serversObserver = new IntersectionObserver(function (entries) {
+          for (let i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) { loadMoreServers(); break; }
+          }
+        }, { rootMargin: '800px 0px' });
+      }
+      serversObserver.observe(serversSentinel);
+    } else if (!serversScrollHandler) {
+      serversScrollHandler = function () {
+        if (!serversSentinel) return;
+        const rect = serversSentinel.getBoundingClientRect();
+        if (rect.top < window.innerHeight + 800) loadMoreServers();
+      };
+      window.addEventListener('scroll', serversScrollHandler, { passive: true });
+    }
+  }
+
+  function removeServersSentinel() {
+    if (serversObserver && serversSentinel) serversObserver.unobserve(serversSentinel);
+    if (serversSentinel) { serversSentinel.remove(); serversSentinel = null; }
   }
 
   function filterServers(query) {
@@ -1720,7 +1711,7 @@
 
   async function fetchReviews(serverId) {
     const url = SUPABASE_URL + '/rest/v1/reviews?server_id=eq.' + encodeURIComponent(serverId) + '&order=created_at.desc&limit=50';
-    const res = await fetch(url, { headers: getApiHeaders() });
+    const res = await fetchWithTimeout(url, { headers: getApiHeaders() }, 15000);
     if (!res.ok) throw new Error('Erreur chargement avis (' + res.status + ')');
     return res.json();
   }
@@ -2041,7 +2032,7 @@
         url = SUPABASE_URL + '/rest/v1/global_chat?select=*&channel=eq.' + tab + '&order=created_at.desc&limit=50';
       }
 
-      var res = await fetch(url, { headers: getApiHeaders() });
+      var res = await fetchWithTimeout(url, { headers: getApiHeaders() }, 15000);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       var msgs = await res.json();
 
@@ -2605,7 +2596,10 @@
 
     if (!chatPollingInterval) {
       chatPollingInterval = setInterval(function () {
-        loadChatMessagesForTab(currentChatTab, currentPrivatePartner);
+        if (isPolling) return;
+        isPolling = true;
+        loadChatMessagesForTab(currentChatTab, currentPrivatePartner)
+          .finally(function () { isPolling = false; });
       }, 3000);
     }
     if (chatInput) chatInput.focus();
@@ -3193,7 +3187,7 @@
 
     function loadLagServerList() {
       if (lagServersLoaded) return;
-      fetch('https://lag-test.creatif-france.workers.dev/?action=list')
+      fetchWithTimeout('https://lag-test.creatif-france.workers.dev/?action=list', {}, 15000)
         .then(function (r) { return r.text(); })
         .then(function (text) {
           var lines = text.trim().split('\n').filter(Boolean);
@@ -3257,9 +3251,11 @@
       });
 
       var promises = DATACENTERS.map(function (dc) {
-        return fetch(
+        return fetchWithTimeout(
           'https://lag-test.creatif-france.workers.dev/?server=' +
-          encodeURIComponent(selectedServer.id) + '&url=' + encodeURIComponent(dc.testHost || dc.host)
+          encodeURIComponent(selectedServer.id) + '&url=' + encodeURIComponent(dc.testHost || dc.host),
+          {},
+          15000
         )
           .then(function (r) { return r.json(); })
           .then(function (data) {
@@ -3376,8 +3372,6 @@
   })();
 
   /* ── Init ── */
-  const footerYear = document.getElementById('footer-year');
-  if (footerYear) footerYear.textContent = new Date().getFullYear();
   initDeblockAuth();
 
   // Migrate legacy hash URLs (#serveurs → /serveurs) without reloading the page.

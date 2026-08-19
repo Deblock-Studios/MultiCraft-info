@@ -110,10 +110,6 @@
     .alert-banner-close:hover {
       background: rgba(255, 255, 255, 0.3);
     }
-    .footer-deblock-btn {
-      font-size: 0.82rem;
-      padding: 0.4rem 1rem;
-    }
     /* ── Deblock Auth Modal ── */
     .deblock-form-group label {
       display: block;
@@ -476,14 +472,21 @@
       </div>
   </section>
 <footer class="site-footer">
-    <div class="footer-info">
-      <p>MultiCraft Info — <span id="footer-year"></span></p>
-      <p class="footer-credits"><span data-i18n="footer.createdBy">Créé par</span> <a href="https://github.com/Nathmatt22">Aurelmattnath</a> et <a href="https://github.com/lulu76450">Lucas76</a>. <span data-i18n="footer.notAffiliated">Nous ne sommes pas affiliés à MultiCraft.</span></p>
-      <p class="footer-source"><span data-i18n="footer.sourceCode">Code source :</span> <a href="https://github.com/Deblock-Studios/MultiCraft-Info" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img class="footer-logo" src="multicraft-info.svg" alt="MultiCraft Info" width="280" height="147">
+        <p class="footer-tagline" data-i18n="footer.tagline">Le site ultime pour les MultiCrafters.</p>
+      </div>
+      <div class="footer-actions">
+        <a href="legal.html" class="btn btn-ghost" data-i18n="footer.legal">Mentions légales et politique de confidentialité</a>
+        <a href="https://github.com/Deblock-Studios/MultiCraft-Info" class="btn btn-ghost" target="_blank" rel="noopener noreferrer" data-i18n="footer.source">Code source</a>
+      </div>
     </div>
-    <div class="footer-links">
-      <a href="legal.html" class="btn btn-ghost footer-deblock-btn">Legal</a>
-      <a href="https://deblock-studios.vercel.app/" class="btn btn-ghost footer-deblock-btn" target="_blank" rel="noopener noreferrer">Deblock Studios</a>
+    <p class="footer-disclaimer" data-i18n="footer.notAffiliated">Nous ne sommes pas affiliés à MultiCraft.</p>
+    <div class="footer-bottom">
+      <img class="footer-studio-avatar" src="https://avatars.githubusercontent.com/u/299074398?s=200&v=4" alt="Deblock Studios" width="48" height="48" loading="lazy">
+      <p class="footer-studio"><span data-i18n="footer.madeBy">MultiCraft Info est une création de</span> <a href="https://deblock-studios.vercel.app/" target="_blank" rel="noopener noreferrer">Deblock Studios</a></p>
+      <p class="footer-rights" data-i18n="footer.rights">© Deblock Studios 2026 — Tous droits réservés</p>
     </div>
   </footer>
   <!-- Pop-up code d'invitation / Server modal -->

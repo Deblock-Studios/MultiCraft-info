@@ -29,9 +29,11 @@
       'home.statServers': 'serveurs répertoriés',
 
       /* Footer */
-      'footer.createdBy': 'Créé par',
-      'footer.notAffiliated': 'Nous ne sommes pas affiliés à MultiCraft.',
-      'footer.sourceCode': 'Code source :',
+      'footer.tagline':      'Le site ultime pour les MultiCrafters.',
+      'footer.source':       'Code source',
+      'footer.notAffiliated':'Nous ne sommes pas affiliés à MultiCraft.',
+      'footer.madeBy':       'MultiCraft Info est une création de',
+      'footer.rights':       '© Deblock Studios 2026 — Tous droits réservés',
 
       /* Updates page */
       'updates.subtitle': 'Les dernières nouveautés du jeu, classées de la plus récente à la plus ancienne.',
@@ -97,7 +99,7 @@
       'download.error':        'Impossible de charger les versions disponibles.',
 
       /* Footer */
-      'footer.legal': 'Légal',
+      'footer.legal': 'Mentions légales et politique de confidentialité',
 
       /* Modal – server */
       'modal.serverInfo':     'Informations du serveur',
@@ -252,9 +254,11 @@
       'home.statServers': 'servers listed',
 
       /* Footer */
-      'footer.createdBy': 'Created by',
-      'footer.notAffiliated': 'We are not affiliated with MultiCraft.',
-      'footer.sourceCode': 'Source code:',
+      'footer.tagline':      'The ultimate site for MultiCrafters.',
+      'footer.source':       'Source code',
+      'footer.notAffiliated':'We are not affiliated with MultiCraft.',
+      'footer.madeBy':       'MultiCraft Info is a creation of',
+      'footer.rights':       '© Deblock Studios 2026 — All rights reserved',
 
       /* Updates page */
       'updates.subtitle': 'Latest game news, sorted from most recent to oldest.',
@@ -320,7 +324,7 @@
       'download.error':        'Could not load the available versions.',
 
       /* Footer */
-      'footer.legal': 'Legal',
+      'footer.legal': 'Legal notice & privacy policy',
 
       /* Modal – server */
       'modal.serverInfo':     'Server Information',

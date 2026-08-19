@@ -38,6 +38,8 @@
 
     initializationPromise = new Promise(function (resolve) {
       // Wait for supabase-js to be loaded on the page
+      var attempts = 0;
+      var MAX_ATTEMPTS = 200; // ~10s : abandonne si le CDN supabase ne charge pas
       function tryInit() {
         if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
           supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -75,7 +77,14 @@
           });
         } else {
           // supabase-js not loaded yet, retry
-          setTimeout(tryInit, 50);
+          attempts += 1;
+          if (attempts >= MAX_ATTEMPTS) {
+            // CDN bloqué / hors-ligne : on libère l'initialisation au lieu de boucler à l'infini
+            ready = true;
+            resolve();
+          } else {
+            setTimeout(tryInit, 50);
+          }
         }
       }
       tryInit();

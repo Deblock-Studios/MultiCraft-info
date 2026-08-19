@@ -300,7 +300,7 @@
       var param = new URLSearchParams(window.location.search).get('redirect');
       if (!param) return null;
       var target = decodeURIComponent(param);
-      var allowed = ['https://multidb.vercel.app', 'http://localhost:', 'http://127.0.0.1:'].some(function (origin) {
+      var allowed = ['https://multi-db-beta.vercel.app', 'https://multidb.vercel.app', 'http://localhost:', 'http://127.0.0.1:'].some(function (origin) {
         return target.indexOf(origin) === 0;
       });
       if (allowed) pendingRedirect = target;

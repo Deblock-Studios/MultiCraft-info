@@ -3,6 +3,5 @@ isDisplayed: oui
 color: rouge
 ---
 
-**fr:** Suite aux ajouts de MultiCraft, nous avons écrit un article de blog. Lisez le ici : de-blog.pages.dev
-**en:** Following the additions to MultiCraft, we've written a blog post. Read it here : de-blog.pages.dev
- 
+**fr:**Nous rencontrons certains problème principal visé sur la langue anglaise du site, nous essayons de régler le problème au plus vite
+**en:** We are experiencing some major issues with the English language on the site; we are trying to resolve the problem as quickly as possible.

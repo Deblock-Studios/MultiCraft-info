@@ -627,6 +627,17 @@ body {
   transform: scale(1.01);
 }
 
+/* ── Updates sentinel (chargement auto) ── */
+.updates-sentinel {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.updates-sentinel .loading-state {
+  padding: 0.5rem 1rem;
+}
+
 /* ── Loading / Empty / Error ── */
 .loading-state,
 .empty-state,

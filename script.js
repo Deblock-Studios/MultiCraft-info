@@ -951,6 +951,12 @@
   /* ── Updates loader ── */
   let updatesLoaded = false;
   const updatesContainer = document.getElementById('updates-container');
+  const UPDATES_PER_BATCH = 7;
+  let updatesAllPosts = [];
+  let updatesDisplayed = 0;
+  let updatesSentinel = null;
+  let updatesObserver = null;
+  let updatesScrollHandler = null;
 
   async function loadUpdates() {
     try {
@@ -973,14 +979,68 @@
           body: parsed.body,
         };
       }));
-      const valid = posts.filter(function (p) { return p !== null; }).sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
-      if (valid.length === 0) updatesContainer.innerHTML = '<div class="empty-state"><p>' + window.i18n.t('updates.empty') + '</p></div>';
-      else { updatesContainer.innerHTML = valid.map(renderUpdatePost).join(''); bindLightbox(); }
+      updatesAllPosts = posts.filter(function (p) { return p !== null; }).sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+      updatesDisplayed = 0;
+      removeUpdatesSentinel();
+      updatesContainer.innerHTML = '';
+      if (updatesAllPosts.length === 0) {
+        updatesContainer.innerHTML = '<div class="empty-state"><p>' + window.i18n.t('updates.empty') + '</p></div>';
+      } else {
+        bindLightbox();
+        renderUpdatesBatch();
+      }
       updatesLoaded = true;
     } catch (err) {
       console.error(err);
       updatesContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('updates.error') + '</p><p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim)">' + window.i18n.t('updates.errorHint') + '</p></div>';
     }
+  }
+
+  function renderUpdatesBatch() {
+    if (!updatesContainer || updatesDisplayed >= updatesAllPosts.length) return;
+    removeUpdatesSentinel();
+    const next = updatesAllPosts.slice(updatesDisplayed, updatesDisplayed + UPDATES_PER_BATCH);
+    const fragment = document.createDocumentFragment();
+    next.forEach(function (post) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderUpdatePost(post);
+      while (tmp.firstElementChild) fragment.appendChild(tmp.firstElementChild);
+    });
+    updatesContainer.appendChild(fragment);
+    updatesDisplayed += next.length;
+    if (updatesDisplayed < updatesAllPosts.length) ensureUpdatesSentinel();
+  }
+
+  function ensureUpdatesSentinel() {
+    if (!updatesContainer || updatesSentinel) return;
+    updatesSentinel = document.createElement('div');
+    updatesSentinel.className = 'updates-sentinel';
+    updatesSentinel.setAttribute('aria-hidden', 'true');
+    updatesSentinel.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('updates.loading') + '</p></div>';
+    updatesContainer.appendChild(updatesSentinel);
+
+    if ('IntersectionObserver' in window) {
+      if (!updatesObserver) {
+        updatesObserver = new IntersectionObserver(function (entries) {
+          for (let i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) { renderUpdatesBatch(); break; }
+          }
+        }, { rootMargin: '800px 0px' });
+      }
+      updatesObserver.observe(updatesSentinel);
+    } else if (!updatesScrollHandler) {
+      updatesScrollHandler = function () {
+        if (!updatesSentinel) return;
+        const rect = updatesSentinel.getBoundingClientRect();
+        if (rect.top < window.innerHeight + 800) renderUpdatesBatch();
+      };
+      window.addEventListener('scroll', updatesScrollHandler, { passive: true });
+    }
+  }
+
+  function removeUpdatesSentinel() {
+    if (updatesObserver && updatesSentinel) updatesObserver.unobserve(updatesSentinel);
+    if (updatesSentinel) { updatesSentinel.remove(); updatesSentinel = null; }
   }
 
   function renderUpdatePost(post) {
@@ -997,16 +1057,18 @@
       '</div>' + imagesHtml + '</article>';
   }
 
+  let lightboxBound = false;
   function bindLightbox() {
-    if (!updatesContainer) return;
-    updatesContainer.querySelectorAll('.update-images img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        const lb = document.createElement('div');
-        lb.className = 'lightbox';
-        lb.innerHTML = '<img src="' + img.src + '" alt="' + (img.alt || '') + '">';
-        lb.addEventListener('click', function () { lb.remove(); });
-        document.body.appendChild(lb);
-      });
+    if (!updatesContainer || lightboxBound) return;
+    lightboxBound = true;
+    updatesContainer.addEventListener('click', function (e) {
+      const img = e.target.closest('.update-images img');
+      if (!img) return;
+      const lb = document.createElement('div');
+      lb.className = 'lightbox';
+      lb.innerHTML = '<img src="' + img.src + '" alt="' + (img.alt || '') + '">';
+      lb.addEventListener('click', function () { lb.remove(); });
+      document.body.appendChild(lb);
     });
   }
 
@@ -1183,7 +1245,10 @@
     return normalized;
   }
 
-  function getServerCountry(server) {
+  const _serverCountryCache = new WeakMap();
+  const _serverLocationCache = new WeakMap();
+
+  function computeServerCountry(server) {
     // Priorité au code pays fourni par l'API (position aléatoire dans le JSON,
     // mais accessible directement une fois l'objet parsé).
     if (server && server.country_code) {
@@ -1266,7 +1331,15 @@
     return 'Autre';
   }
 
-  function extractServerLocation(server) {
+  function getServerCountry(server) {
+    if (!server || typeof server !== 'object') return 'Autre';
+    if (_serverCountryCache.has(server)) return _serverCountryCache.get(server);
+    const result = computeServerCountry(server);
+    _serverCountryCache.set(server, result);
+    return result;
+  }
+
+  function computeServerLocation(server) {
     const text = (server.description || '') + ' ' + (server.server_name || '');
     const lowerText = text.toLowerCase();
     const locationPatterns = {
@@ -1286,6 +1359,14 @@
       if (match) return location;
     }
     return null;
+  }
+
+  function extractServerLocation(server) {
+    if (!server || typeof server !== 'object') return null;
+    if (_serverLocationCache.has(server)) return _serverLocationCache.get(server);
+    const result = computeServerLocation(server);
+    _serverLocationCache.set(server, result);
+    return result;
   }
 
   function updateCountryFilter() {
@@ -1417,25 +1498,39 @@
     return search(server);
   }
 
+  const _serverAdultCache = new WeakMap();
   function isServerAdult(server) {
-    return toFlagBoolean(findServerValue(server, 'adult'));
+    if (!server || typeof server !== 'object') return false;
+    if (_serverAdultCache.has(server)) return _serverAdultCache.get(server);
+    const result = toFlagBoolean(findServerValue(server, 'adult'));
+    _serverAdultCache.set(server, result);
+    return result;
   }
 
   // Retourne true/false selon creative_mode, ou null si la clé est absente.
+  const _serverCreativeCache = new WeakMap();
   function getCreativeMode(server) {
+    if (!server || typeof server !== 'object') return null;
+    if (_serverCreativeCache.has(server)) return _serverCreativeCache.get(server);
     const value = findServerValue(server, 'creative_mode');
-    if (value === undefined) return null;
-    return toFlagBoolean(value);
+    const result = value === undefined ? null : toFlagBoolean(value);
+    _serverCreativeCache.set(server, result);
+    return result;
   }
 
   const MODE_KEYS = { creative: 'servers.modeCreative', survival: 'servers.modeSurvival', pvp: 'servers.modePvp' };
   function getModeLabel(mode) { return window.i18n.t(MODE_KEYS[mode] || 'servers.modeSurvival'); }
 
   // Détermine le mode affiché du serveur : créatif > pvp > survie.
+  const _serverModeCache = new WeakMap();
   function getServerMode(server) {
-    if (getCreativeMode(server) === true) return 'creative';
-    if (toFlagBoolean(findServerValue(server, 'pvp'))) return 'pvp';
-    return 'survival';
+    if (!server || typeof server !== 'object') return 'survival';
+    if (_serverModeCache.has(server)) return _serverModeCache.get(server);
+    let result = 'survival';
+    if (getCreativeMode(server) === true) result = 'creative';
+    else if (toFlagBoolean(findServerValue(server, 'pvp'))) result = 'pvp';
+    _serverModeCache.set(server, result);
+    return result;
   }
 
   function renderServerCard(server) {
@@ -3141,8 +3236,8 @@
 
     function lagLatencyClass(ms) {
       if (ms === null) return 'lag-lat-error';
-      if (ms < 50) return 'lag-lat-good';
-      if (ms <= 100) return 'lag-lat-mid';
+      if (ms <= 30) return 'lag-lat-good';
+      if (ms <= 60) return 'lag-lat-mid';
       return 'lag-lat-high';
     }
 

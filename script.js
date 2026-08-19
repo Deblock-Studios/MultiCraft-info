@@ -24,6 +24,10 @@
   /* ── State ── */
   let chatMessages = [];
 
+  /* ── Redirection inter-sites (vers MultiDB) ── */
+  let pendingRedirect = null;
+  let redirectHandled = false;
+
   /* ── Gestion des rôles ── */
   let userRoles = [];
   let rolesCache = null;
@@ -290,7 +294,33 @@
     document.getElementById('deblock-forgot-mode').hidden = true;
   }
 
+  function readPendingRedirect() {
+    pendingRedirect = null;
+    try {
+      var param = new URLSearchParams(window.location.search).get('redirect');
+      if (!param) return null;
+      var target = decodeURIComponent(param);
+      var allowed = ['https://multi-db-beta.vercel.app', 'https://multidb.vercel.app', 'http://localhost:', 'http://127.0.0.1:'].some(function (origin) {
+        return target.indexOf(origin) === 0;
+      });
+      if (allowed) pendingRedirect = target;
+    } catch (e) {
+      pendingRedirect = null;
+    }
+    return pendingRedirect;
+  }
+
+  function maybeRedirectToMultiDB() {
+    if (redirectHandled) return;
+    if (!pendingRedirect || !Deblock.getUser()) return;
+    redirectHandled = true;
+    Deblock.buildAuthRedirect(pendingRedirect).then(function (url) {
+      window.location.replace(url);
+    });
+  }
+
   function initDeblockAuth() {
+    readPendingRedirect();
     // Wait for Deblock module to be ready
     Deblock.ready().then(function () {
       // Initial UI update
@@ -298,8 +328,12 @@
       fetchUserRoles();
       initProfilePage();
 
+      // Déjà connecté sur MultiCraft-Info et venu de MultiDB → renvoyer les jetons
+      maybeRedirectToMultiDB();
+
       // Listen for auth state changes
       Deblock.onAuthStateChanged(function () {
+        maybeRedirectToMultiDB();
         updateDeblockUI();
         if (chatOpen && chatMessagesEl) {
           loadChatMessagesForTab(currentChatTab, currentPrivatePartner);
@@ -383,6 +417,12 @@
       showAuthLoading(true);
       try {
         await Deblock.login(email, password);
+        if (pendingRedirect) {
+          redirectHandled = true;
+          var target = await Deblock.buildAuthRedirect(pendingRedirect);
+          window.location.replace(target);
+          return;
+        }
         navigate('accueil');
       } catch (err) {
         showAuthLoading(false);
@@ -406,7 +446,10 @@
       }
       showAuthLoading(true);
       try {
-        await Deblock.signUp(email, password, pseudo || null);
+        var signupRedirect = pendingRedirect
+          ? (window.location.origin + '/compte?redirect=' + encodeURIComponent(pendingRedirect))
+          : undefined;
+        await Deblock.signUp(email, password, pseudo || null, signupRedirect);
         showAuthLoading(false);
         showLoginError('✅ Compte cr\u00e9\u00e9 ! V\u00e9rifiez votre email pour confirmer votre inscription.');
       } catch (err) {
@@ -421,7 +464,10 @@
       if (!email) { showLoginError('Veuillez entrer votre email.'); return; }
       showAuthLoading(true);
       try {
-        await Deblock.sendMagicLink(email);
+        var forgotRedirect = pendingRedirect
+          ? (window.location.origin + '/compte?redirect=' + encodeURIComponent(pendingRedirect))
+          : undefined;
+        await Deblock.sendMagicLink(email, forgotRedirect);
         navigate('accueil');
         showTemporaryNotification('✅ Lien de réinitialisation envoyé par email', true);
       } catch (err) {

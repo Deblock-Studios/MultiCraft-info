@@ -177,10 +177,10 @@
     },
 
     /* Create a new account with optional display_name (pseudo) */
-    signUp: async function (email, password, displayName) {
+    signUp: async function (email, password, displayName, redirectTo) {
       if (!supabase) await init();
       var options = {
-        emailRedirectTo: window.location.origin + window.location.pathname,
+        emailRedirectTo: redirectTo || (window.location.origin + window.location.pathname),
       };
       if (displayName && displayName.trim()) {
         options.data = { display_name: displayName.trim() };
@@ -195,14 +195,41 @@
     },
 
     /* Send a magic link / OTP */
-    sendMagicLink: async function (email) {
+    sendMagicLink: async function (email, redirectTo) {
       if (!supabase) await init();
       var result = await supabase.auth.signInWithOtp({
         email: email,
-        options: { emailRedirectTo: window.location.origin + window.location.pathname },
+        options: { emailRedirectTo: redirectTo || (window.location.origin + window.location.pathname) },
       });
       if (result.error) throw result.error;
       return result.data;
+    },
+
+    /* Construit l'URL de retour vers un autre site (MultiDB) en y ajoutant
+       les jetons de session courants, pour que le site cible puisse
+       restaurer la session Supabase (authentification inter-origines). */
+    buildAuthRedirect: async function (target) {
+      if (!supabase) await init();
+      var result = await supabase.auth.getSession();
+      var session = result.data && result.data.session ? result.data.session : null;
+      if (!session) return target;
+
+      var params = new URLSearchParams();
+      params.set('access_token', session.access_token);
+      params.set('refresh_token', session.refresh_token);
+      if (session.expires_in != null) params.set('expires_in', String(session.expires_in));
+      params.set('token_type', session.token_type || 'bearer');
+      params.set('type', 'signin');
+
+      var hashIndex = target.indexOf('#');
+      var base = target;
+      var hash = '';
+      if (hashIndex !== -1) {
+        base = target.slice(0, hashIndex);
+        hash = target.slice(hashIndex);
+      }
+      var sep = base.indexOf('?') === -1 ? '?' : '&';
+      return base + sep + params.toString() + hash;
     },
 
     /* Log out */

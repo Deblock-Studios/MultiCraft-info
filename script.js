@@ -1005,16 +1005,16 @@
 
   async function loadUpdates() {
     try {
-      const manifestRes = await fetch('updates/manifest.json');
+      const manifestRes = await fetch('/updates/manifest.json');
       if (!manifestRes.ok) throw new Error('Manifest introuvable');
       const folders = await manifestRes.json();
       const posts = await Promise.all(folders.map(async function (folder) {
         const lang = window.i18n.lang;
         let raw = null;
         if (lang === 'en') {
-          try { const enRes = await fetch('updates/' + folder + '/post-en.md'); if (enRes.ok) raw = await enRes.text(); } catch (e) { /* ignore */ }
+          try { const enRes = await fetch('/updates/' + folder + '/post-en.md'); if (enRes.ok) raw = await enRes.text(); } catch (e) { /* ignore */ }
         }
-        if (raw === null) { const res = await fetch('updates/' + folder + '/post.md'); if (!res.ok) return null; raw = await res.text(); }
+        if (raw === null) { const res = await fetch('/updates/' + folder + '/post.md'); if (!res.ok) return null; raw = await res.text(); }
         const parsed = parseFrontmatter(raw);
         return {
           folder: folder,
@@ -1093,7 +1093,7 @@
     let imagesHtml = '';
     if (post.images && post.images.length > 0) {
       imagesHtml = '<div class="update-images">' + post.images.map(function (img) {
-        return '<img src="updates/' + post.folder + '/images/' + img + '" alt="" loading="lazy">';
+        return '<img src="/updates/' + post.folder + '/images/' + img + '" alt="" loading="lazy">';
       }).join('') + '</div>';
     }
     return '<article class="update-post"><div class="update-header"><time class="update-date" datetime="' +
@@ -1214,7 +1214,7 @@
 
   function loadDownloads() {
     if (!androidSelect && !windowsSelect) return;
-    fetch('downloads.json')
+    fetch('/downloads.json')
       .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
       .then(function (data) { downloadsData = data; populateVersionSelect(androidSelect, androidBtn, data.android || []); populateVersionSelect(windowsSelect, windowsBtn, data.windows || []); downloadsLoaded = true; })
       .catch(function (err) { console.error('Erreur de chargement des téléchargements:', err); if (androidSelect) androidSelect.innerHTML = '<option>' + escapeHtml(window.i18n.t('download.error')) + '</option>'; if (windowsSelect) windowsSelect.innerHTML = '<option>' + escapeHtml(window.i18n.t('download.error')) + '</option>'; });
@@ -1562,7 +1562,7 @@
     const adultHtml = isServerAdult(server) ? '<span class="server-adult" title="18+">🔞</span>' : '';
     const mode = getServerMode(server);
     const modeLabel = getModeLabel(mode);
-    const modeHtml = '<span class="server-mode" title="' + modeLabel + '"><img src="files/logos/server_' + mode + '_icon.png" alt="' + modeLabel + '" width="16" height="16"></span>';
+    const modeHtml = '<span class="server-mode" title="' + modeLabel + '"><img src="/files/logos/server_' + mode + '_icon.png" alt="' + modeLabel + '" width="16" height="16"></span>';
     const ratingHtml = server._avgRating != null ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1) + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>' : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
     const serverDataAttr = escapeHtml(JSON.stringify(server));
     return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><!-- <span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span> --></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + adultHtml + modeHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<!-- <button type="button" class="btn btn-players">' + window.i18n.t('servers.playersList') + '</button> --><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';

@@ -112,7 +112,7 @@
   }
 
   function loadBanner() {
-    fetch('banner.md?_=' + Date.now())
+    fetch('/banner.md?_=' + Date.now())
       .then(function (res) {
         if (!res.ok) throw new Error('banner.md not found');
         return res.text();

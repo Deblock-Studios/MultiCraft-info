@@ -156,7 +156,7 @@
       'deblock.loading':     'Chargement…',
       'deblock.user':        'Compte',
       'deblock.logout':      'Déconnexion',
-      'deblock.consent': 'J\'accepte la <a href="legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">politique de confidentialité</a> et les <a href="legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">conditions d\'utilisation</a>.',
+      'deblock.consent': 'J\'accepte la <a href="/legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">politique de confidentialité</a> et les <a href="/legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">conditions d\'utilisation</a>.',
       'deblock.consentRequired': 'Veuillez accepter la politique de confidentialité et les conditions d\'utilisation.',
       /* Profile page */
       'nav.profile':        'Profil',
@@ -384,7 +384,7 @@
       'deblock.loading':     'Loading…',
       'deblock.user':        'Account',
       'deblock.logout':      'Log out',
-      'deblock.consent': 'I accept the <a href="legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Privacy Policy</a> and the <a href="legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Terms of Use</a>.',
+      'deblock.consent': 'I accept the <a href="/legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Privacy Policy</a> and the <a href="/legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Terms of Use</a>.',
       'deblock.consentRequired': 'Please accept the Privacy Policy and the Terms of Use.',
 
       /* Profile page */

@@ -1990,7 +1990,7 @@
   document.addEventListener('langchange', function () { if (serversLoaded) renderServers(); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath())); });
 
   /* ── Son ── */
-  document.addEventListener('click', function (e) { const target = e.target.closest('a, button, [role="button"]'); if (target) { const audio = new Audio('btn_press.ogg'); audio.play().catch(function (err) { console.warn('Impossible de jouer le son :', err); }); } });
+  document.addEventListener('click', function (e) { const target = e.target.closest('a, button, [role="button"]'); if (target) { const audio = new Audio('/btn_press.ogg'); audio.play().catch(function (err) { console.warn('Impossible de jouer le son :', err); }); } });
 
   /* ── Fonctions du chat ── */
 

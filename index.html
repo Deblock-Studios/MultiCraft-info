@@ -209,7 +209,7 @@
     <!-- Accueil / Home -->
     <section id="page-accueil" class="page active">
       <div class="hero">
-        <h1 data-i18n="home.title">Tout sur <span class="gradient-text">MultiCraft</span></h1>
+        <h1 class="porthole-title" data-i18n="home.title">Tout sur <span class="gradient-text">MultiCraft</span></h1>
         <p class="hero-subtitle" data-i18n="home.subtitle">
           Suivez les mises à jour, explorez les serveurs et rejoignez la communauté. </p>
         <div class="hero-actions">
@@ -227,7 +227,7 @@
     <!-- Mises à jour / Updates -->
     <section id="page-mises-a-jour" class="page">
       <div class="page-header">
-        <h1 data-i18n="nav.updates">Mises à jour</h1>
+        <h1 class="porthole-title" data-i18n="nav.updates">Mises à jour</h1>
         <p data-i18n="updates.subtitle">Les dernières nouveautés du jeu, classées de la plus récente à la plus ancienne. </p>
       </div>
       <div id="updates-container" class="updates-list">
@@ -240,7 +240,7 @@
     <!-- Serveurs / Servers -->
     <section id="page-serveurs" class="page">
       <div class="page-header">
-        <h1 data-i18n="nav.servers">Serveurs</h1>
+        <h1 class="porthole-title" data-i18n="nav.servers">Serveurs</h1>
         <p data-i18n="servers.subtitle">Liste des serveurs. Trouvez un serveur et rejoignez-le en un clic.</p>
       </div>
       <div class="servers-toolbar">
@@ -285,7 +285,7 @@
     <!-- Le jeu / The Game (Télécharger + Info du jeu) -->
     <section id="page-le-jeu" class="page">
       <div class="page-header">
-        <h1 data-i18n="nav.theGame">Le jeu</h1>
+        <h1 class="porthole-title" data-i18n="nav.theGame">Le jeu</h1>
         <p data-i18n="download.subtitle">Téléchargez MultiCraft pour Android ou Windows et choisissez la version de votre choix.</p>
       </div>
       <div class="download-grid">
@@ -308,7 +308,7 @@
         </article> -->
       </div>
       <div class="page-header page-header-secondary">
-        <h2 data-i18n="nav.gameInfo">Serveurs physiques</h2>
+        <h2 class="porthole-title" data-i18n="nav.gameInfo">Serveurs physiques</h2>
         <p data-i18n="gameInfo.subtitle">Liste des serveurs physiques de MultiCraft.</p>
       </div>
       <div class="lag-test-toolbar">
@@ -321,7 +321,7 @@
     <section id="page-compte" class="page auth-page">
       <div class="auth-layout">
         <div class="auth-hero">
-          <h1 class="auth-hero-title" data-i18n="deblock.heroTitle">COMPTE DEBLOCK</h1>
+          <h1 class="auth-hero-title porthole-title" data-i18n="deblock.heroTitle">COMPTE DEBLOCK</h1>
           <p class="auth-hero-sub" data-i18n="deblock.tagline">Un seul compte pour tout un univers</p>
         </div>
         <div class="auth-panel">
@@ -402,10 +402,21 @@
 <!-- Page Profil / Profile page -->
   <section id="page-profil" class="page">
       <div class="page-header">
-        <h1 data-i18n="profile.title">Mon Profil</h1>
+        <h1 class="porthole-title" data-i18n="profile.title">Mon Profil</h1>
         <p class="page-subtitle" data-i18n="profile.subtitle">Gérez vos informations personnelles</p>
       </div>
       <div id="profile-status-msg" class="review-error-msg" style="margin-bottom:1rem;" hidden></div>
+      <!-- Paramètres locaux / Local settings -->
+      <div class="profile-section profile-settings-section">
+        <h3 data-i18n="profile.settings">Paramètres</h3>
+        <label class="profile-setting-toggle" for="profile-show-portholes">
+          <input type="checkbox" id="profile-show-portholes">
+          <span class="profile-setting-copy">
+            <strong data-i18n="profile.showPortholes">Afficher des hublots</strong>
+            <small data-i18n="profile.showPortholesHint">Affiche l’image des hublots à côté des titres du site. Ce réglage est enregistré uniquement sur cet appareil.</small>
+          </span>
+        </label>
+      </div>
       <!-- Pseudo / Username -->
       <!-- ── Photo de profil ── -->
       <div class="profile-section profile-avatar-section">

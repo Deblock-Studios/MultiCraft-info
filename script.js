@@ -24,6 +24,33 @@
   /* ── State ── */
   let chatMessages = [];
 
+  /* ── Préférence locale des hublots (indépendante du compte) ── */
+  const PORTHOLES_STORAGE_KEY = 'mc_show_portholes';
+
+  function arePortholesEnabled() {
+    try {
+      return localStorage.getItem(PORTHOLES_STORAGE_KEY) === 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function applyPortholePreference() {
+    const enabled = arePortholesEnabled();
+    document.body.classList.toggle('show-portholes', enabled);
+    const toggle = document.getElementById('profile-show-portholes');
+    if (toggle) toggle.checked = enabled;
+  }
+
+  function setPortholesEnabled(enabled) {
+    try {
+      localStorage.setItem(PORTHOLES_STORAGE_KEY, enabled ? 'true' : 'false');
+    } catch (e) {
+      // Ignore storage errors (for example, private browsing restrictions).
+    }
+    applyPortholePreference();
+  }
+
   /* ── Redirection inter-sites (vers MultiDB) ── */
   let pendingRedirect = null;
   let redirectHandled = false;
@@ -514,6 +541,8 @@
     if (deleteBtn) deleteBtn.hidden = false;
     if (deleteCancel) deleteCancel.hidden = true;
     if (deleteConfirm) deleteConfirm.hidden = true;
+    // Keep local preferences in sync when returning to the profile page.
+    applyPortholePreference();
     // Hide status message
     const msgEl = document.getElementById('profile-status-msg');
     if (msgEl) msgEl.hidden = true;
@@ -527,6 +556,15 @@
     if (!profilePage) return;
 
     const msgEl = document.getElementById('profile-status-msg');
+
+    /* ── Préférences locales ── */
+    const portholeToggle = document.getElementById('profile-show-portholes');
+    if (portholeToggle) {
+      portholeToggle.addEventListener('change', function () {
+        setPortholesEnabled(portholeToggle.checked);
+      });
+      applyPortholePreference();
+    }
 
     /* ── Avatar upload ── */
     (function initAvatarSection() {
@@ -3372,6 +3410,7 @@
   })();
 
   /* ── Init ── */
+  applyPortholePreference();
   initDeblockAuth();
 
   // Migrate legacy hash URLs (#serveurs → /serveurs) without reloading the page.

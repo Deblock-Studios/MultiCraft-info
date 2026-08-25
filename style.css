@@ -452,6 +452,29 @@ body {
   margin-bottom: 0.4rem;
 }
 
+/* Optional porthole decoration for the main site titles */
+.porthole-title::before {
+  content: none;
+}
+
+body.show-portholes .porthole-title::before {
+  content: '';
+  display: inline-block;
+  width: 1.08em;
+  height: 1.08em;
+  margin-right: 0.42em;
+  vertical-align: -0.14em;
+  background: url('porthole_for_dulen.jpg') center / cover no-repeat;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.22), 0 3px 10px rgba(0, 0, 0, 0.35);
+  animation: portholeAppear 0.2s ease;
+}
+
+@keyframes portholeAppear {
+  from { opacity: 0; transform: scale(0.75); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .page-header p {
   color: var(--text-muted);
   font-size: 0.98rem;
@@ -2673,6 +2696,54 @@ body.modal-open {
 /* Profile avatar */
 .profile-avatar-section {
   position: relative;
+}
+
+.profile-settings-section {
+  margin-bottom: 1.5rem;
+}
+
+.profile-setting-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.profile-setting-toggle:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.profile-setting-toggle input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0.15rem 0 0;
+  flex-shrink: 0;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+.profile-setting-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.profile-setting-copy strong {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.profile-setting-copy small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 
 .profile-avatar-wrapper {

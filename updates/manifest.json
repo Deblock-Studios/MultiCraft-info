@@ -18,5 +18,8 @@
   "mail-eggs",
   "hontes-multi",
   "Peacock",
-  "asian-servers"
+  "asian-servers",
+  "ie_block",
+  "new-option-ieBlock",
+  "custom-block-terraform"
 ]

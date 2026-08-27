@@ -1075,7 +1075,7 @@
       updatesLoaded = true;
     } catch (err) {
       console.error(err);
-      updatesContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('updates.error') + '</p><p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim)">' + window.i18n.t('updates.errorHint') + '</p></div>';
+      updatesContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('updates.error') + '</p></div>';
     }
   }
 
@@ -1713,7 +1713,7 @@
       handleServerShare();
     } catch (err) {
       console.error(err);
-      if (serversContainer) serversContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('servers.errorLoad') + '</p><p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-dim)">Vérifiez votre connexion et réessayez dans un instant.</p></div>';
+      if (serversContainer) serversContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('servers.errorLoad') + '</p><p style="margin-top:0.75rem"><a class="btn btn-primary" href="https://stats.uptimerobot.com/LxQkdgr4jJ" target="_blank" rel="noopener">' + window.i18n.t('servers.errorBtn') + '</a></p></div>';
       if (serversCountEl) serversCountEl.textContent = '';
     }
   }

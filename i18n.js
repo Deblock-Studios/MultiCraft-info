@@ -39,8 +39,7 @@
       'updates.subtitle': 'Les dernières nouveautés du jeu, classées de la plus récente à la plus ancienne.',
       'updates.loading':  'Chargement des mises à jour…',
       'updates.empty':    'Aucune mise à jour pour le moment.',
-      'updates.error':    'Impossible de charger les mises à jour.',
-      'updates.errorHint':'Servez le site via un serveur local (ex. <code>python -m http.server</code>).',
+      'updates.error':    'Oops. on dirait que ça ne marche pas :/ Un des développeurs à encore tout cassé... Désolé ! N\'hésitez pas à nous envoyer un mail pour nous signaler le problème : deblock-studios@proton.me',
 
       /* Servers page */
       'servers.subtitle':       'Liste des serveurs en direct. Trouvez un serveur et rejoignez-le en un clic.',
@@ -60,7 +59,8 @@
       'servers.filterMinor':    '-18',
       'servers.dataDate':       'Date des données : 30/07/2026',
       'servers.empty':          'Aucun serveur ne correspond à votre recherche.',
-      'servers.errorLoad':      'Impossible de charger la liste des serveurs.',
+      'servers.errorLoad':      'La liste des serveurs est inaccessible. Vérifiez si elle fonctionne sur notre page Status.',
+      'servers.errorBtn':       'Page Status',
       'servers.noDesc':         'Aucune description disponible.',
       'servers.noName':         'Serveur sans nom',
       'servers.noRating':       'Aucun avis',
@@ -267,8 +267,7 @@
       'updates.subtitle': 'Latest game news, sorted from most recent to oldest.',
       'updates.loading':  'Loading updates…',
       'updates.empty':    'No updates yet.',
-      'updates.error':    'Could not load updates.',
-      'updates.errorHint':'Serve the site via a local server (e.g. <code>python -m http.server</code>).',
+      'updates.error':    'Oops. Looks like it does not work :/ One of the developers broke everything again... Sorry! Feel free to email us to report the issue: deblock-studios@proton.me',
 
       /* Servers page */
       'servers.subtitle':       'Live server list. Find a server and join in one click.',
@@ -288,7 +287,8 @@
       'servers.filterMinor':    '-18',
       'servers.dataDate':       'Data date: 30/07/2026',
       'servers.empty':          'No server matches your search.',
-      'servers.errorLoad':      'Could not load the server list.',
+      'servers.errorLoad':      'The server list is unreachable. Check if it is working on our Status page.',
+      'servers.errorBtn':       'Status page',
       'servers.noDesc':         'No description available.',
       'servers.noName':         'Unnamed server',
       'servers.noRating':       'No reviews',

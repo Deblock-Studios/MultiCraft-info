@@ -3225,7 +3225,7 @@
 
     function loadLagServerList() {
       if (lagServersLoaded) return;
-      fetchWithTimeout('https://lag-test.creatif-france.workers.dev/?action=list', {}, 15000)
+      fetchWithTimeout('https://pingify.creatif-france.workers.dev/?action=list', {}, 15000)
         .then(function (r) { return r.text(); })
         .then(function (text) {
           var lines = text.trim().split('\n').filter(Boolean);

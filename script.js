@@ -3290,7 +3290,7 @@
 
       var promises = DATACENTERS.map(function (dc) {
         return fetchWithTimeout(
-          'https://lag-test.creatif-france.workers.dev/?server=' +
+          'https://pingify.creatif-france.workers.dev/?server=' +
           encodeURIComponent(selectedServer.id) + '&url=' + encodeURIComponent(dc.testHost || dc.host),
           {},
           15000

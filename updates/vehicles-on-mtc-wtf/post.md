@@ -1,7 +1,7 @@
 ---
 date: 2026-09-10
 title: Nouveaux véhicules !
-images: [1.png, 2.png, 3.png]
+images: [1.jpg, 2.jpg, 3.jpg]
 ---
 
 Oui, vous avez bien lu.

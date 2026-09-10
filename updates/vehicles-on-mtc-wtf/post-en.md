@@ -1,8 +1,7 @@
 ---
-Date: 2026-09-10
-Title: New Vehicles!
-
-Images: [1.jpg, 2.jpg, 3.jpg]
+date: 2026-09-10
+title: New Vehicles!
+images: [1.jpg, 2.jpg, 3.jpg]
 ---
 
 Yes, you read that right. Vehicles are coming to MultiCraft.

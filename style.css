@@ -650,6 +650,15 @@ body.show-portholes .porthole-title::before {
   transform: scale(1.01);
 }
 
+.update-images video {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: #000;
+  display: block;
+}
+
 /* ── Sentinels de chargement auto (updates + serveurs) ── */
 .updates-sentinel,
 .servers-sentinel {

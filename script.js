@@ -1126,11 +1126,20 @@
     if (updatesSentinel) { updatesSentinel.remove(); updatesSentinel = null; }
   }
 
+  const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'm4v', 'ogv'];
+  function isVideoFile(name) {
+    const ext = String(name || '').split('.').pop().toLowerCase();
+    return VIDEO_EXTENSIONS.indexOf(ext) !== -1;
+  }
+
   function renderUpdatePost(post) {
     if (!post) return '';
     let imagesHtml = '';
     if (post.images && post.images.length > 0) {
       imagesHtml = '<div class="update-images">' + post.images.map(function (img) {
+        if (isVideoFile(img)) {
+          return '<video src="/updates/' + post.folder + '/images/' + img + '" controls preload="metadata" playsinline></video>';
+        }
         return '<img src="/updates/' + post.folder + '/images/' + img + '" alt="" loading="lazy">';
       }).join('') + '</div>';
     }

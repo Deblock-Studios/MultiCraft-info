@@ -1277,6 +1277,7 @@
   let serversNoMore = false;
   let serversConfirmingEnd = false;
   let serversNextPage = 1;
+  let serversApiSort = null;         // tri API en cours : 'abc' A-Z, 'desc' Z-A ; null = ordre par defaut de l'API
   let serversSearchResults = null;   // résultats de /db/<lang>/search?q= ; null = liste complète
   let serversSearchQuery = '';       // terme de la recherche serveur en cours
   let serversSearchRequestId = 0;    // ignore une réponse de recherche obsolète
@@ -1517,12 +1518,16 @@
       });
       filtered = rated.concat(unrated);
     } else if (sortType === 'name-asc' || sortType === 'name-desc') {
-      filtered.sort(function (a, b) {
-        const aName = (a.server_name || '').toLowerCase();
-        const bName = (b.server_name || '').toLowerCase();
-        const cmp = aName.localeCompare(bName);
-        return sortType === 'name-asc' ? cmp : -cmp;
-      });
+      // Tri alphabétique : appliqué par l'API en mode liste (sort=abc|desc),
+      // et localement sur les résultats de recherche (l'endpoint /search n'a pas de tri).
+      if (!serversApiSort || serversSearchResults !== null) {
+        filtered.sort(function (a, b) {
+          const aName = (a.server_name || '').toLowerCase();
+          const bName = (b.server_name || '').toLowerCase();
+          const cmp = aName.localeCompare(bName);
+          return sortType === 'name-asc' ? cmp : -cmp;
+        });
+      }
     }
     filteredServers = filtered;
   }
@@ -1882,6 +1887,11 @@
 
   // L'API est paginée : ?p=<taille>,<page> (50 serveurs par page, numérotation à partir de 1).
   function buildServersPageUrl(lang, page) {
+    // Tri alphabétique : l'API trie côté serveur avec le format
+    // /db/<lang>?count=50&page=N&sort=abc (A-Z) ou sort=desc (Z-A).
+    if (serversApiSort) {
+      return getServersApiUrl(lang) + '?count=' + SERVERS_API_PAGE_SIZE + '&page=' + page + '&sort=' + serversApiSort;
+    }
     return getServersApiUrl(lang) + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page;
   }
 
@@ -1939,6 +1949,15 @@
     }
   }
 
+  // Recharge la liste paginée depuis la page 1 quand le tri alphabétique doit
+  // venir de l'API : changement de tri ou retour à la liste après une recherche.
+  function reloadServersForApiSort() {
+    serversLoaded = false;
+    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
+    if (serversCountEl) serversCountEl.textContent = '';
+    loadServers();
+  }
+
   const searchBtn = document.getElementById('search-btn');
 
   // Recherche serveur : le terme est envoyé à /db/<lang>/search?q= et seuls les
@@ -1950,6 +1969,7 @@
     serversSearchQuery = query;
     if (!query) {
       serversSearchResults = null;
+      if (serversLoaded && serversApiSort) { reloadServersForApiSort(); return; }
       if (serversLoaded) applyFiltersAndSort();
       return;
     }
@@ -1991,7 +2011,19 @@
     serverSearchInput.focus();
     applyServerSearch();
   });
-  if (sortBySelect) sortBySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
+  if (sortBySelect) sortBySelect.addEventListener('change', function () {
+    if (!serversLoaded) return;
+    const v = sortBySelect.value;
+    // Tri alphabétique : requête côté API (sort=abc pour A-Z, sort=desc pour Z-A) ;
+    // les autres tris restent calculés localement.
+    serversApiSort = v === 'name-asc' ? 'abc' : (v === 'name-desc' ? 'desc' : null);
+    if (serversApiSort && serversSearchResults === null) {
+      // Le tri vient de l'API : on recharge la liste paginée depuis la page 1.
+      reloadServersForApiSort();
+      return;
+    }
+    applyFiltersAndSort();
+  });
   if (filterModeSelect) filterModeSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterAdultSelect) filterAdultSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterCountrySelect) filterCountrySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });

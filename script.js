@@ -1269,8 +1269,17 @@
 
   /* ── Serveurs ── */
   const SERVERS_API_URL = 'https://multicraft-servers.creatif-france.workers.dev';
-  const SERVERS_PER_PAGE = 35;
+  const SERVERS_PER_PAGE = 50;        // cartes rendues par lot (aligné sur la taille de page de l'API)
+  const SERVERS_API_PAGE_SIZE = 50;   // l'API exige ?p=<taille>,<page> : 50 serveurs par page, à partir de 1
+  const SERVERS_MAX_PAGES = 500;      // garde-fou contre les boucles infinies
   let serversLoaded = false;
+  let serversLoadingMore = false;
+  let serversNoMore = false;
+  let serversConfirmingEnd = false;
+  let serversNextPage = 1;
+  let serversSeenIds = new Set();
+  let serversRatingsMap = null;
+  let pendingShareServerId = null;
   let allServers = [];
   let filteredServers = [];
   let serversDisplayedCount = 0;
@@ -1430,6 +1439,7 @@
 
   function updateCountryFilter() {
     if (!filterCountrySelect) return;
+    const previous = filterCountrySelect.value || 'all';
     const countries = new Set();
     allServers.forEach(function (server) { countries.add(getServerCountry(server)); });
     const sortedCountries = Array.from(countries).sort();
@@ -1440,6 +1450,10 @@
       option.textContent = country;
       filterCountrySelect.appendChild(option);
     });
+    // Conserve la sélection courante (le filtre pays est reconstruit à chaque
+    // fusion de page quand de nouveaux serveurs arrivent).
+    const hasPrevious = Array.prototype.some.call(filterCountrySelect.options, function (o) { return o.value === previous; });
+    filterCountrySelect.value = hasPrevious ? previous : 'all';
   }
 
   async function fetchAllServerRatings() {
@@ -1470,8 +1484,9 @@
     });
   }
 
-  function applyFiltersAndSort() {
-    if (!allServers.length) return;
+  // Calcule filteredServers à partir de allServers selon la recherche, les
+  // filtres et le tri actuellement sélectionnés.
+  function computeFilteredServers() {
     const searchQuery = serverSearchInput ? serverSearchInput.value : '';
     const sortType = sortBySelect ? sortBySelect.value : 'rating-desc';
     const modeFilter = filterModeSelect ? filterModeSelect.value : 'all';
@@ -1506,7 +1521,12 @@
       });
     }
     filteredServers = filtered;
-    renderServers(filtered);
+  }
+
+  function applyFiltersAndSort() {
+    if (!allServers.length) { filteredServers = []; renderServers([]); return; }
+    computeFilteredServers();
+    renderServers(filteredServers);
   }
 
   function extractServers(data) {
@@ -1521,7 +1541,8 @@
     return Array.from(found.values());
   }
 
-  function countLabel(n) { return n + ' ' + (n === 1 ? window.i18n.t('servers.count1') : window.i18n.t('servers.countN')); }
+  // plus=true → « 50+ serveurs » : d'autres pages restent à charger.
+  function countLabel(n, plus) { return n + (plus ? '+' : '') + ' ' + (n === 1 ? window.i18n.t('servers.count1') : window.i18n.t('servers.countN')); }
 
   // Convertit une valeur « flag » en booléen, quelle que soit sa forme
   // (true, 1, "true", "yes", "on"…).
@@ -1630,31 +1651,34 @@
     });
   }
 
-  function renderServers(list) {
+  // Affiche la liste. keepCount permet de ré-afficher en conservant la profondeur
+  // de scroll (même nombre de cartes) lors d'un tri recalculé après chargement.
+  function renderServers(list, keepCount) {
     if (!serversContainer) return;
     if (!list) list = filteredServers;
     serversActiveList = list;
     removeServersSentinel();
+    var batchEnd = keepCount ? Math.max(keepCount, SERVERS_PER_PAGE) : SERVERS_PER_PAGE;
     serversDisplayedCount = 0;
     if (!list || !list.length) {
       serversContainer.innerHTML = '<div class="empty-state"><p>' + window.i18n.t('servers.empty') + '</p></div>';
     } else {
-      var firstBatch = list.slice(0, SERVERS_PER_PAGE);
+      var firstBatch = list.slice(0, Math.min(batchEnd, list.length));
       serversDisplayedCount = firstBatch.length;
       serversContainer.innerHTML = firstBatch.map(renderServerCard).join('');
       bindServerCardActions();
-      if (serversDisplayedCount < list.length) {
+      if (serversDisplayedCount < list.length || !serversNoMore) {
         ensureServersSentinel();
       }
     }
-    if (serversCountEl) serversCountEl.textContent = countLabel((list || []).length);
+    if (serversCountEl) serversCountEl.textContent = countLabel((list || []).length, !serversNoMore);
   }
 
-  function loadMoreServers() {
-    const list = serversActiveList || filteredServers;
-    if (!serversContainer || !list || serversDisplayedCount >= list.length) return;
-    removeServersSentinel();
+  function appendNextBatch(list) {
     var nextBatch = list.slice(serversDisplayedCount, serversDisplayedCount + SERVERS_PER_PAGE);
+    if (!nextBatch.length) return;
+    // Si l'état vide (« Aucun serveur… ») est affiché, on le vide d'abord.
+    if (!serversContainer.querySelector('.server-card')) serversContainer.innerHTML = '';
     serversDisplayedCount += nextBatch.length;
     var fragment = document.createDocumentFragment();
     nextBatch.forEach(function (server) {
@@ -1664,7 +1688,109 @@
     });
     serversContainer.appendChild(fragment);
     bindServerCardActions();
-    if (serversDisplayedCount < list.length) ensureServersSentinel();
+  }
+
+  // Compare le préfixe déjà affiché avec la nouvelle liste filtrée.
+  function displayedPrefixMatches(previousDisplayed, list) {
+    if (!previousDisplayed || previousDisplayed.length !== Math.min(serversDisplayedCount, list.length)) return false;
+    for (let i = 0; i < previousDisplayed.length; i++) {
+      if (!previousDisplayed[i] || !list[i] || previousDisplayed[i].server_id !== list[i].server_id) return false;
+    }
+    return true;
+  }
+
+  // Fusionne une page fraîchement chargée dans la liste, puis l'affiche si
+  // l'utilisateur attend en bas de la liste.
+  function mergeServersPage(fresh) {
+    if (!fresh || !fresh.length) return;
+    const previousDisplayed = (serversActiveList || []).slice(0, serversDisplayedCount);
+    const wasAtEnd = !!serversActiveList && serversDisplayedCount >= serversActiveList.length;
+    allServers = allServers.concat(fresh);
+    applyServerRatings(fresh, serversRatingsMap);
+    updateCountryFilter();
+    checkPendingShare();
+    if (!serversLoaded || !allServers.length) return;
+    computeFilteredServers();
+    if (serversCountEl) serversCountEl.textContent = countLabel(filteredServers.length, !serversNoMore);
+    if (displayedPrefixMatches(previousDisplayed, filteredServers)) {
+      // Le début affiché ne change pas : on garde le DOM et on ajoute la suite
+      // uniquement si l'utilisateur attend en bas de la liste.
+      serversActiveList = filteredServers;
+      if (wasAtEnd) appendNextBatch(filteredServers);
+      if (serversDisplayedCount < filteredServers.length || !serversNoMore) ensureServersSentinel();
+      else removeServersSentinel();
+    } else if (previousDisplayed.length) {
+      // Le tri a réordonné la partie déjà affichée (nouvelles notes) :
+      // ré-affichage complet en conservant la profondeur de scroll.
+      renderServers(filteredServers, previousDisplayed.length);
+    } else {
+      serversActiveList = filteredServers;
+    }
+  }
+
+  // Charge la ou les pages suivantes de l'API : appelé quand l'utilisateur
+  // atteint la fin de ce qui est affiché, ou pour retrouver un serveur partagé
+  // (?server=ID) pas encore chargé.
+  async function fetchNextServersPage() {
+    if (!serversLoaded || serversLoadingMore || serversNoMore) return;
+    serversLoadingMore = true;
+    try {
+      while (serversLoaded && !serversNoMore && serversNextPage <= SERVERS_MAX_PAGES) {
+        const result = await fetchServersPage(serversNextPage);
+        if (!serversLoaded) return;
+        serversNextPage++;
+        // Page plus courte que demandé : dernière page réelle ou entrée résiduelle —
+        // on le confirme avec la page suivante avant de déclarer la liste terminée.
+        if (result.raw < SERVERS_API_PAGE_SIZE) {
+          if (serversConfirmingEnd) serversNoMore = true;
+          else serversConfirmingEnd = true;
+        } else {
+          serversConfirmingEnd = false;
+        }
+        mergeServersPage(result.fresh);
+        // On enchaîne automatiquement tant que l'utilisateur attend un résultat
+        // pas encore chargé : serveur partagé introuvable, ou recherche/filtre
+        // sans correspondance dans les données déjà chargées.
+        if (pendingShareServerId) continue;
+        if (serversDisplayedCount === 0 && filteredServers.length === 0) continue;
+        break;
+      }
+    } catch (err) {
+      console.error('Erreur de chargement des serveurs (page ' + serversNextPage + ')', err);
+    } finally {
+      serversLoadingMore = false;
+      if (!serversLoaded) return;
+      if (serversCountEl) serversCountEl.textContent = countLabel(filteredServers.length, !serversNoMore);
+      if (serversDisplayedCount < filteredServers.length || !serversNoMore) ensureServersSentinel();
+      else removeServersSentinel();
+      // Utilisateur toujours en bas de liste sans rien de plus à afficher :
+      // on relance le chargement (le sentinel visible ne redéclenche pas
+      // l'IntersectionObserver tant qu'il n'a pas quitté le champ).
+      if (!serversNoMore && serversSentinel && serversSentinel.getBoundingClientRect().top < window.innerHeight && serversDisplayedCount >= filteredServers.length) {
+        setTimeout(fetchNextServersPage, 50);
+      }
+    }
+  }
+
+  function loadMoreServers() {
+    if (!serversContainer) return;
+    const list = serversActiveList || filteredServers;
+    if (serversDisplayedCount < list.length) {
+      // Il reste des serveurs déjà chargés à afficher.
+      removeServersSentinel();
+      appendNextBatch(list);
+      if (serversDisplayedCount < list.length || !serversNoMore) ensureServersSentinel();
+      // Utilisateur collé en bas avec le sentinel resté dans le champ (pied de
+      // page plus haut que la fenêtre) : enchaîne directement sur l'API,
+      // sinon aucun nouvel événement de scroll ne viendra relancer le chargement.
+      if (!serversNoMore && !serversLoadingMore && serversSentinel && serversSentinel.getBoundingClientRect().top < window.innerHeight && serversDisplayedCount >= list.length) {
+        fetchNextServersPage();
+      }
+      return;
+    }
+    if (serversNoMore || serversLoadingMore) { if (serversNoMore) removeServersSentinel(); return; }
+    // Fin de ce qui est affiché : on va chercher la page suivante de l'API.
+    fetchNextServersPage();
   }
 
   function ensureServersSentinel() {
@@ -1700,6 +1826,28 @@
     if (serversSentinel) { serversSentinel.remove(); serversSentinel = null; }
   }
 
+  // Filet de sécurité : quand le pied de page est plus haut que la fenêtre, le
+  // sentinel peut rester au-dessus du champ visible même à scroll maximal et
+  // l'IntersectionObserver ne se redéclenche plus. Tout scroll le rattrape.
+  window.addEventListener('scroll', function () {
+    if (!serversSentinel) return;
+    const rect = serversSentinel.getBoundingClientRect();
+    if (rect.top < window.innerHeight) loadMoreServers();
+  }, { passive: true });
+
+  // Second filet : utilisateur immobile collé en bas de la page, aucun
+  // événement de scroll ni d'intersection ne peut plus se déclencher alors que
+  // le sentinel (donc du contenu à charger) reste dans le champ. Une vérification
+  // périodique relance le chargement ; le sentinel est retiré en fin de liste,
+  // ce qui rend la vérification inerte.
+  setInterval(function () {
+    if (!serversLoaded || serversLoadingMore || serversNoMore) return;
+    if (!pages.serveurs || !pages.serveurs.classList.contains('active')) return;
+    if (!serversSentinel) return;
+    const rect = serversSentinel.getBoundingClientRect();
+    if (rect.top < window.innerHeight) loadMoreServers();
+  }, 700);
+
   function filterServers(query) {
     const q = query.trim().toLowerCase();
     if (!q) return allServers.slice();
@@ -1710,24 +1858,63 @@
     });
   }
 
-  // URL de l'API selon la langue choisie pour les descriptions des serveurs.
-  function getServersApiUrl() {
-    const lang = descLangSelect ? descLangSelect.value : 'original';
-    if (lang === 'english') return SERVERS_API_URL + '/db/english';
-    if (lang === 'french') return SERVERS_API_URL + '/db/french';
+  // URL de base de l'API selon la langue choisie pour les descriptions des serveurs.
+  function getServersApiUrl(lang) {
+    const value = lang || (descLangSelect ? descLangSelect.value : 'original');
+    if (value === 'english') return SERVERS_API_URL + '/db/english';
+    if (value === 'french') return SERVERS_API_URL + '/db/french';
     return SERVERS_API_URL + '/db/original';
   }
 
-  const HERO_STATS_API_URL = SERVERS_API_URL + '/db/original';
+  // L'API est paginée : ?p=<taille>,<page> (50 serveurs par page, numérotation à partir de 1).
+  function buildServersPageUrl(lang, page) {
+    return getServersApiUrl(lang) + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page;
+  }
 
-  async function loadServers() {
+  // Charge une page de l'API. Retourne les serveurs jamais vus jusqu'ici
+  // (dédoublonnage par server_id : l'API peut répéter une entrée entre pages)
+  // ainsi que le nombre de lignes brut, seul signal fiable de fin de liste
+  // (le dédoublonnage peut réduire le compte même sur une page pleine).
+  async function fetchServersPage(page, lang) {
+    const res = await fetchWithTimeout(buildServersPageUrl(lang, page), {}, 12000);
+    if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
+    const servers = extractServers(await res.json());
+    const fresh = [];
+    for (let i = 0; i < servers.length; i++) {
+      const s = servers[i];
+      if (s && s.server_id && !serversSeenIds.has(s.server_id)) { serversSeenIds.add(s.server_id); fresh.push(s); }
+    }
+    return { fresh: fresh, raw: servers.length };
+  }
+
+  // Charge la page 1, puis laisse le scroll demander les pages suivantes.
+  let serversLoadPromise = null;
+  function loadServers(force) {
+    // Anti-doublon : plusieurs déclencheurs peuvent appeler loadServers au
+    // chargement (routage, changement de langue des descriptions…). On ne
+    // relance pas si un chargement est déjà en cours, sauf demande explicite.
+    if (serversLoadPromise && !force) return serversLoadPromise;
+    serversLoadPromise = loadServersInner().finally(function () { serversLoadPromise = null; });
+    return serversLoadPromise;
+  }
+
+  async function loadServersInner() {
+    serversLoaded = false;
+    serversLoadingMore = false;
+    serversNoMore = false;
+    serversConfirmingEnd = false;
+    serversNextPage = 1;
+    serversSeenIds = new Set();
+    allServers = [];
     try {
-      const [res, ratings] = await Promise.all([fetchWithTimeout(getServersApiUrl(), {}, 12000), fetchAllServerRatings()]);
-      if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
-      const data = await res.json();
-      allServers = extractServers(data);
+      const [firstPage, ratings] = await Promise.all([fetchServersPage(1), fetchAllServerRatings()]);
+      serversRatingsMap = ratings;
+      allServers = firstPage.fresh;
       applyServerRatings(allServers, ratings);
       serversLoaded = true;
+      // La page 1 est chargée : la pagination reprendra à la page 2.
+      serversNextPage = 2;
+      if (firstPage.raw < SERVERS_API_PAGE_SIZE) serversNoMore = true;
       updateCountryFilter();
       applyFiltersAndSort();
       handleServerShare();
@@ -1891,6 +2078,17 @@
     return (window.i18n && window.i18n.lang === 'en') ? 'english' : 'french';
   }
 
+  // Serveur partagé (?server=ID) pas encore chargé : on rouvre la modale dès
+  // qu'il apparaît dans une page fraîchement chargée.
+  function checkPendingShare() {
+    if (!pendingShareServerId) return;
+    const server = allServers.find(function (s) { return s.server_id === pendingShareServerId; });
+    if (!server) return;
+    pendingShareServerId = null;
+    if (!document.getElementById('page-serveurs').classList.contains('active')) navigate('serveurs');
+    setTimeout(function () { openServerDetailsModal(server); }, 300);
+  }
+
   function openServerDetailsModal(server) {
     if (!serverModal) return;
     const name = server.server_name || window.i18n.t('servers.noName');
@@ -1958,7 +2156,17 @@
         serverId = hashParams.get('server');
       }
     }
-    if (serverId && allServers.length > 0) { const server = allServers.find(function (s) { return s.server_id === serverId; }); if (server) { if (!document.getElementById('page-serveurs').classList.contains('active')) navigate('serveurs'); setTimeout(function () { openServerDetailsModal(server); }, 300); } }
+    if (!serverId) return;
+    const server = allServers.find(function (s) { return s.server_id === serverId; });
+    if (server) {
+      if (!document.getElementById('page-serveurs').classList.contains('active')) navigate('serveurs');
+      setTimeout(function () { openServerDetailsModal(server); }, 300);
+    } else if (serversLoaded && !serversNoMore) {
+      // Serveur pas encore chargé (liste paginée) : on continue de charger les
+      // pages en arrière-plan jusqu'à le trouver.
+      pendingShareServerId = serverId;
+      fetchNextServersPage();
+    }
   }
 
   function openServerModal(name, code) { if (!serverModal) return; if (modalServerName) modalServerName.textContent = name || window.i18n.t('modal.server'); if (modalCode) modalCode.textContent = code || '—'; if (modalCopyBtn) modalCopyBtn.textContent = window.i18n.t('modal.copy'); serverModal.hidden = false; syncModalOpenState(); }
@@ -2053,7 +2261,7 @@
   document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (playersModal && !playersModal.hidden) { closePlayersModal(); return; } if (serverModal && !serverModal.hidden) closeServerModal(); });
 
   /* ── Language change ── */
-  document.addEventListener('langchange', function () { syncDescLangSelect(); if (serversLoaded) renderServers(); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath())); });
+  document.addEventListener('langchange', function () { syncDescLangSelect(); if (serversLoaded) renderServers(serversActiveList || filteredServers, serversDisplayedCount); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath())); });
 
   /* ── Son ── */
   document.addEventListener('click', function (e) { const target = e.target.closest('a, button, [role="button"]'); if (target) { const audio = new Audio('/btn_press.ogg'); audio.play().catch(function (err) { console.warn('Impossible de jouer le son :', err); }); } });
@@ -3466,13 +3674,59 @@
       requestAnimationFrame(step);
     }
 
-    fetch(HERO_STATS_API_URL)
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        var servers = extractServers(data);
-        animateValue(serversEl, servers.length);
-      })
-      .catch(function () {});
+    // L'API ne renvoie plus la liste complète (500 sans ?p=) : on estime le
+    // nombre total de serveurs en cherchant la dernière page par dichotomie
+    // (pages réelles ≈ 50 lignes, au-delà de la fin une page résiduelle d'une
+    // ligne). Résultat mis en cache 30 minutes.
+    var CACHE_KEY = 'mc_servers_total';
+    var CACHE_TTL = 30 * 60 * 1000;
+    try {
+      var cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+      if (cached && cached.total > 0 && (Date.now() - cached.at) < CACHE_TTL) { animateValue(serversEl, cached.total); return; }
+    } catch (e) { /* ignore */ }
+
+    async function pageRowCount(page) {
+      try {
+        const res = await fetchWithTimeout(getServersApiUrl('original') + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page, {}, 12000);
+        if (!res.ok) return -1;
+        const data = await res.json();
+        return Array.isArray(data) ? data.length : -1;
+      } catch (e) { return -1; }
+    }
+
+    (async function () {
+      var first = await pageRowCount(1);
+      if (first <= 0) return; // API indisponible ou liste vide
+      var total = 0;
+      if (first < SERVERS_API_PAGE_SIZE) {
+        total = first;
+      } else {
+        var lo = 1, hi = 2, rows = await pageRowCount(hi);
+        if (rows < 0) return;
+        while (hi <= SERVERS_MAX_PAGES && rows >= SERVERS_API_PAGE_SIZE) { lo = hi; hi *= 2; rows = await pageRowCount(hi); if (rows < 0) return; }
+        if (hi > SERVERS_MAX_PAGES) {
+          total = lo * SERVERS_API_PAGE_SIZE;
+        } else {
+          // Dichotomie entre lo et hi pour trouver la dernière page pleine.
+          var min = lo + 1, max = hi - 1;
+          while (min <= max) {
+            var mid = Math.floor((min + max) / 2);
+            var midRows = await pageRowCount(mid);
+            if (midRows < 0) return;
+            if (midRows >= SERVERS_API_PAGE_SIZE) { lo = mid; min = mid + 1; }
+            else { max = mid - 1; }
+          }
+          // lo = dernière page pleine ; la page suivante contient le reliquat
+          // (une éventuelle page résiduelle d'une ligne n'ajoute pas de serveur).
+          var lastRows = (lo + 1 === hi) ? rows : await pageRowCount(lo + 1);
+          if (lastRows < 0) return;
+          total = lo * SERVERS_API_PAGE_SIZE + (lastRows > 1 ? lastRows - 1 : 0);
+        }
+      }
+      if (!total) return;
+      animateValue(serversEl, total);
+      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), total: total })); } catch (e) { /* ignore */ }
+    })();
   })();
 
   /* ── Init ── */

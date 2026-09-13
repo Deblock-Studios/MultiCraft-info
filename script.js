@@ -1276,6 +1276,7 @@
   const filterModeSelect = document.getElementById('filter-mode');
   const filterAdultSelect = document.getElementById('filter-adult');
   const filterCountrySelect = document.getElementById('filter-country');
+  const descLangSelect = document.getElementById('desc-lang');
 
   let regionNames = null;
   try { regionNames = new Intl.DisplayNames(['fr'], { type: 'region' }); } catch (e) { regionNames = null; }
@@ -1700,9 +1701,19 @@
     });
   }
 
+  // URL de l'API selon la langue choisie pour les descriptions des serveurs.
+  function getServersApiUrl() {
+    const lang = descLangSelect ? descLangSelect.value : 'original';
+    if (lang === 'english') return SERVERS_API_URL + '/db/english';
+    if (lang === 'french') return SERVERS_API_URL + '/db/french';
+    return SERVERS_API_URL + '/db/original';
+  }
+
+  const HERO_STATS_API_URL = SERVERS_API_URL + '/db/original';
+
   async function loadServers() {
     try {
-      const [res, ratings] = await Promise.all([fetchWithTimeout(SERVERS_API_URL, {}, 12000), fetchAllServerRatings()]);
+      const [res, ratings] = await Promise.all([fetchWithTimeout(getServersApiUrl(), {}, 12000), fetchAllServerRatings()]);
       if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
       const data = await res.json();
       allServers = extractServers(data);
@@ -1731,6 +1742,24 @@
   if (filterModeSelect) filterModeSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterAdultSelect) filterAdultSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterCountrySelect) filterCountrySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
+  if (descLangSelect) descLangSelect.addEventListener('change', function () {
+    if (!document.getElementById('page-serveurs').classList.contains('active')) return;
+    serversLoaded = false;
+    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
+    if (serversCountEl) serversCountEl.textContent = '';
+    loadServers();
+  });
+
+  // Synchronise le sélecteur de langue des descriptions avec la langue du site (i18n).
+  function syncDescLangSelect() {
+    if (!descLangSelect) return;
+    const value = getDefaultDescLangValue();
+    if (descLangSelect.value !== value) {
+      descLangSelect.value = value;
+      descLangSelect.dispatchEvent(new Event('change'));
+    }
+  }
+  syncDescLangSelect();
 
   /* ══════════════════════════════════════════════════════
      Système d'avis
@@ -1848,6 +1877,11 @@
 
   function syncModalOpenState() { const serverModalOpen = !!(serverModal && !serverModal.hidden); const playersModalOpen = !!(playersModal && !playersModal.hidden); document.body.classList.toggle('modal-open', serverModalOpen || playersModalOpen); }
 
+  // Valeur par défaut du sélecteur de langue des descriptions : la langue du site (i18n).
+  function getDefaultDescLangValue() {
+    return (window.i18n && window.i18n.lang === 'en') ? 'english' : 'french';
+  }
+
   function openServerDetailsModal(server) {
     if (!serverModal) return;
     const name = server.server_name || window.i18n.t('servers.noName');
@@ -1863,7 +1897,30 @@
     if (modalCode) modalCode.textContent = code;
     const modalBody = document.querySelector('.modal-body');
     if (modalBody) {
-      modalBody.innerHTML = '<div class="modal-details"><div class="modal-description"><h3>Description</h3><p>' + escapeHtml(description) + '</p></div><div class="modal-info-grid"><!-- <div class="modal-info-item"><span class="modal-info-label">👥 Joueurs</span><span class="modal-info-value">' + players + ' / ' + maxPlayers + '</span></div> --><div class="modal-info-item"><span class="modal-info-label">👑 Administrateur</span><span class="modal-info-value">' + escapeHtml(adminName) + '</span></div><div class="modal-info-item"><span class="modal-info-label">📍 Localisation</span><span class="modal-info-value">' + escapeHtml(location) + '</span></div></div>' + (url ? '<div class="modal-deblock-link"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-deblock">Rejoindre Discord</a></div>' : '') + '</div>';
+      const descLangValue = getDefaultDescLangValue();
+      const descOptions = [
+        { value: 'original', label: window.i18n.t('servers.descLangOriginal'), selected: descLangValue === 'original' },
+        { value: 'english', label: window.i18n.t('servers.descLangEnglish'), selected: descLangValue === 'english' },
+        { value: 'french', label: window.i18n.t('servers.descLangFrench'), selected: descLangValue === 'french' }
+      ].map(function (opt) { return '<option value="' + opt.value + '"' + (opt.selected ? ' selected' : '') + '>' + escapeHtml(opt.label) + '</option>'; }).join('');
+      modalBody.innerHTML = '<div class="modal-details"><div class="modal-description"><h3>' + escapeHtml(window.i18n.t('modal.descriptionTitle')) + '</h3><p id="modal-description-text">' + escapeHtml(description) + '</p><div class="modal-desc-lang"><span class="modal-desc-lang-label">' + escapeHtml(window.i18n.t('servers.descLangLabel')) + '</span><select id="modal-desc-lang" class="modal-desc-lang-select" aria-label="' + escapeHtml(window.i18n.t('servers.descLangLabel')) + '">' + descOptions + '</select></div></div><div class="modal-info-grid"><!-- <div class="modal-info-item"><span class="modal-info-label">👥 Joueurs</span><span class="modal-info-value">' + players + ' / ' + maxPlayers + '</span></div> --><div class="modal-info-item"><span class="modal-info-label">👑 Administrateur</span><span class="modal-info-value">' + escapeHtml(adminName) + '</span></div><div class="modal-info-item"><span class="modal-info-label">📍 Localisation</span><span class="modal-info-value">' + escapeHtml(location) + '</span></div></div>' + (url ? '<div class="modal-deblock-link"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-deblock">Rejoindre Discord</a></div>' : '') + '</div>';
+      const descLangSelect = document.getElementById('modal-desc-lang');
+      if (descLangSelect) {
+        descLangSelect.addEventListener('change', function () {
+          const textEl = document.getElementById('modal-description-text');
+          const lang = descLangSelect.value;
+          if (!textEl) return;
+          textEl.textContent = '…';
+          fetchWithTimeout(SERVERS_API_URL + '/db/' + lang, {}, 12000)
+            .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
+            .then(function (data) {
+              const found = extractServers(data);
+              const match = found.find(function (s) { return s.server_id === code; });
+              textEl.textContent = (match && match.description) ? match.description : window.i18n.t('servers.noDesc');
+            })
+            .catch(function () { textEl.textContent = window.i18n.t('servers.noDesc'); });
+        });
+      }
     }
     serverModal.hidden = false;
     syncModalOpenState();
@@ -1987,7 +2044,7 @@
   document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (playersModal && !playersModal.hidden) { closePlayersModal(); return; } if (serverModal && !serverModal.hidden) closeServerModal(); });
 
   /* ── Language change ── */
-  document.addEventListener('langchange', function () { if (serversLoaded) renderServers(); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath())); });
+  document.addEventListener('langchange', function () { syncDescLangSelect(); if (serversLoaded) renderServers(); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath())); });
 
   /* ── Son ── */
   document.addEventListener('click', function (e) { const target = e.target.closest('a, button, [role="button"]'); if (target) { const audio = new Audio('/btn_press.ogg'); audio.play().catch(function (err) { console.warn('Impossible de jouer le son :', err); }); } });
@@ -3400,7 +3457,7 @@
       requestAnimationFrame(step);
     }
 
-    fetch(SERVERS_API_URL)
+    fetch(HERO_STATS_API_URL)
       .then(function (r) { return r.json(); })
       .then(function (data) {
         var servers = extractServers(data);

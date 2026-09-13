@@ -1503,6 +1503,44 @@ body.modal-open {
   word-break: break-word;
 }
 
+.modal-desc-lang {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.modal-desc-lang-label {
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.modal-desc-lang-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1rem;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  min-width: 140px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.modal-desc-lang-select:hover {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.modal-desc-lang-select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+
 .modal-info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

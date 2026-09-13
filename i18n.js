@@ -68,6 +68,10 @@
       'servers.countN':         'serveurs',
       'servers.playersList':    '👥 Liste des joueurs',
       'servers.addMyServer':    'Ajouter mon serveur',
+      'servers.descLangLabel':   'Langue des descriptions',
+      'servers.descLangOriginal':'Original',
+      'servers.descLangEnglish': 'Anglais',
+      'servers.descLangFrench':  'Français',
 
       /* Modal */
       'modal.addServer':    'Ajouter mon serveur',
@@ -104,6 +108,7 @@
       /* Modal – server */
       'modal.serverInfo':     'Informations du serveur',
       'modal.server':         'Serveur',
+      'modal.descriptionTitle': 'Description',
       'modal.inviteCode':     'Code d\'invitation',
       'modal.copy':           'Copier',
       'modal.copied':         'Copié !',
@@ -296,6 +301,10 @@
       'servers.countN':         'servers',
       'servers.playersList':    '👥 Player list',
       'servers.addMyServer':    'Add my server',
+      'servers.descLangLabel':   'Description language',
+      'servers.descLangOriginal':'Original',
+      'servers.descLangEnglish': 'English',
+      'servers.descLangFrench':  'French',
 
       /* Modal */
       'modal.addServer':    'Add my server',
@@ -332,6 +341,7 @@
       /* Modal – server */
       'modal.serverInfo':     'Server Information',
       'modal.server':         'Server',
+      'modal.descriptionTitle': 'Description',
       'modal.inviteCode':     'Invite Code',
       'modal.copy':           'Copy',
       'modal.copied':         'Copied!',

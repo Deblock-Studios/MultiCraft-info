@@ -1277,6 +1277,9 @@
   let serversNoMore = false;
   let serversConfirmingEnd = false;
   let serversNextPage = 1;
+  let serversSearchResults = null;   // résultats de /db/<lang>/search?q= ; null = liste complète
+  let serversSearchQuery = '';       // terme de la recherche serveur en cours
+  let serversSearchRequestId = 0;    // ignore une réponse de recherche obsolète
   let serversSeenIds = new Set();
   let serversRatingsMap = null;
   let pendingShareServerId = null;
@@ -1487,12 +1490,13 @@
   // Calcule filteredServers à partir de allServers selon la recherche, les
   // filtres et le tri actuellement sélectionnés.
   function computeFilteredServers() {
-    const searchQuery = serverSearchInput ? serverSearchInput.value : '';
     const sortType = sortBySelect ? sortBySelect.value : 'rating-desc';
     const modeFilter = filterModeSelect ? filterModeSelect.value : 'all';
     const adultFilter = filterAdultSelect ? filterAdultSelect.value : 'all';
     const countryFilter = filterCountrySelect ? filterCountrySelect.value : 'all';
-    let filtered = filterServers(searchQuery);
+    // Recherche active : les serveurs viennent de /db/<lang>/search (le filtrage
+    // est fait côté API). Sinon on part de la liste paginée déjà chargée.
+    let filtered = (serversSearchResults !== null ? serversSearchResults : allServers).slice();
     if (modeFilter !== 'all') {
       filtered = filtered.filter(function (server) { return getServerMode(server) === modeFilter; });
     }
@@ -1524,7 +1528,7 @@
   }
 
   function applyFiltersAndSort() {
-    if (!allServers.length) { filteredServers = []; renderServers([]); return; }
+    if (serversSearchResults === null && !allServers.length) { filteredServers = []; renderServers([]); return; }
     computeFilteredServers();
     renderServers(filteredServers);
   }
@@ -1667,11 +1671,12 @@
       serversDisplayedCount = firstBatch.length;
       serversContainer.innerHTML = firstBatch.map(renderServerCard).join('');
       bindServerCardActions();
-      if (serversDisplayedCount < list.length || !serversNoMore) {
+      // Une recherche renvoie toutes ses correspondances d'un coup : pas de pagination.
+      if (serversSearchResults === null && (serversDisplayedCount < list.length || !serversNoMore)) {
         ensureServersSentinel();
       }
     }
-    if (serversCountEl) serversCountEl.textContent = countLabel((list || []).length, !serversNoMore);
+    if (serversCountEl) serversCountEl.textContent = countLabel((list || []).length, serversSearchResults === null && !serversNoMore);
   }
 
   function appendNextBatch(list) {
@@ -1732,6 +1737,7 @@
   // atteint la fin de ce qui est affiché, ou pour retrouver un serveur partagé
   // (?server=ID) pas encore chargé.
   async function fetchNextServersPage() {
+    if (serversSearchResults !== null) return;
     if (!serversLoaded || serversLoadingMore || serversNoMore) return;
     serversLoadingMore = true;
     try {
@@ -1774,6 +1780,7 @@
 
   function loadMoreServers() {
     if (!serversContainer) return;
+    if (serversSearchResults !== null) return;
     const list = serversActiveList || filteredServers;
     if (serversDisplayedCount < list.length) {
       // Il reste des serveurs déjà chargés à afficher.
@@ -1848,22 +1855,29 @@
     if (rect.top < window.innerHeight) loadMoreServers();
   }, 700);
 
-  function filterServers(query) {
-    const q = query.trim().toLowerCase();
-    if (!q) return allServers.slice();
-    return allServers.filter(function (s) {
-      return (s.server_name && s.server_name.toLowerCase().indexOf(q) !== -1) ||
-        (s.description && s.description.toLowerCase().indexOf(q) !== -1) ||
-        (s.admin_name && s.admin_name.toLowerCase().indexOf(q) !== -1);
-    });
+  // Langue courante de l'API : le choix de l'utilisateur (sélecteur « langue des
+  // descriptions »), initialisé sur la langue du site définie par i18n.js.
+  function getCurrentDescLang() {
+    if (descLangSelect && descLangSelect.value) return descLangSelect.value;
+    return getDefaultDescLangValue();
   }
 
   // URL de base de l'API selon la langue choisie pour les descriptions des serveurs.
   function getServersApiUrl(lang) {
-    const value = lang || (descLangSelect ? descLangSelect.value : 'original');
+    const value = lang || getCurrentDescLang();
     if (value === 'english') return SERVERS_API_URL + '/db/english';
     if (value === 'french') return SERVERS_API_URL + '/db/french';
     return SERVERS_API_URL + '/db/original';
+  }
+
+  // Recherche serveur côté API : /db/<lang>/search?q=<terme>.
+  function getServersSearchUrl(lang, query) {
+    return getServersApiUrl(lang) + '/search?q=' + encodeURIComponent(query);
+  }
+
+  // Statistiques de la base : /db/<lang>/stats → { count: <nombre de serveurs> }.
+  function getServersStatsUrl(lang) {
+    return getServersApiUrl(lang) + '/stats';
   }
 
   // L'API est paginée : ?p=<taille>,<page> (50 serveurs par page, numérotation à partir de 1).
@@ -1927,19 +1941,64 @@
 
   const searchBtn = document.getElementById('search-btn');
 
-  function triggerServerSearch() { if (!serversLoaded) return; applyFiltersAndSort(); }
+  // Recherche serveur : le terme est envoyé à /db/<lang>/search?q= et seuls les
+  // serveurs renvoyés par l'API sont affichés. Une recherche vide réaffiche la
+  // liste paginée classique.
+  function applyServerSearch() {
+    const query = serverSearchInput ? serverSearchInput.value.trim() : '';
+    const requestId = ++serversSearchRequestId;
+    serversSearchQuery = query;
+    if (!query) {
+      serversSearchResults = null;
+      if (serversLoaded) applyFiltersAndSort();
+      return;
+    }
+    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
+    if (serversCountEl) serversCountEl.textContent = '';
+    fetchWithTimeout(getServersSearchUrl(null, query), {}, 12000)
+      .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
+      .then(function (data) {
+        if (requestId !== serversSearchRequestId) return;
+        const results = extractServers(data);
+        applyServerRatings(results, serversRatingsMap || new Map());
+        serversSearchResults = results;
+        computeFilteredServers();
+        renderServers(filteredServers);
+      })
+      .catch(function (err) {
+        if (requestId !== serversSearchRequestId) return;
+        console.error('Erreur de recherche serveur', err);
+        serversSearchResults = [];
+        filteredServers = [];
+        if (serversContainer) serversContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('servers.errorLoad') + '</p><p style="margin-top:0.75rem"><a class="btn btn-primary" href="https://stats.uptimerobot.com/LxQkdgr4jJ" target="_blank" rel="noopener">' + window.i18n.t('servers.errorBtn') + '</a></p></div>';
+        if (serversCountEl) serversCountEl.textContent = '';
+      });
+  }
+
+  function triggerServerSearch() { applyServerSearch(); }
 
   if (serverSearchInput) {
     serverSearchInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); triggerServerSearch(); } });
     serverSearchInput.addEventListener('search', triggerServerSearch);
+    // Effacement du champ (croix native du <input type="search">) : retour à la liste.
+    serverSearchInput.addEventListener('input', function () { if (!serverSearchInput.value && serversSearchResults !== null) applyServerSearch(); });
   }
   if (searchBtn) searchBtn.addEventListener('click', triggerServerSearch);
+  const clearSearchBtn = document.getElementById('clear-search-btn');
+  if (clearSearchBtn) clearSearchBtn.addEventListener('click', function () {
+    if (!serverSearchInput) return;
+    serverSearchInput.value = '';
+    serverSearchInput.focus();
+    applyServerSearch();
+  });
   if (sortBySelect) sortBySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterModeSelect) filterModeSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterAdultSelect) filterAdultSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterCountrySelect) filterCountrySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (descLangSelect) descLangSelect.addEventListener('change', function () {
     if (!document.getElementById('page-serveurs').classList.contains('active')) return;
+    // Recherche en cours : on la relance dans la nouvelle langue.
+    if (serversSearchQuery) { applyServerSearch(); return; }
     serversLoaded = false;
     if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
     if (serversCountEl) serversCountEl.textContent = '';
@@ -3674,59 +3733,27 @@
       requestAnimationFrame(step);
     }
 
-    // L'API ne renvoie plus la liste complète (500 sans ?p=) : on estime le
-    // nombre total de serveurs en cherchant la dernière page par dichotomie
-    // (pages réelles ≈ 50 lignes, au-delà de la fin une page résiduelle d'une
-    // ligne). Résultat mis en cache 30 minutes.
-    var CACHE_KEY = 'mc_servers_total';
+    // Le nombre total de serveurs vient de l'API : /db/<lang>/stats renvoie
+    // { count: <nombre> }. La langue est celle du sélecteur « langue des
+    // descriptions », initialisé sur la langue du site (i18n.js). Résultat mis
+    // en cache 30 minutes (une entrée par langue).
+    var lang = getCurrentDescLang();
+    var CACHE_KEY = 'mc_servers_total_' + lang;
     var CACHE_TTL = 30 * 60 * 1000;
     try {
       var cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
       if (cached && cached.total > 0 && (Date.now() - cached.at) < CACHE_TTL) { animateValue(serversEl, cached.total); return; }
     } catch (e) { /* ignore */ }
 
-    async function pageRowCount(page) {
-      try {
-        const res = await fetchWithTimeout(getServersApiUrl('original') + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page, {}, 12000);
-        if (!res.ok) return -1;
-        const data = await res.json();
-        return Array.isArray(data) ? data.length : -1;
-      } catch (e) { return -1; }
-    }
-
-    (async function () {
-      var first = await pageRowCount(1);
-      if (first <= 0) return; // API indisponible ou liste vide
-      var total = 0;
-      if (first < SERVERS_API_PAGE_SIZE) {
-        total = first;
-      } else {
-        var lo = 1, hi = 2, rows = await pageRowCount(hi);
-        if (rows < 0) return;
-        while (hi <= SERVERS_MAX_PAGES && rows >= SERVERS_API_PAGE_SIZE) { lo = hi; hi *= 2; rows = await pageRowCount(hi); if (rows < 0) return; }
-        if (hi > SERVERS_MAX_PAGES) {
-          total = lo * SERVERS_API_PAGE_SIZE;
-        } else {
-          // Dichotomie entre lo et hi pour trouver la dernière page pleine.
-          var min = lo + 1, max = hi - 1;
-          while (min <= max) {
-            var mid = Math.floor((min + max) / 2);
-            var midRows = await pageRowCount(mid);
-            if (midRows < 0) return;
-            if (midRows >= SERVERS_API_PAGE_SIZE) { lo = mid; min = mid + 1; }
-            else { max = mid - 1; }
-          }
-          // lo = dernière page pleine ; la page suivante contient le reliquat
-          // (une éventuelle page résiduelle d'une ligne n'ajoute pas de serveur).
-          var lastRows = (lo + 1 === hi) ? rows : await pageRowCount(lo + 1);
-          if (lastRows < 0) return;
-          total = lo * SERVERS_API_PAGE_SIZE + (lastRows > 1 ? lastRows - 1 : 0);
-        }
-      }
-      if (!total) return;
-      animateValue(serversEl, total);
-      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), total: total })); } catch (e) { /* ignore */ }
-    })();
+    fetchWithTimeout(getServersStatsUrl(lang), {}, 12000)
+      .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
+      .then(function (data) {
+        var total = parseInt(data && data.count, 10);
+        if (!total) return;
+        animateValue(serversEl, total);
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), total: total })); } catch (e) { /* ignore */ }
+      })
+      .catch(function (err) { console.error('Erreur de chargement du nombre de serveurs', err); });
   })();
 
   /* ── Init ── */

@@ -1126,11 +1126,20 @@
     if (updatesSentinel) { updatesSentinel.remove(); updatesSentinel = null; }
   }
 
+  const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'm4v', 'ogv'];
+  function isVideoFile(name) {
+    const ext = String(name || '').split('.').pop().toLowerCase();
+    return VIDEO_EXTENSIONS.indexOf(ext) !== -1;
+  }
+
   function renderUpdatePost(post) {
     if (!post) return '';
     let imagesHtml = '';
     if (post.images && post.images.length > 0) {
       imagesHtml = '<div class="update-images">' + post.images.map(function (img) {
+        if (isVideoFile(img)) {
+          return '<video src="/updates/' + post.folder + '/images/' + img + '" controls preload="metadata" playsinline></video>';
+        }
         return '<img src="/updates/' + post.folder + '/images/' + img + '" alt="" loading="lazy">';
       }).join('') + '</div>';
     }
@@ -3282,7 +3291,7 @@
 
     function loadLagServerList() {
       if (lagServersLoaded) return;
-      fetchWithTimeout('https://lag-test.creatif-france.workers.dev/?action=list', {}, 15000)
+      fetchWithTimeout('https://pingify.creatif-france.workers.dev/?action=list', {}, 15000)
         .then(function (r) { return r.text(); })
         .then(function (text) {
           var lines = text.trim().split('\n').filter(Boolean);
@@ -3347,7 +3356,7 @@
 
       var promises = DATACENTERS.map(function (dc) {
         return fetchWithTimeout(
-          'https://lag-test.creatif-france.workers.dev/?server=' +
+          'https://pingify.creatif-france.workers.dev/?server=' +
           encodeURIComponent(selectedServer.id) + '&url=' + encodeURIComponent(dc.testHost || dc.host),
           {},
           15000

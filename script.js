@@ -2014,12 +2014,40 @@
   if (sortBySelect) sortBySelect.addEventListener('change', function () {
     if (!serversLoaded) return;
     const v = sortBySelect.value;
-    // Tri alphabétique : requête côté API (sort=abc pour A-Z, sort=desc pour Z-A) ;
-    // les autres tris restent calculés localement.
+    // Tri alphabétique : on essaie d'abord le tri côté API (sort=abc|desc),
+    // mais si l'API ne répond pas on garde la liste déjà chargée et le tri local.
     serversApiSort = v === 'name-asc' ? 'abc' : (v === 'name-desc' ? 'desc' : null);
     if (serversApiSort && serversSearchResults === null) {
-      // Le tri vient de l'API : on recharge la liste paginée depuis la page 1.
-      reloadServersForApiSort();
+      // On affiche temporairement un loader, et on recharge la liste paginée.
+      // En cas d'erreur API, on revient à la dernière liste connue plutôt que
+      // d'afficher une page "inaccessible" pour un simple changement de tri.
+      const previousList = allServers.slice();
+      const previousSort = v;
+      const previousSearchResults = serversSearchResults;
+      const previousSearchQuery = serversSearchQuery;
+      const previousFilterMode = filterModeSelect ? filterModeSelect.value : null;
+      const previousFilterAdult = filterAdultSelect ? filterAdultSelect.value : null;
+      const previousFilterCountry = filterCountrySelect ? filterCountrySelect.value : null;
+
+      if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
+      if (serversCountEl) serversCountEl.textContent = '';
+      loadServers()
+        .then(function () { applyFiltersAndSort(); })
+        .catch(function (err) {
+          console.warn('Tri alphabétique API indisponible, retour au tri local :', err && err.message || err);
+          serversApiSort = null;
+          if (!serversLoaded || !allServers.length) {
+            allServers = previousList;
+            serversSearchResults = previousSearchResults;
+            serversSearchQuery = previousSearchQuery;
+            if (filterModeSelect) filterModeSelect.value = previousFilterMode;
+            if (filterAdultSelect) filterAdultSelect.value = previousFilterAdult;
+            if (filterCountrySelect) filterCountrySelect.value = previousFilterCountry;
+            applyFiltersAndSort();
+          } else {
+            applyFiltersAndSort();
+          }
+        });
       return;
     }
     applyFiltersAndSort();

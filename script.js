@@ -1890,7 +1890,7 @@
     // Tri alphabétique : l'API trie côté serveur avec le format
     // /db/<lang>?count=50&page=N&sort=abc (A-Z) ou sort=desc (Z-A).
     if (serversApiSort) {
-      return getServersApiUrl(lang) + '?count=' + SERVERS_API_PAGE_SIZE + '&page=' + page + '&sort=' + serversApiSort;
+      return getServersApiUrl(lang) + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page + '&sort=' + serversApiSort;
     }
     return getServersApiUrl(lang) + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page;
   }

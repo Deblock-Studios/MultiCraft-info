@@ -1,7 +1,7 @@
 ---
-isDisplayed: yes
+isDisplayed: oui
 color: vert
 ---
 
-**fr:**Pour les utilisateurs anglais, ils peuvent a nouveau utilisé le site sans bugs
-**en:**You can finally use the website without bugs.
+**fr:** Nous effectuons des opérations de maintenance sur la base de données. La page serveurs ne marche donc pas. Ca revient bientôt :)
+**en:** We are making some maintenances on the databse. The servers page don't work for now. It come back soon :)

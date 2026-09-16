@@ -1277,7 +1277,10 @@
   let serversNoMore = false;
   let serversConfirmingEnd = false;
   let serversNextPage = 1;
-  let serversApiSort = null;         // tri API en cours : 'asc'/'desc' (alphabétique), 'rating_desc'/'rating_inv' (notes) ; null = ordre par défaut de l'API
+  // Tri API courant. Le sélecteur affiche « Note (décroissant) » par défaut :
+  // on initialise donc avec sort=rating_desc pour que le premier chargement
+  // soit déjà trié par note (meilleures notes d'abord).
+  let serversApiSort = 'rating_desc';   // tri API en cours : 'asc'/'desc' (alphabétique), 'rating_desc'/'rating_inv' (notes) ; null = ordre par défaut de l'API
   let serversSearchResults = null;   // résultats de /db/<lang>/search?q= ; null = liste complète
   let serversSearchQuery = '';       // terme de la recherche serveur en cours
   let serversSearchRequestId = 0;    // ignore une réponse de recherche obsolète
@@ -1891,6 +1894,17 @@
   function getApiSortParam(sortType) {
     return Object.prototype.hasOwnProperty.call(API_SORT_PARAMS, sortType) ? API_SORT_PARAMS[sortType] : null;
   }
+
+  // Tri par défaut : « Note (décroissant) ». Le sélecteur HTML liste déjà cette
+  // option en premier, mais on s'assure ici que l'état JS et l'UI sont alignés :
+  // si l'option sélectionnée diffère (HTML modifié, réglage restauré…), l'état
+  // JS suit le sélecteur ; sinon on force le sélecteur sur le tri par note.
+  (function initDefaultSort() {
+    if (!sortBySelect) return;
+    const selectedSort = getApiSortParam(sortBySelect.value);
+    if (selectedSort) serversApiSort = selectedSort;
+    else sortBySelect.value = 'rating-desc';
+  })();
 
   // URL de base de l'API selon la langue choisie pour les descriptions des serveurs.
   function getServersApiUrl(lang) {

@@ -1488,15 +1488,20 @@
       filtered = filtered.filter(function (server) { return getServerCountry(server) === countryFilter; });
     }
     if (sortType === 'rating-desc' || sortType === 'rating-asc') {
-      const rated = filtered.filter(function (s) { return s._avgRating != null; });
-      const unrated = filtered.filter(function (s) { return s._avgRating == null; });
-      rated.sort(function (a, b) {
-        const diff = sortType === 'rating-desc' ? b._avgRating - a._avgRating : a._avgRating - b._avgRating;
-        if (diff !== 0) return diff;
-        // Égalité de note : on départage par le nombre de notes (plus de notes en premier)
-        return (b._reviewsCount || 0) - (a._reviewsCount || 0);
-      });
-      filtered = rated.concat(unrated);
+      if (serversSortFromApi) {
+        // L'ordre est déjà fourni par l'API (?sort=rating_desc / rating_inv) :
+        // on préserve l'ordre reçu (les serveurs sans avis sont déjà en fin).
+      } else {
+        const rated = filtered.filter(function (s) { return s._avgRating != null; });
+        const unrated = filtered.filter(function (s) { return s._avgRating == null; });
+        rated.sort(function (a, b) {
+          const diff = sortType === 'rating-desc' ? b._avgRating - a._avgRating : a._avgRating - b._avgRating;
+          if (diff !== 0) return diff;
+          // Égalité de note : on départage par le nombre de notes (plus de notes en premier)
+          return (b._reviewsCount || 0) - (a._reviewsCount || 0);
+        });
+        filtered = rated.concat(unrated);
+      }
     } else if (sortType === 'name-asc' || sortType === 'name-desc') {
       filtered.sort(function (a, b) {
         const aName = (a.server_name || '').toLowerCase();
@@ -1710,20 +1715,57 @@
     });
   }
 
+  /* ── Tri côté API ──
+     Le tri par note et note inversé est fait par l'API via le paramètre ?sort= :
+       - rating_desc : meilleures notes d'abord (reviews_avg DESC, puis reviews_count DESC)
+       - rating_inv  : notes les plus basses d'abord (reviews_avg ASC, puis reviews_count ASC)
+     Les serveurs sans avis sont toujours renvoyés en fin de liste par l'API. */
+  const RATING_SORT_PARAMS = { 'rating-desc': 'rating_desc', 'rating-asc': 'rating_inv' };
+  // Vrai lorsque la liste affichée provient d'un appel API avec ?sort= (ordre déjà trié).
+  let serversSortFromApi = false;
+
+  function isRatingSortValue(sortType) {
+    return Object.prototype.hasOwnProperty.call(RATING_SORT_PARAMS, sortType);
+  }
+
+  function getServersSortParam(sortType) {
+    return isRatingSortValue(sortType) ? RATING_SORT_PARAMS[sortType] : null;
+  }
+
   // URL de l'API selon la langue choisie pour les descriptions des serveurs.
-  function getServersApiUrl() {
+  // Le paramètre ?sort= est ajouté pour les tris par note (meilleures / moins bonnes).
+  function getServersApiUrl(sortType) {
     const lang = descLangSelect ? descLangSelect.value : 'original';
-    if (lang === 'english') return SERVERS_API_URL + '/db/english';
-    if (lang === 'french') return SERVERS_API_URL + '/db/french';
-    return SERVERS_API_URL + '/db/original';
+    const base = SERVERS_API_URL + '/db/' + (lang === 'english' ? 'english' : lang === 'french' ? 'french' : 'original');
+    const sort = getServersSortParam(sortType);
+    if (!sort) return base;
+    return base + '?sort=' + encodeURIComponent(sort);
   }
 
   const HERO_STATS_API_URL = SERVERS_API_URL + '/db/original';
 
+  let serversLoadSeq = 0;
+
+  // Recharge la liste des serveurs. Si un tri par note est actif (rating-desc /
+  // rating-asc), l'appel à l'API est distinct : le paramètre ?sort= est transmis
+  // en plus de la langue des descriptions. Une garde anti-course évite qu'une
+  // réponse lente d'un tri précédent n'écrase le résultat du tri courant.
   async function loadServers() {
+    const seq = ++serversLoadSeq;
+    const sortType = sortBySelect ? sortBySelect.value : null;
+    const sortParam = getServersSortParam(sortType);
     try {
-      const [res, ratings] = await Promise.all([fetchWithTimeout(getServersApiUrl(), {}, 12000), fetchAllServerRatings()]);
+      const [firstRes, ratings] = await Promise.all([fetchWithTimeout(getServersApiUrl(sortType), {}, 12000), fetchAllServerRatings()]);
+      if (seq !== serversLoadSeq) return; // un tri plus récent a déjà été lancé
+      // Repli : si l'API rejette le paramètre sort (500), on retente sans tri
+      // et le tri par note sera refait localement dans applyFiltersAndSort().
+      let res = firstRes;
+      if (!res.ok && sortParam) {
+        res = await fetchWithTimeout(getServersApiUrl(null), {}, 12000);
+        if (seq !== serversLoadSeq) return;
+      }
       if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
+      serversSortFromApi = !!sortParam;
       const data = await res.json();
       allServers = extractServers(data);
       applyServerRatings(allServers, ratings);
@@ -1732,6 +1774,8 @@
       applyFiltersAndSort();
       handleServerShare();
     } catch (err) {
+      if (seq !== serversLoadSeq) return;
+      serversSortFromApi = false;
       console.error(err);
       if (serversContainer) serversContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('servers.errorLoad') + '</p><p style="margin-top:0.75rem"><a class="btn btn-primary" href="https://stats.uptimerobot.com/LxQkdgr4jJ" target="_blank" rel="noopener">' + window.i18n.t('servers.errorBtn') + '</a></p></div>';
       if (serversCountEl) serversCountEl.textContent = '';
@@ -1747,7 +1791,13 @@
     serverSearchInput.addEventListener('search', triggerServerSearch);
   }
   if (searchBtn) searchBtn.addEventListener('click', triggerServerSearch);
-  if (sortBySelect) sortBySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
+  // Tri par note / note inversé : l'ordre vient de l'API (paramètre ?sort=),
+  // donc on recharge la liste. Les autres tris restent locaux.
+  if (sortBySelect) sortBySelect.addEventListener('change', function () {
+    if (!serversLoaded) return;
+    if (isRatingSortValue(sortBySelect.value)) { loadServers(); return; }
+    applyFiltersAndSort();
+  });
   if (filterModeSelect) filterModeSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterAdultSelect) filterAdultSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterCountrySelect) filterCountrySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });

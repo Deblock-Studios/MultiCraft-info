@@ -1275,8 +1275,10 @@
   let serversLoaded = false;
   let serversLoadingMore = false;
   let serversNoMore = false;
+  let serversTotalCount = 0;         // total de serveurs de la base (/db/<lang>/stats), comme la page d'accueil
   let serversConfirmingEnd = false;
   let serversNextPage = 1;
+  let serversLoadGeneration = 0;     // ignore les réponses du total obsolètes après un rechargement
   // Tri API courant. Le sélecteur affiche « Note (décroissant) » par défaut :
   // on initialise donc avec sort=rating_desc pour que le premier chargement
   // soit déjà trié par note (meilleures notes d'abord).
@@ -1558,8 +1560,28 @@
     return Array.from(found.values());
   }
 
-  // plus=true → « 50+ serveurs » : d'autres pages restent à charger.
+  // Formate le compteur : « N serveurs » ; plus=true ajoute « + » quand
+  // d'autres pages restent à charger (voir serversCountLabelText).
   function countLabel(n, plus) { return n + (plus ? '+' : '') + ' ' + (n === 1 ? window.i18n.t('servers.count1') : window.i18n.t('servers.countN')); }
+
+  // Filtres (mode / âge / pays) actifs ? La recherche est gérée à part
+  // (serversSearchResults !== null).
+  function hasActiveServerFilters() {
+    return (filterModeSelect && filterModeSelect.value !== 'all') ||
+           (filterAdultSelect && filterAdultSelect.value !== 'all') ||
+           (filterCountrySelect && filterCountrySelect.value !== 'all');
+  }
+
+  // Texte du compteur sous la barre de recherche. Liste complète et sans
+  // filtre : total exact de la base (API /stats, comme la page d'accueil).
+  // Sinon : nombre de serveurs concernés, avec « + » tant que des pages
+  // restent à charger.
+  function serversCountLabelText(n) {
+    if (serversSearchResults === null && !hasActiveServerFilters() && serversTotalCount > 0) {
+      return countLabel(serversTotalCount, false);
+    }
+    return countLabel(n, serversSearchResults === null && !serversNoMore);
+  }
 
   // Convertit une valeur « flag » en booléen, quelle que soit sa forme
   // (true, 1, "true", "yes", "on"…).
@@ -1689,7 +1711,7 @@
         ensureServersSentinel();
       }
     }
-    if (serversCountEl) serversCountEl.textContent = countLabel((list || []).length, serversSearchResults === null && !serversNoMore);
+    if (serversCountEl) serversCountEl.textContent = serversCountLabelText((list || []).length);
   }
 
   function appendNextBatch(list) {
@@ -1729,7 +1751,7 @@
     checkPendingShare();
     if (!serversLoaded || !allServers.length) return;
     computeFilteredServers();
-    if (serversCountEl) serversCountEl.textContent = countLabel(filteredServers.length, !serversNoMore);
+    if (serversCountEl) serversCountEl.textContent = serversCountLabelText(filteredServers.length);
     if (displayedPrefixMatches(previousDisplayed, filteredServers)) {
       // Le début affiché ne change pas : on garde le DOM et on ajoute la suite
       // uniquement si l'utilisateur attend en bas de la liste.
@@ -1779,7 +1801,7 @@
     } finally {
       serversLoadingMore = false;
       if (!serversLoaded) return;
-      if (serversCountEl) serversCountEl.textContent = countLabel(filteredServers.length, !serversNoMore);
+      if (serversCountEl) serversCountEl.textContent = serversCountLabelText(filteredServers.length);
       if (serversDisplayedCount < filteredServers.length || !serversNoMore) ensureServersSentinel();
       else removeServersSentinel();
       // Utilisateur toujours en bas de liste sans rien de plus à afficher :
@@ -1924,6 +1946,27 @@
     return getServersApiUrl(lang) + '/stats';
   }
 
+  // Nombre total de serveurs de la base. Même cache sessionStorage (30 min,
+  // même clé) que le compteur de la page d'accueil : une seule requête pour les deux.
+  function fetchServersTotal(lang) {
+    const value = lang || getCurrentDescLang();
+    const CACHE_KEY = 'mc_servers_total_' + value;
+    const CACHE_TTL = 30 * 60 * 1000;
+    try {
+      const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+      if (cached && cached.total > 0 && (Date.now() - cached.at) < CACHE_TTL) return Promise.resolve(cached.total);
+    } catch (e) { /* ignore */ }
+    return fetchWithTimeout(getServersStatsUrl(value), {}, 12000)
+      .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
+      .then(function (data) {
+        const total = parseInt(data && data.count, 10) || 0;
+        if (total) {
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), total: total })); } catch (e) { /* ignore */ }
+        }
+        return total;
+      });
+  }
+
   // L'API est paginée : ?p=<taille>,<page> (50 serveurs par page, numérotation à partir de 1).
   function buildServersPageUrl(lang, page) {
     // Tri côté serveur : sort=asc|desc (alphabétique) ou
@@ -1962,6 +2005,7 @@
   }
 
   async function loadServersInner() {
+    const loadGen = ++serversLoadGeneration;
     serversLoaded = false;
     serversLoadingMore = false;
     serversNoMore = false;
@@ -1969,6 +2013,15 @@
     serversNextPage = 1;
     serversSeenIds = new Set();
     allServers = [];
+    serversTotalCount = 0;
+    // Total de la base pour le compteur : récupéré en parallèle des pages,
+    // le compteur s'actualise dès réception (sans attendre la fin du chargement).
+    fetchServersTotal(getCurrentDescLang())
+      .then(function (total) {
+        if (loadGen !== serversLoadGeneration || total <= 0) return;
+        if (serversLoaded && serversCountEl) serversCountEl.textContent = serversCountLabelText(filteredServers.length);
+      })
+      .catch(function () { /* ignore : le compteur restera en « N+ serveurs » */ });
     try {
       const ratingsPromise = fetchAllServerRatings();
       let firstPage;

@@ -100,27 +100,22 @@
       });
   }
 
-  /* ── Dictionnaire des mots interdits ── */
-  const BAD_WORDS = {
-    'connard': 'insulte', 'con': 'insulte', 'pute': 'insulte', 'prostituée': 'insulte',
-    'salope': 'insulte', 'enculé': 'insulte', 'fdp': 'insulte', 'batard': 'insulte',
-    'bâtard': 'insulte', 'merde': 'vulgarité', 'putain': 'vulgarité', 'bordel': 'vulgarité',
-    'foutre': 'vulgarité', 'nique': 'insulte', 'nik': 'insulte', 'baise': 'vulgarité',
-    'nègre': 'raciste', 'negro': 'raciste', 'bougnoule': 'raciste', 'bicot': 'raciste',
-    'raton': 'raciste', 'youpin': 'raciste', 'feuj': 'raciste', 'pedé': 'homophobe',
-    'pédé': 'homophobe', 'gouine': 'homophobe', 'tarlouze': 'homophobe', 'pd': 'homophobe',
-    'c0nnard': 'insulte', 'c0n': 'insulte', 'f0utre': 'vulgarité', 'n1que': 'insulte',
-    's4lope': 'insulte', 'b4tard': 'insulte', 'fuck': 'vulgarité', 'shit': 'vulgarité',
-    'bitch': 'insulte', 'bastard': 'insulte', 'asshole': 'insulte', 'motherfucker': 'insulte',
-    'mf': 'insulte', 'b1tch': 'insulte', '4ssh0le': 'insulte', 'f4gg0t': 'homophobe',
-    'salaud': 'insulte', 'salopard': 'insulte', 'connasse': 'insulte', 'grognasse': 'insulte',
-    'pétasse': 'insulte', 'traînée': 'insulte', 'trainée': 'insulte', 'chienne': 'insulte',
-    'suceur': 'insulte', 'suceuse': 'insulte', 'branleur': 'insulte', 'branleuse': 'insulte',
-    'trouduc': 'insulte', 'trou du cul': 'insulte', 'trouducul': 'insulte', 'enculeur': 'insulte',
-    'enculeuse': 'insulte', 'débile': 'insulte', 'debile': 'insulte', 'idiot': 'insulte',
-    'imbécile': 'insulte', 'imbecile': 'insulte', 'crétin': 'insulte', 'cretin': 'insulte',
-    'abruti': 'insulte'
-  };
+  /* ── Dictionnaire des mots interdits ──
+     Stocké encodé en base64 pour que les mots eux-mêmes n'apparaissent
+     jamais en clair dans le code source. Format décodé, une entrée par ligne :
+     "mot<TAB>catégorie". */
+  const BAD_WORDS_DATA = 'Y29ubmFyZAlpbnN1bHRlCmNvbglpbnN1bHRlCnB1dGUJaW5zdWx0ZQpwcm9zdGl0dcOpZQlpbnN1bHRlCnNhbG9wZQlpbnN1bHRlCmVuY3Vsw6kJaW5zdWx0ZQpmZHAJaW5zdWx0ZQpiYXRhcmQJaW5zdWx0ZQpiw6J0YXJkCWluc3VsdGUKbWVyZGUJdnVsZ2FyaXTDqQpwdXRhaW4JdnVsZ2FyaXTDqQpib3JkZWwJdnVsZ2FyaXTDqQpmb3V0cmUJdnVsZ2FyaXTDqQpuaXF1ZQlpbnN1bHRlCm5pawlpbnN1bHRlCmJhaXNlCXZ1bGdhcml0w6kKbsOoZ3JlCXJhY2lzdGUKbmVncm8JcmFjaXN0ZQpib3Vnbm91bGUJcmFjaXN0ZQpiaWNvdAlyYWNpc3RlCnJhdG9uCXJhY2lzdGUKeW91cGluCXJhY2lzdGUKZmV1aglyYWNpc3RlCnBlZMOpCWhvbW9waG9iZQpww6lkw6kJaG9tb3Bob2JlCmdvdWluZQlob21vcGhvYmUKdGFybG91emUJaG9tb3Bob2JlCnBkCWhvbW9waG9iZQpjMG5uYXJkCWluc3VsdGUKYzBuCWluc3VsdGUKZjB1dHJlCXZ1bGdhcml0w6kKbjFxdWUJaW5zdWx0ZQpzNGxvcGUJaW5zdWx0ZQpiNHRhcmQJaW5zdWx0ZQpmdWNrCXZ1bGdhcml0w6kKc2hpdAl2dWxnYXJpdMOpCmJpdGNoCWluc3VsdGUKYmFzdGFyZAlpbnN1bHRlCmFzc2hvbGUJaW5zdWx0ZQptb3RoZXJmdWNrZXIJaW5zdWx0ZQptZglpbnN1bHRlCmIxdGNoCWluc3VsdGUKNHNzaDBsZQlpbnN1bHRlCmY0Z2cwdAlob21vcGhvYmUKc2FsYXVkCWluc3VsdGUKc2Fsb3BhcmQJaW5zdWx0ZQpjb25uYXNzZQlpbnN1bHRlCmdyb2duYXNzZQlpbnN1bHRlCnDDqXRhc3NlCWluc3VsdGUKdHJhw65uw6llCWluc3VsdGUKdHJhaW7DqWUJaW5zdWx0ZQpjaGllbm5lCWluc3VsdGUKc3VjZXVyCWluc3VsdGUKc3VjZXVzZQlpbnN1bHRlCmJyYW5sZXVyCWluc3VsdGUKYnJhbmxldXNlCWluc3VsdGUKdHJvdWR1YwlpbnN1bHRlCnRyb3UgZHUgY3VsCWluc3VsdGUKdHJvdWR1Y3VsCWluc3VsdGUKZW5jdWxldXIJaW5zdWx0ZQplbmN1bGV1c2UJaW5zdWx0ZQpkw6liaWxlCWluc3VsdGUKZGViaWxlCWluc3VsdGUKaWRpb3QJaW5zdWx0ZQppbWLDqWNpbGUJaW5zdWx0ZQppbWJlY2lsZQlpbnN1bHRlCmNyw6l0aW4JaW5zdWx0ZQpjcmV0aW4JaW5zdWx0ZQphYnJ1dGkJaW5zdWx0ZQ==';
+
+  const BAD_WORDS = (function () {
+    const bytes = Uint8Array.from(atob(BAD_WORDS_DATA), function (c) { return c.charCodeAt(0); });
+    const dict = {};
+    new TextDecoder('utf-8').decode(bytes).split('\n').forEach(function (line) {
+      if (!line) return;
+      const sep = line.indexOf('\t');
+      dict[line.slice(0, sep)] = line.slice(sep + 1);
+    });
+    return dict;
+  })();
 
   /* ── Fonctions de filtrage ── */
   function hasBadWords(text) {
@@ -1283,6 +1278,7 @@
   // on initialise donc avec sort=rating_desc pour que le premier chargement
   // soit déjà trié par note (meilleures notes d'abord).
   let serversApiSort = 'rating_desc';   // tri API en cours : 'asc'/'desc' (alphabétique), 'rating_desc'/'rating_inv' (notes) ; null = ordre par défaut de l'API
+  let serversApiCountry = null;      // filtre pays appliqué par l'API (&country=) : code ISO (ex. 'FR'), null = tous les pays
   let serversSearchResults = null;   // résultats de /db/<lang>/search?q= ; null = liste complète
   let serversSearchQuery = '';       // terme de la recherche serveur en cours
   let serversSearchRequestId = 0;    // ignore une réponse de recherche obsolète
@@ -1320,6 +1316,23 @@
       } catch (e) { /* ignore */ }
     }
     return normalized;
+  }
+
+  // Code ISO à deux lettres fourni par l'API (country_code) : c'est la valeur du
+  // filtre pays transmise à l'API (&country=FR). null si absent ou invalide.
+  function getServerCountryCode(server) {
+    if (!server || typeof server !== 'object') return null;
+    const code = server.country_code;
+    if (typeof code !== 'string') return null;
+    const normalized = code.trim().toUpperCase();
+    return /^[A-Z]{2}$/.test(normalized) ? normalized : null;
+  }
+
+  // Code ISO → drapeau (paires de lettres régionales Unicode).
+  function countryCodeToFlag(code) {
+    return String(code).toUpperCase().replace(/[A-Z]/g, function (c) {
+      return String.fromCodePoint(127397 + c.charCodeAt(0));
+    });
   }
 
   const _serverCountryCache = new WeakMap();
@@ -1446,23 +1459,30 @@
     return result;
   }
 
+  // Options du filtre pays : les codes ISO rencontrés dans les serveurs chargés
+  // (valeur = code envoyé à l'API, libellé = drapeau + nom localisé).
   function updateCountryFilter() {
     if (!filterCountrySelect) return;
     const previous = filterCountrySelect.value || 'all';
-    const countries = new Set();
-    allServers.forEach(function (server) { countries.add(getServerCountry(server)); });
-    const sortedCountries = Array.from(countries).sort();
-    filterCountrySelect.innerHTML = '<option value="all">🌍 Tous les pays</option>';
-    sortedCountries.forEach(function (country) {
+    const codes = new Set();
+    allServers.forEach(function (server) {
+      const code = getServerCountryCode(server);
+      if (code) codes.add(code);
+    });
+    // Le pays sélectionné doit rester disponible même s'il n'est pas (encore)
+    // dans la liste chargée : sinon la sélection retomberait sur « Tous les pays ».
+    if (previous !== 'all' && !codes.has(previous)) codes.add(previous);
+    const sortedCodes = Array.from(codes).sort(function (a, b) {
+      return (countryCodeToName(a) || a).localeCompare(countryCodeToName(b) || b);
+    });
+    filterCountrySelect.innerHTML = '<option value="all">' + escapeHtml(window.i18n.t('servers.allCountries')) + '</option>';
+    sortedCodes.forEach(function (code) {
       const option = document.createElement('option');
-      option.value = country;
-      option.textContent = country;
+      option.value = code;
+      option.textContent = countryCodeToFlag(code) + ' ' + (countryCodeToName(code) || code);
       filterCountrySelect.appendChild(option);
     });
-    // Conserve la sélection courante (le filtre pays est reconstruit à chaque
-    // fusion de page quand de nouveaux serveurs arrivent).
-    const hasPrevious = Array.prototype.some.call(filterCountrySelect.options, function (o) { return o.value === previous; });
-    filterCountrySelect.value = hasPrevious ? previous : 'all';
+    filterCountrySelect.value = previous;
   }
 
   async function fetchAllServerRatings() {
@@ -1499,7 +1519,6 @@
     const sortType = sortBySelect ? sortBySelect.value : 'rating-desc';
     const modeFilter = filterModeSelect ? filterModeSelect.value : 'all';
     const adultFilter = filterAdultSelect ? filterAdultSelect.value : 'all';
-    const countryFilter = filterCountrySelect ? filterCountrySelect.value : 'all';
     // Recherche active : les serveurs viennent de /db/<lang>/search (le filtrage
     // est fait côté API). Sinon on part de la liste paginée déjà chargée.
     let filtered = (serversSearchResults !== null ? serversSearchResults : allServers).slice();
@@ -1509,8 +1528,14 @@
     if (adultFilter !== 'all') {
       filtered = filtered.filter(function (server) { return adultFilter === 'adult' ? isServerAdult(server) : !isServerAdult(server); });
     }
-    if (countryFilter !== 'all') {
-      filtered = filtered.filter(function (server) { return getServerCountry(server) === countryFilter; });
+    // Le filtre pays est appliqué par l'API (&country=) : ici on écarte seulement
+    // les lignes dont le code pays explicite ne correspond pas (l'API peut
+    // renvoyer une ligne hors filtre en fin de page).
+    if (serversApiCountry) {
+      filtered = filtered.filter(function (server) {
+        const code = getServerCountryCode(server);
+        return !code || code === serversApiCountry;
+      });
     }
     if (sortType === 'rating-desc' || sortType === 'rating-asc') {
       if (serversSortFromApi && serversSearchResults === null) {
@@ -1564,20 +1589,19 @@
   // d'autres pages restent à charger (voir serversCountLabelText).
   function countLabel(n, plus) { return n + (plus ? '+' : '') + ' ' + (n === 1 ? window.i18n.t('servers.count1') : window.i18n.t('servers.countN')); }
 
-  // Filtres (mode / âge / pays) actifs ? La recherche est gérée à part
-  // (serversSearchResults !== null).
-  function hasActiveServerFilters() {
+  // Filtres locaux (mode / âge) actifs ? La recherche et le filtre pays, gérés
+  // par l'API, sont suivis à part (serversSearchResults / serversApiCountry).
+  function hasLocalServerFilters() {
     return (filterModeSelect && filterModeSelect.value !== 'all') ||
-           (filterAdultSelect && filterAdultSelect.value !== 'all') ||
-           (filterCountrySelect && filterCountrySelect.value !== 'all');
+           (filterAdultSelect && filterAdultSelect.value !== 'all');
   }
 
-  // Texte du compteur sous la barre de recherche. Liste complète et sans
-  // filtre : total exact de la base (API /stats, comme la page d'accueil).
-  // Sinon : nombre de serveurs concernés, avec « + » tant que des pages
-  // restent à charger.
+  // Texte du compteur sous la barre de recherche. Sans recherche ni filtre local :
+  // total exact de la base (API /stats, comme la page d'accueil), pays compris
+  // quand le filtre pays est actif (?country=). Sinon : nombre de serveurs
+  // concernés, avec « + » tant que des pages restent à charger.
   function serversCountLabelText(n) {
-    if (serversSearchResults === null && !hasActiveServerFilters() && serversTotalCount > 0) {
+    if (serversSearchResults === null && !hasLocalServerFilters() && serversTotalCount > 0) {
       return countLabel(serversTotalCount, false);
     }
     return countLabel(n, serversSearchResults === null && !serversNoMore);
@@ -1936,27 +1960,42 @@
     return SERVERS_API_URL + '/db/original';
   }
 
-  // Recherche serveur côté API : /db/<lang>/search?q=<terme>.
+  // Recherche serveur côté API : /db/<lang>/search?q=<terme>. Le filtre pays
+  // courant est passé en paramètre (&country=) comme pour la liste.
   function getServersSearchUrl(lang, query) {
-    return getServersApiUrl(lang) + '/search?q=' + encodeURIComponent(query);
+    return getServersApiUrl(lang) + '/search?q=' + encodeURIComponent(query) + countryQueryParam();
+  }
+
+  // Infos d'un serveur dans une langue donnée :
+  // /db/<langue>/<code d'invitation du serveur> → objet du serveur (description incluse).
+  function getServerInfoUrl(lang, inviteCode) {
+    return getServersApiUrl(lang) + '/' + encodeURIComponent(inviteCode);
+  }
+
+  // Paramètre &country= à ajouter aux URL de l'API, ou chaîne vide si aucun
+  // filtre pays n'est actif (ex. '&country=FR').
+  function countryQueryParam() {
+    return serversApiCountry ? '&country=' + encodeURIComponent(serversApiCountry) : '';
   }
 
   // Statistiques de la base : /db/<lang>/stats → { count: <nombre de serveurs> }.
-  function getServersStatsUrl(lang) {
-    return getServersApiUrl(lang) + '/stats';
+  // Avec un filtre pays, l'API renvoie le total de ce pays (?country=FR).
+  function getServersStatsUrl(lang, country) {
+    return getServersApiUrl(lang) + '/stats' + (country ? '?country=' + encodeURIComponent(country) : '');
   }
 
-  // Nombre total de serveurs de la base. Même cache sessionStorage (30 min,
-  // même clé) que le compteur de la page d'accueil : une seule requête pour les deux.
-  function fetchServersTotal(lang) {
+  // Nombre total de serveurs de la base (total du pays quand un filtre pays est
+  // actif). Même cache sessionStorage (30 min, même clé) que le compteur de la
+  // page d'accueil : une seule requête pour les deux.
+  function fetchServersTotal(lang, country) {
     const value = lang || getCurrentDescLang();
-    const CACHE_KEY = 'mc_servers_total_' + value;
+    const CACHE_KEY = 'mc_servers_total_' + value + (country ? '_' + country : '');
     const CACHE_TTL = 30 * 60 * 1000;
     try {
       const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
       if (cached && cached.total > 0 && (Date.now() - cached.at) < CACHE_TTL) return Promise.resolve(cached.total);
     } catch (e) { /* ignore */ }
-    return fetchWithTimeout(getServersStatsUrl(value), {}, 12000)
+    return fetchWithTimeout(getServersStatsUrl(value, country), {}, 12000)
       .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
       .then(function (data) {
         const total = parseInt(data && data.count, 10) || 0;
@@ -1967,14 +2006,27 @@
       });
   }
 
+  // Met à jour serversTotalCount (compteur de la page serveurs) via l'endpoint
+  // stats, en tenant compte du filtre pays courant — même source que l'accueil.
+  function refreshServersTotal(loadGen) {
+    return fetchServersTotal(getCurrentDescLang(), serversApiCountry)
+      .then(function (total) {
+        if (loadGen !== undefined && loadGen !== serversLoadGeneration) return;
+        if (total <= 0) return;
+        serversTotalCount = total;
+        if (serversLoaded && serversCountEl) serversCountEl.textContent = serversCountLabelText(filteredServers.length);
+      })
+      .catch(function () { /* ignore : le compteur restera en « N+ serveurs » */ });
+  }
+
   // L'API est paginée : ?p=<taille>,<page> (50 serveurs par page, numérotation à partir de 1).
   function buildServersPageUrl(lang, page) {
     // Tri côté serveur : sort=asc|desc (alphabétique) ou
-    // sort=rating_desc|rating_inv (meilleures / moins bonnes notes d'abord).
-    if (serversApiSort) {
-      return getServersApiUrl(lang) + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page + '&sort=' + serversApiSort;
-    }
-    return getServersApiUrl(lang) + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page;
+    // sort=rating_desc|rating_inv (meilleures / moins bonnes notes d'abord),
+    // plus le filtre pays éventuel.
+    let url = getServersApiUrl(lang) + '?p=' + SERVERS_API_PAGE_SIZE + ',' + page;
+    if (serversApiSort) url += '&sort=' + serversApiSort;
+    return url + countryQueryParam();
   }
 
   // Charge une page de l'API. Retourne les serveurs jamais vus jusqu'ici
@@ -2014,14 +2066,10 @@
     serversSeenIds = new Set();
     allServers = [];
     serversTotalCount = 0;
-    // Total de la base pour le compteur : récupéré en parallèle des pages,
-    // le compteur s'actualise dès réception (sans attendre la fin du chargement).
-    fetchServersTotal(getCurrentDescLang())
-      .then(function (total) {
-        if (loadGen !== serversLoadGeneration || total <= 0) return;
-        if (serversLoaded && serversCountEl) serversCountEl.textContent = serversCountLabelText(filteredServers.length);
-      })
-      .catch(function () { /* ignore : le compteur restera en « N+ serveurs » */ });
+    // Total pour le compteur : endpoint stats (comme la page d'accueil), filtré
+    // par pays le cas échéant. Récupéré en parallèle des pages, le compteur
+    // s'actualise dès réception (sans attendre la fin du chargement).
+    refreshServersTotal(loadGen);
     try {
       const ratingsPromise = fetchAllServerRatings();
       let firstPage;
@@ -2060,9 +2108,10 @@
     }
   }
 
-  // Recharge la liste paginée depuis la page 1 quand le tri alphabétique doit
-  // venir de l'API : changement de tri ou retour à la liste après une recherche.
-  function reloadServersForApiSort() {
+  // Recharge la liste paginée depuis la page 1 quand l'ordre ou le filtre pays
+  // doit venir de l'API : changement de tri/pays ou retour à la liste après
+  // une recherche.
+  function reloadServersFromApi() {
     serversLoaded = false;
     if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
     if (serversCountEl) serversCountEl.textContent = '';
@@ -2080,9 +2129,10 @@
     serversSearchQuery = query;
     if (!query) {
       serversSearchResults = null;
-      // Liste éventuellement dans l'ordre d'un tri API précédent (alphabétique
-      // ou note) : on recharge pour retrouver l'ordre par défaut de l'API.
-      if (serversLoaded && (serversApiSort || serversSortFromApi)) { reloadServersForApiSort(); return; }
+      // Liste éventuellement dans l'ordre d'un tri API précédent, ou obsolète
+      // après un changement de pays : on recharge la page 1 pour retrouver
+      // l'ordre et le filtre pays courants de l'API.
+      if (serversLoaded && (serversApiSort || serversSortFromApi || serversApiCountry)) { reloadServersFromApi(); return; }
       if (serversLoaded) applyFiltersAndSort();
       return;
     }
@@ -2142,7 +2192,7 @@
     if (!serversApiSort && previousApiSort && serversSearchResults === null) {
       // Retour au tri par défaut de l'API : la liste affichée est encore dans
       // l'ordre du tri précédent → rechargement depuis la page 1.
-      reloadServersForApiSort();
+      reloadServersFromApi();
       return;
     }
 
@@ -2150,7 +2200,18 @@
   });
   if (filterModeSelect) filterModeSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
   if (filterAdultSelect) filterAdultSelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
-  if (filterCountrySelect) filterCountrySelect.addEventListener('change', function () { if (!serversLoaded) return; applyFiltersAndSort(); });
+  // Filtre pays : appliqué par l'API (&country=), donc la liste (et la
+  // recherche) est rechargée depuis la page 1 ; le total du compteur suit avec
+  // l'endpoint stats du pays (?country=).
+  if (filterCountrySelect) filterCountrySelect.addEventListener('change', function () {
+    if (!serversLoaded) return;
+    const value = filterCountrySelect.value;
+    const next = (value && value !== 'all') ? value : null;
+    if (next === serversApiCountry) return;
+    serversApiCountry = next;
+    if (serversSearchQuery) { applyServerSearch(); return; }
+    reloadServersFromApi();
+  });
   if (descLangSelect) descLangSelect.addEventListener('change', function () {
     if (!document.getElementById('page-serveurs').classList.contains('active')) return;
     // Recherche en cours : on la relance dans la nouvelle langue.
@@ -2333,12 +2394,15 @@
           const lang = descLangSelect.value;
           if (!textEl) return;
           textEl.textContent = '…';
-          fetchWithTimeout(SERVERS_API_URL + '/db/' + lang, {}, 12000)
+          // Description dans la langue choisie : infos du serveur via son code
+          // d'invitation (/db/<langue>/<code>), sans recharger toute la base.
+          fetchWithTimeout(getServerInfoUrl(lang, code), {}, 12000)
             .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
             .then(function (data) {
-              const found = extractServers(data);
-              const match = found.find(function (s) { return s.server_id === code; });
-              textEl.textContent = (match && match.description) ? match.description : window.i18n.t('servers.noDesc');
+              // L'endpoint renvoie l'objet du serveur (liste d'un seul élément
+              // tolérée au cas où l'API changerait de forme).
+              const info = Array.isArray(data) ? (data[0] || null) : data;
+              textEl.textContent = (info && info.description) ? info.description : window.i18n.t('servers.noDesc');
             })
             .catch(function () { textEl.textContent = window.i18n.t('servers.noDesc'); });
         });

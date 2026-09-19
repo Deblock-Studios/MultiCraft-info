@@ -289,11 +289,71 @@ body {
   line-height: 1.65;
 }
 
-.hero-actions {
+/* ── Grandes cartes de l'accueil ── */
+.home-cards {
   display: flex;
-  gap: 0.6rem;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.home-card {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1.35rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition), transform var(--transition), background var(--transition);
+}
+
+.home-card:hover {
+  border-color: var(--green);
+  background: var(--bg-card-hover);
+  transform: translateY(-3px);
+}
+
+.home-card-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.home-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.home-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.home-card-desc {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.home-card-arrow {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--green);
+  transition: transform var(--transition);
+}
+
+.home-card:hover .home-card-arrow {
+  transform: translateX(4px);
 }
 
 .hero-stats {
@@ -1686,6 +1746,13 @@ body.modal-open {
   justify-content: center;
 }
 
+.official-modal-text {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  margin: 0.75rem 0 1rem;
+}
+
 #modal-share-btn {
   background: rgba(34, 197, 94, 0.06);
   border: 1px solid var(--border);
@@ -2106,19 +2173,6 @@ body.modal-open {
   background: #16a34a;
 }
 
-.review-deblock-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  font-size: 0.68rem;
-  color: #22c55e;
-  margin-left: auto;
-}
-
-.review-deblock-badge svg {
-  opacity: 0.7;
-}
-
 /* ── Downloads ── */
 .download-grid {
   display: grid;
@@ -2173,6 +2227,36 @@ body.modal-open {
   width: 100%;
   text-align: center;
   margin-top: 0.65rem;
+}
+
+/* ── Bouton « revenir en haut » (serveurs + mises à jour) ── */
+.scroll-top-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 84px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  color: var(--green);
+  cursor: pointer;
+  font: inherit;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: border-color var(--transition), transform var(--transition), background var(--transition);
+}
+
+.scroll-top-btn[hidden] { display: none; }
+
+.scroll-top-btn:hover {
+  border-color: var(--green);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
 }
 
 /* ── Chat Widget ── */
@@ -3384,14 +3468,17 @@ body.modal-open {
     padding: 0 0.4rem;
   }
 
-  .hero-actions {
-    flex-direction: column;
-    align-items: center;
+  .home-card {
+    gap: 0.85rem;
+    padding: 1.1rem 1.15rem;
   }
 
-  .hero-actions .btn {
-    width: 100%;
-    max-width: 260px;
+  .home-card-title {
+    font-size: 1.1rem;
+  }
+
+  .home-card-desc {
+    font-size: 0.82rem;
   }
 
   #app {

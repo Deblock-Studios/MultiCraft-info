@@ -874,6 +874,7 @@
       document.getElementById('app').style.display = '';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    updateScrollTopBtn();
   }
 
   function pagePath(pageId) {
@@ -1459,19 +1460,39 @@
     return result;
   }
 
-  // Options du filtre pays : les codes ISO rencontrés dans les serveurs chargés
+  // Codes pays déjà rencontrés depuis le début de la session (toutes pages
+  // chargées, filtre pays compris). Sans cette mémoire, appliquer un filtre pays
+  // réduirait le sélecteur aux 2-3 pays de la page 1 filtrée.
+  const COUNTRY_CODES_CACHE_KEY = 'mc_country_codes';
+  const knownCountryCodes = new Set();
+  (function loadKnownCountryCodes() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(COUNTRY_CODES_CACHE_KEY) || '[]');
+      if (Array.isArray(saved)) saved.forEach(function (code) { if (/^[A-Z]{2}$/.test(code)) knownCountryCodes.add(code); });
+    } catch (e) { /* ignore */ }
+  })();
+
+  // Mémorise les pays des serveurs actuellement chargés (liste courante).
+  function rememberCountryCodes() {
+    let changed = false;
+    allServers.forEach(function (server) {
+      const code = getServerCountryCode(server);
+      if (code && !knownCountryCodes.has(code)) { knownCountryCodes.add(code); changed = true; }
+    });
+    if (!changed) return;
+    try { sessionStorage.setItem(COUNTRY_CODES_CACHE_KEY, JSON.stringify(Array.from(knownCountryCodes))); } catch (e) { /* ignore */ }
+  }
+
+  // Options du filtre pays : tous les codes ISO rencontrés dans la session
   // (valeur = code envoyé à l'API, libellé = drapeau + nom localisé).
   function updateCountryFilter() {
     if (!filterCountrySelect) return;
     const previous = filterCountrySelect.value || 'all';
-    const codes = new Set();
-    allServers.forEach(function (server) {
-      const code = getServerCountryCode(server);
-      if (code) codes.add(code);
-    });
+    rememberCountryCodes();
+    const codes = new Set(knownCountryCodes);
     // Le pays sélectionné doit rester disponible même s'il n'est pas (encore)
     // dans la liste chargée : sinon la sélection retomberait sur « Tous les pays ».
-    if (previous !== 'all' && !codes.has(previous)) codes.add(previous);
+    if (previous !== 'all') codes.add(previous);
     const sortedCodes = Array.from(codes).sort(function (a, b) {
       return (countryCodeToName(a) || a).localeCompare(countryCodeToName(b) || b);
     });
@@ -1681,6 +1702,19 @@
     return result;
   }
 
+  /* ── Serveurs officiels ──
+     Codes d'invitation (server_id) des serveurs appartenant directement à
+     MultiCraft : ils affichent un badge « Officiel » qui ouvre une pop-up
+     d'information. Ajouter/retirer un code ici suffit (insensible à la casse). */
+  const OFFICIAL_SERVER_IDS = ['MCSRVR02', 'MCSRVR03', 'MCSRVRXR', 'MCSRVR05', 'VF5VRVSB'];
+  const OFFICIAL_BADGE_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>';
+
+  function isOfficialServer(server) {
+    const id = server && server.server_id;
+    if (typeof id !== 'string') return false;
+    return OFFICIAL_SERVER_IDS.indexOf(id.trim().toUpperCase()) !== -1;
+  }
+
   function renderServerCard(server) {
     const online = !!server.online;
     const players = (online ? (server.connected_players || 0) : 0) + ' / ' + (server.max_players != null ? server.max_players : '?');
@@ -1697,11 +1731,18 @@
     const modeHtml = '<span class="server-mode" title="' + modeLabel + '"><img src="/files/logos/server_' + mode + '_icon.png" alt="' + modeLabel + '" width="16" height="16"></span>';
     const ratingHtml = server._avgRating != null ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1) + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>' : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
     const serverDataAttr = escapeHtml(JSON.stringify(server));
-    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div><!-- <span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span> --></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + adultHtml + modeHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<!-- <button type="button" class="btn btn-players">' + window.i18n.t('servers.playersList') + '</button> --><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
+    const officialBadge = isOfficialServer(server)
+      ? '<button type="button" class="server-official btn-official" aria-haspopup="dialog">' + OFFICIAL_BADGE_ICON + escapeHtml(window.i18n.t('servers.officialBadge')) + '</button>'
+      : '';
+    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div>' + officialBadge + '<!-- <span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span> --></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + adultHtml + modeHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<!-- <button type="button" class="btn btn-players">' + window.i18n.t('servers.playersList') + '</button> --><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
   }
 
   function bindServerCardActions() {
     if (!serversContainer) return;
+    // Badge « Officiel » : ouvre la pop-up explicative (serveurs de MultiCraft).
+    serversContainer.querySelectorAll('.btn-official').forEach(function (btn) {
+      btn.addEventListener('click', function () { openOfficialServerModal(); });
+    });
     serversContainer.querySelectorAll('.btn-details').forEach(function (btn) {
       btn.addEventListener('click', function () {
         try { const serverData = JSON.parse(btn.dataset.server); openServerDetailsModal(serverData); } catch (e) { console.error('Erreur lors du parsing des données du serveur', e); }
@@ -1781,7 +1822,8 @@
       // uniquement si l'utilisateur attend en bas de la liste.
       serversActiveList = filteredServers;
       if (wasAtEnd) appendNextBatch(filteredServers);
-      if (serversDisplayedCount < filteredServers.length || !serversNoMore) ensureServersSentinel();
+      if (serversSearchResults !== null) removeServersSentinel();
+      else if (serversDisplayedCount < filteredServers.length || !serversNoMore) ensureServersSentinel();
       else removeServersSentinel();
     } else if (previousDisplayed.length) {
       // Le tri a réordonné la partie déjà affichée (nouvelles notes) :
@@ -1826,7 +1868,10 @@
       serversLoadingMore = false;
       if (!serversLoaded) return;
       if (serversCountEl) serversCountEl.textContent = serversCountLabelText(filteredServers.length);
-      if (serversDisplayedCount < filteredServers.length || !serversNoMore) ensureServersSentinel();
+      // Une recherche a pu être lancée pendant ce chargement : ses résultats sont
+      // affichés, on ne laisse pas le sentinel de pagination (spinner trompeur).
+      if (serversSearchResults !== null) removeServersSentinel();
+      else if (serversDisplayedCount < filteredServers.length || !serversNoMore) ensureServersSentinel();
       else removeServersSentinel();
       // Utilisateur toujours en bas de liste sans rien de plus à afficher :
       // on relance le chargement (le sentinel visible ne redéclenche pas
@@ -1839,7 +1884,9 @@
 
   function loadMoreServers() {
     if (!serversContainer) return;
-    if (serversSearchResults !== null) return;
+    // Recherche affichée : pas de pagination. On retire au passage un sentinel
+    // éventuellement laissé par un chargement lancé avant la recherche.
+    if (serversSearchResults !== null) { removeServersSentinel(); return; }
     const list = serversActiveList || filteredServers;
     if (serversDisplayedCount < list.length) {
       // Il reste des serveurs déjà chargés à afficher.
@@ -1861,6 +1908,9 @@
 
   function ensureServersSentinel() {
     if (!serversContainer || serversSentinel) return;
+    // Recherche affichée : la liste paginée n'est plus à l'écran, aucun sentinel
+    // (donc aucun spinner) ne doit être ajouté sous les résultats de recherche.
+    if (serversSearchResults !== null) return;
     serversSentinel = document.createElement('div');
     serversSentinel.id = 'servers-sentinel';
     serversSentinel.className = 'servers-sentinel';
@@ -2136,6 +2186,9 @@
       if (serversLoaded) applyFiltersAndSort();
       return;
     }
+    // La liste paginée laisse la place aux résultats de recherche : son sentinel
+    // de chargement (spinner sous la liste) doit disparaître avec elle.
+    removeServersSentinel();
     if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
     if (serversCountEl) serversCountEl.textContent = '';
     fetchWithTimeout(getServersSearchUrl(null, query), {}, 12000)
@@ -2278,8 +2331,8 @@
   function buildReviewCardsHtml(reviews) {
     if (!reviews.length) return '<p class="reviews-empty">' + window.i18n.t('reviews.noReviews') + '</p>';
     return reviews.map(function (r) {
-      const verifiedBadge = r.user_id ? '<span class="review-deblock-badge">✓ Vérifié</span>' : '';
-      return '<div class="review-card"><div class="review-header"><span class="review-stars">' + buildStarsHtml(r.rating) + '</span><span class="review-pseudo">' + escapeHtml(r.pseudo || 'Anonyme') + '</span>' + verifiedBadge + '<span class="review-date">' + escapeHtml(r.date || new Date(r.created_at).toLocaleDateString('fr-FR')) + '</span></div>' + (r.text ? '<p class="review-text">' + escapeHtml(r.text) + '</p>' : '') + '</div>';
+      // Aucun avis ne porte de statut « vérifié » : le pseudo et la date suffisent.
+      return '<div class="review-card"><div class="review-header"><span class="review-stars">' + buildStarsHtml(r.rating) + '</span><span class="review-pseudo">' + escapeHtml(r.pseudo || 'Anonyme') + '</span><span class="review-date">' + escapeHtml(r.date || new Date(r.created_at).toLocaleDateString('fr-FR')) + '</span></div>' + (r.text ? '<p class="review-text">' + escapeHtml(r.text) + '</p>' : '') + '</div>';
     }).join('');
   }
 
@@ -2302,7 +2355,7 @@
     let formHtml;
 
     if (!currentUser) {
-      formHtml = '<div class="review-deblock-prompt"><svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg><span>Connectez-vous pour laisser un avis vérifié.</span><button type="button" class="btn-deblock-inline" id="review-deblock-login-btn">' + window.i18n.t('reviews.loginBtn') + '</button></div>';
+      formHtml = '<div class="review-deblock-prompt"><svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg><span>Connectez-vous pour laisser un avis.</span><button type="button" class="btn-deblock-inline" id="review-deblock-login-btn">' + window.i18n.t('reviews.loginBtn') + '</button></div>';
     } else if (alreadyReviewed) { formHtml = '<p class="review-already-done">' + window.i18n.t('reviews.alreadyDone') + '</p>'; }
     else {
       formHtml = '<div class="review-form" id="review-form-wrap"><p class="review-form-title">Laisser un avis en tant que <strong style="color:var(--green-muted)">' + escapeHtml(Deblock.getDisplayName()) + '</strong></p><div class="review-form-fields"><div class="review-form-row"><div class="review-star-picker" data-selected="0"><span class="review-star-picker-label">' + window.i18n.t('reviews.ratingLabel') + '</span><span class="star-pick" data-val="1">★</span><span class="star-pick" data-val="2">★</span><span class="star-pick" data-val="3">★</span><span class="star-pick" data-val="4">★</span><span class="star-pick" data-val="5">★</span></div></div><textarea class="review-input review-text-input" placeholder="' + window.i18n.t('reviews.placeholder') + '" maxlength="280" rows="2"></textarea><div class="review-form-footer"><span class="review-char-count" id="review-char-count">0 / 280</span><button type="button" class="btn btn-primary review-submit-btn">Publier</button></div></div></div>';
@@ -2347,7 +2400,13 @@
   const modalCloseBtn2 = document.getElementById('modal-close-btn-2');
   let modalCopyResetTimer = null;
 
-  function syncModalOpenState() { const serverModalOpen = !!(serverModal && !serverModal.hidden); const playersModalOpen = !!(playersModal && !playersModal.hidden); document.body.classList.toggle('modal-open', serverModalOpen || playersModalOpen); }
+  function syncModalOpenState() {
+    const serverModalOpen = !!(serverModal && !serverModal.hidden);
+    const playersModalOpen = !!(playersModal && !playersModal.hidden);
+    const officialEl = document.getElementById('official-modal');
+    const officialModalOpen = !!(officialEl && !officialEl.hidden);
+    document.body.classList.toggle('modal-open', serverModalOpen || playersModalOpen || officialModalOpen);
+  }
 
   // Valeur par défaut du sélecteur de langue des descriptions : la langue du site (i18n).
   function getDefaultDescLangValue() {
@@ -2537,7 +2596,18 @@
   if (playersModalCloseBtn) playersModalCloseBtn.addEventListener('click', closePlayersModal);
   if (playersModalCloseBtn2) playersModalCloseBtn2.addEventListener('click', closePlayersModal);
   if (playersModal) playersModal.addEventListener('click', function (e) { if (e.target === playersModal) closePlayersModal(); });
-  document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (playersModal && !playersModal.hidden) { closePlayersModal(); return; } if (serverModal && !serverModal.hidden) closeServerModal(); });
+  /* ── Pop-up « serveur officiel » ── */
+  const officialModal = document.getElementById('official-modal');
+  const officialModalCloseBtn = document.getElementById('official-modal-close-btn');
+  const officialModalCloseBtn2 = document.getElementById('official-modal-close-btn-2');
+
+  function openOfficialServerModal() { if (!officialModal) return; officialModal.hidden = false; syncModalOpenState(); }
+  function closeOfficialServerModal() { if (!officialModal) return; officialModal.hidden = true; syncModalOpenState(); }
+  if (officialModalCloseBtn) officialModalCloseBtn.addEventListener('click', closeOfficialServerModal);
+  if (officialModalCloseBtn2) officialModalCloseBtn2.addEventListener('click', closeOfficialServerModal);
+  if (officialModal) officialModal.addEventListener('click', function (e) { if (e.target === officialModal) closeOfficialServerModal(); });
+
+  document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (officialModal && !officialModal.hidden) { closeOfficialServerModal(); return; } if (playersModal && !playersModal.hidden) { closePlayersModal(); return; } if (serverModal && !serverModal.hidden) closeServerModal(); });
 
   /* ── Language change ── */
   document.addEventListener('langchange', function () { syncDescLangSelect(); if (serversLoaded) renderServers(serversActiveList || filteredServers, serversDisplayedCount); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath())); });
@@ -3975,6 +4045,25 @@
       })
       .catch(function (err) { console.error('Erreur de chargement du nombre de serveurs', err); });
   })();
+
+  /* ── Bouton « revenir en haut » (pages serveurs + mises à jour) ── */
+  const scrollTopBtn = document.getElementById('scroll-top-btn');
+  const SCROLL_TOP_PAGES = ['serveurs', 'mises-a-jour'];
+  const SCROLL_TOP_THRESHOLD = 400;
+
+  function updateScrollTopBtn() {
+    if (!scrollTopBtn) return;
+    const pageId = currentPageFromPath();
+    scrollTopBtn.hidden = SCROLL_TOP_PAGES.indexOf(pageId) === -1 || window.scrollY <= SCROLL_TOP_THRESHOLD;
+    if (!scrollTopBtn.hidden) scrollTopBtn.setAttribute('aria-label', window.i18n.t('ui.scrollTop'));
+  }
+
+  if (scrollTopBtn) {
+    scrollTopBtn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    window.addEventListener('scroll', updateScrollTopBtn, { passive: true });
+    document.addEventListener('langchange', updateScrollTopBtn);
+    updateScrollTopBtn();
+  }
 
   /* ── Init ── */
   applyPortholePreference();

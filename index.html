@@ -213,9 +213,27 @@
         <h1 class="porthole-title" data-i18n="home.title">Tout sur <span class="gradient-text">MultiCraft</span></h1>
         <p class="hero-subtitle" data-i18n="home.subtitle">
           Suivez les mises à jour, explorez les serveurs et rejoignez la communauté. </p>
-        <div class="hero-actions">
-          <a href="/serveurs" class="btn btn-primary" data-nav="serveurs" data-i18n="home.btnServers">🎮 Serveurs</a>
-          <a href="/mises-a-jour" class="btn btn-ghost" data-nav="mises-a-jour" data-i18n="home.btnUpdates">📋 Mises à jour</a>
+        <div class="home-cards">
+          <a href="/serveurs" class="home-card" data-nav="serveurs">
+            <span class="home-card-icon" aria-hidden="true">🎮</span>
+            <span class="home-card-text">
+              <span class="home-card-title" data-i18n="home.cardServersTitle">Liste des serveurs</span>
+              <span class="home-card-desc" data-i18n="home.cardServersDesc">Découvrez de nouveaux serveurs dans notre gigantesque base de +5100 serveurs.</span>
+            </span>
+            <span class="home-card-arrow" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
+          <a href="/mises-a-jour" class="home-card" data-nav="mises-a-jour">
+            <span class="home-card-icon" aria-hidden="true">📋</span>
+            <span class="home-card-text">
+              <span class="home-card-title" data-i18n="home.cardUpdatesTitle">Mises à jour</span>
+              <span class="home-card-desc" data-i18n="home.cardUpdatesDesc">Découvrez les mises à jour du jeu avant tout le monde !</span>
+            </span>
+            <span class="home-card-arrow" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
         </div>
       </div>
       <div class="hero-stats" id="hero-stats">
@@ -546,6 +564,24 @@
       </div>
     </div>
   </div>
+
+  <!-- Pop-up serveur officiel / Official server modal -->
+  <div id="official-modal" class="modal-overlay" hidden>
+    <div class="modal-box official-modal-box" role="dialog" aria-modal="true" aria-labelledby="official-modal-title">
+      <button type="button" class="modal-close" id="official-modal-close-btn" aria-label="Fermer">✕</button>
+      <p class="modal-eyebrow" data-i18n="official.eyebrow">Serveur officiel</p>
+      <h2 id="official-modal-title" data-i18n="official.title">Serveur officiel</h2>
+      <p class="official-modal-text" data-i18n="official.text">Ce serveur appartient directement à MultiCraft. Les mises à jour y seront en avance.</p>
+      <div class="modal-actions">
+        <button type="button" id="official-modal-close-btn-2" class="btn btn-ghost modal-close-bottom"data-i18n="modal.close">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bouton « revenir en haut » (pages serveurs + mises à jour) -->
+  <button type="button" id="scroll-top-btn" class="scroll-top-btn" hidden aria-label="Revenir en haut de la page">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  </button>
 
   <!-- Widget Chat Flottant -->
   <div id="chat-widget" class="chat-widget">

@@ -18,14 +18,10 @@
       /* Home */
       'home.title':    'Tout sur <span class="gradient-text">MultiCraft</span>',
       'home.subtitle': 'Retrouvez ici la liste des mises à jour du jeu ainsi que tous leurs serveurs.',
-      'home.btnServers': 'Liste des serveurs',
-      'home.btnUpdates': 'Voir les mises à jour',
-      'home.card1Title': 'Mises à jour',
-      'home.card1Desc':  'Consultez l\'historique des ajouts et corrections.',
-      'home.card1Link':  'Consulter →',
-      'home.card2Title': 'Serveurs',
-      'home.card2Desc':  'Liste des différents serveurs de MultiCraft.',
-      'home.card2Link':  'Explorer →',
+      'home.cardServersTitle': 'Liste des serveurs',
+      'home.cardServersDesc':  'Découvrez de nouveaux serveurs dans notre gigantesque base de +5100 serveurs.',
+      'home.cardUpdatesTitle': 'Mises à jour',
+      'home.cardUpdatesDesc':  'Découvrez les mises à jour du jeu avant tout le monde !',
       'home.statServers': 'serveurs répertoriés',
 
       /* Footer */
@@ -64,6 +60,7 @@
       'servers.noDesc':         'Aucune description disponible.',
       'servers.noName':         'Serveur sans nom',
       'servers.noRating':       'Aucun avis',
+      'servers.officialBadge':  'Officiel',
       'servers.count1':         'serveur',
       'servers.countN':         'serveurs',
       'servers.playersList':    '👥 Liste des joueurs',
@@ -126,6 +123,14 @@
       'modal.noInviteCode':     'Code d\'invitation introuvable pour ce serveur.',
       'modal.playerOnline1':    'joueur en ligne',
       'modal.playerOnlineN':    'joueurs en ligne',
+
+      /* Modal – serveur officiel */
+      'official.eyebrow': 'Serveur officiel',
+      'official.title':   'Serveur officiel',
+      'official.text':    'Ce serveur appartient directement à MultiCraft. Les mises à jour y seront en avance.',
+
+      /* Interface */
+      'ui.scrollTop': 'Revenir en haut de la page',
 
       /* Reviews */
       'reviews.title':       '⭐ Avis de la communauté',
@@ -251,14 +256,10 @@
       /* Home */
       'home.title':    'All about <span class="gradient-text">MultiCraft</span>',
       'home.subtitle': 'Find the list of game updates and all their servers right here.',
-      'home.btnServers': 'Server List',
-      'home.btnUpdates': 'View Updates',
-      'home.card1Title': 'Updates',
-      'home.card1Desc':  'Browse the history of additions and fixes.',
-      'home.card1Link':  'Browse →',
-      'home.card2Title': 'Servers',
-      'home.card2Desc':  'List of MultiCraft servers.',
-      'home.card2Link':  'Explore →',
+      'home.cardServersTitle': 'Server list',
+      'home.cardServersDesc':  'Discover new servers in our huge database of 5100+ servers.',
+      'home.cardUpdatesTitle': 'Updates',
+      'home.cardUpdatesDesc':  'Discover the game updates before everyone else!',
       'home.statServers': 'servers listed',
 
       /* Footer */
@@ -297,6 +298,7 @@
       'servers.noDesc':         'No description available.',
       'servers.noName':         'Unnamed server',
       'servers.noRating':       'No reviews',
+      'servers.officialBadge':  'Official',
       'servers.count1':         'server',
       'servers.countN':         'servers',
       'servers.playersList':    '👥 Player list',
@@ -359,6 +361,14 @@
       'modal.noInviteCode':     'No invite code found for this server.',
       'modal.playerOnline1':    'player online',
       'modal.playerOnlineN':    'players online',
+
+      /* Modal – official server */
+      'official.eyebrow': 'Official server',
+      'official.title':   'Official server',
+      'official.text':    'This server belongs directly to MultiCraft. Game updates will be available there early.',
+
+      /* Interface */
+      'ui.scrollTop': 'Back to top of page',
 
       /* Reviews */
       'reviews.title':       '⭐ Community Reviews',

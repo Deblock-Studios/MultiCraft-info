@@ -540,6 +540,25 @@ body.show-portholes .porthole-title::before {
   font-size: 0.98rem;
 }
 
+/* Avis de la page « Mises à jour » : les articles ne sont rédigés qu'en français
+   et en anglais. La langue courante est écrite sur <html lang> par i18n.js, donc
+   le simple attribut suffit pour l'afficher ou le masquer — aucun JS à modifier. */
+.updates-lang-notice {
+  display: none;
+}
+
+html:not([lang='fr']):not([lang='en']) .updates-lang-notice {
+  display: block;
+  margin-top: 1rem;
+  padding: 0.7rem 0.95rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 8px;
+}
+
 .page-header-secondary {
   margin-top: 3rem;
   padding-top: 2rem;

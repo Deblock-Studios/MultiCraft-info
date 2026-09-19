@@ -1,604 +1,391 @@
-/* ── MultiCraft Info — i18n (FR / EN) ── */
+/* ── MultiCraft Info — moteur i18n ──
+   Les traductions ne sont PAS dans ce fichier : elles sont dans /locales/<code>.json
+   (une entrée par clé ; les valeurs peuvent être des objets, ex. « gameInfo.locations »).
+
+   HTML (appliqué automatiquement au chargement et à chaque changement de langue) :
+     <h1 data-i18n="home.title">…</h1>                     → texte
+     <h1 data-i18n-html="home.title">…</h1>                → texte contenant du HTML
+     <input data-i18n-placeholder="servers.searchPlaceholder">
+     <button data-i18n-title="ui.example">                 → attribut title
+     <button data-i18n-aria-label="modal.close">           → attribut aria-label
+     <meta data-i18n-content="meta.description">           → attribut content
+
+   JavaScript :
+     t('servers.count1')                          → « serveur »
+     t('modal.playerOnlineN', { count: 12 })      → remplace {count} dans la traduction
+     i18n.loc('Singapour')                 → traduit un lieu (gameInfo.locations)
+     i18n.ready.then(…)                    → traductions de la langue courante chargées
+     i18n.apply()                          → ré-applique les traductions au DOM
+
+   Comportement si une clé n'existe pas : console.warn + la clé est renvoyée telle
+   quelle (l'élément HTML concerné garde son contenu d'origine). Le script
+   `node scripts/check-i18n.js` détecte les clés manquantes avant la mise en ligne.*/
 (function () {
   'use strict';
 
-  /* ────────────────────────────────────────
-     Translations
-  ──────────────────────────────────────── */
-  const TRANSLATIONS = {
-    fr: {
-      /* Navigation */
-      'nav.home':     'Accueil',
-      'nav.updates':  'Mises à jour',
-      'nav.servers':  'Serveurs',
-      'nav.gameInfo': 'Serveurs physiques',
-      'nav.download': 'Télécharger',
-      'nav.theGame':  'Le jeu',
+  /* ── Langues disponibles ─────────────────────────────────────────────────────
+     C'est la SEULE liste à modifier pour ajouter une langue :
+       1. créer locales/<code>.json (copier en.json et traduire les valeurs)
+       2. ajouter une ligne ici.
 
-      /* Home */
-      'home.title':    'Tout sur <span class="gradient-text">MultiCraft</span>',
-      'home.subtitle': 'Retrouvez ici la liste des mises à jour du jeu ainsi que tous leurs serveurs.',
-      'home.cardServersTitle': 'Liste des serveurs',
-      'home.cardServersDesc':  'Découvrez de nouveaux serveurs dans notre gigantesque base de +5100 serveurs.',
-      'home.cardUpdatesTitle': 'Mises à jour',
-      'home.cardUpdatesDesc':  'Découvrez les mises à jour du jeu avant tout le monde !',
-      'home.statServers': 'serveurs répertoriés',
+     code    : code ISO à deux ou trois lettres (aussi utilisé comme préfixe
+               d'URL, ex. /ja/serveurs, /br/, /nrm/).
+     flag    : emoji de secours, affiché seulement si le drapeau SVG ne charge pas.
+     flagImg : chemin du drapeau, à préciser uniquement si le fichier ne s'appelle
+               pas comme le code. Par défaut le moteur charge /flags/<code>.svg
+               (voir FLAGS_PATH) : aucune langue actuelle n'a besoin de l'écrire.
+     name    : nom affiché dans le menu (dans la langue concernée).
+     file    : uniquement pour une variante régionale qui réutilise un fichier
+               existant (es-MX et pt-BR partagent es.json et pt.json).
+     La langue « fr » n'a pas de préfixe d'URL (c'est la langue par défaut du site).
+  ──────────────────────────────────────────────────────────────────────────── */
+  const LANGUAGES = [
+    { code: 'fr', flag: '🇫🇷', name: 'Français' },
+    { code: 'br', flag: '🏴', name: 'Brezhoneg' },
+    { code: 'nrm', flag: '🏴', name: 'Cauchois' },
+    { code: 'en', flag: '🇬🇧', name: 'English' },
+    { code: 'es', flag: '🇪🇸', name: 'Español' },
+    { code: 'es-MX', flag: '🇲🇽', name: 'Español (México)', file: 'es' },
+    { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+    { code: 'pt-BR', flag: '🇧🇷', name: 'Português (Brasil)', file: 'pt' },
+    { code: 'nl', flag: '🇳🇱', name: 'Nederlands' },
+    { code: 'ru', flag: '🇷🇺', name: 'Русский' },
+    { code: 'uk', flag: '🇺🇦', name: 'Українська' },
+    { code: 'tr', flag: '🇹🇷', name: 'Türkçe' },
+    { code: 'zh', flag: '🇨🇳', name: '中文' },
+    { code: 'ja', flag: '🇯🇵', name: '日本語' },
+    { code: 'ko', flag: '🇰🇷', name: '한국어' },
+    { code: 'hi', flag: '🇮🇳', name: 'हिन्दी' },
+    { code: 'bn', flag: '🇧🇩', name: 'বাংলা' },
+    { code: 'ar', flag: '🇸🇦', name: 'العربية' },
+    { code: 'id', flag: '🇮🇩', name: 'Bahasa Indonesia' },
+  ];
 
-      /* Footer */
-      'footer.tagline':      'Le site ultime pour les MultiCrafters.',
-      'footer.source':       'Code source',
-      'footer.notAffiliated':'Nous ne sommes pas affiliés à MultiCraft.',
-      'footer.madeBy':       'MultiCraft Info est une création de',
-      'footer.rights':       '© Deblock Studios 2026 — Tous droits réservés',
+  // Index par code en minuscules (la comparaison d'URL ignore la casse).
+  const LANGUAGE_BY_CODE = {};
+  LANGUAGES.forEach(function (lang) { LANGUAGE_BY_CODE[lang.code.toLowerCase()] = lang; });
 
-      /* Updates page */
-      'updates.subtitle': 'Les dernières nouveautés du jeu, classées de la plus récente à la plus ancienne.',
-      'updates.loading':  'Chargement des mises à jour…',
-      'updates.empty':    'Aucune mise à jour pour le moment.',
-      'updates.error':    'Oops. on dirait que ça ne marche pas :/ Un des développeurs à encore tout cassé... Désolé ! N\'hésitez pas à nous envoyer un mail pour nous signaler le problème : deblock-studios@proton.me',
+  // Langue de référence : sert de secours si une clé manque dans la langue courante.
+  const REFERENCE_LANGUAGE = 'en';
+  const DEFAULT_LANGUAGE = 'fr'; // langue utilisée si le navigateur ne correspond à rien
+  const LOCALES_PATH = '/locales/';
+  const FLAGS_PATH = '/flags/'; // un drapeau par code : /flags/br.svg, /flags/ja.svg…
+  const STORAGE_KEY = 'mc_lang';
 
-      /* Servers page */
-      'servers.subtitle':       'Liste des serveurs en direct. Trouvez un serveur et rejoignez-le en un clic.',
-      'servers.loading':        'Chargement des serveurs…',
-      'servers.searchPlaceholder': 'Rechercher un serveur…',
-      'servers.allCountries':   '🌍 Tous les pays',
-      'servers.sortRatingDesc': 'Note (décroissant)',
-      'servers.sortRatingAsc':  'Note (croissant)',
-      'servers.sortNameAsc':    'Nom (A-Z)',
-      'servers.sortNameDesc':   'Nom (Z-A)',
-      'servers.filterAll':      'Tous les serveurs',
-      'servers.modeCreative':   'Créatif',
-      'servers.modeSurvival':   'Survie',
-      'servers.modePvp':        'PvP',
-      'servers.filterAllAges':  'Tous les âges',
-      'servers.filterAdult':    '18+',
-      'servers.filterMinor':    '-18',
-      'servers.dataDate':       'Date des données : 30/07/2026',
-      'servers.empty':          'Aucun serveur ne correspond à votre recherche.',
-      'servers.errorLoad':      'La liste des serveurs est inaccessible. Vérifiez si elle fonctionne sur notre page Status.',
-      'servers.errorBtn':       'Page Status',
-      'servers.noDesc':         'Aucune description disponible.',
-      'servers.noName':         'Serveur sans nom',
-      'servers.noRating':       'Aucun avis',
-      'servers.officialBadge':  'Officiel',
-      'servers.count1':         'serveur',
-      'servers.countN':         'serveurs',
-      'servers.playersList':    '👥 Liste des joueurs',
-      'servers.addMyServer':    'Ajouter mon serveur',
-      'servers.descLangLabel':   'Langue des descriptions',
-      'servers.descLangOriginal':'Original',
-      'servers.descLangEnglish': 'Anglais',
-      'servers.descLangFrench':  'Français',
+  /* ── Langue : détection et persistance ── */
 
-      /* Modal */
-      'modal.addServer':    'Ajouter mon serveur',
-      'modal.addServerMsg': 'Si vous souhaitez ajouter votre serveur sur cette liste, contactez .lucas76. sur Discord.',
+  // Renvoie le code canonique (« es-mx » → « es-MX »), ou null si non supporté.
+  function canonical(code) {
+    if (typeof code !== 'string') return null;
+    const lang = LANGUAGE_BY_CODE[code.toLowerCase()];
+    return lang ? lang.code : null;
+  }
 
-      /* Game Info page */
-      'gameInfo.subtitle': 'Liste des serveurs physiques de MultiCraft.',
-      'gameInfo.locations': {
-        'Falkenstein, Allemagne': 'Falkenstein, Allemagne',
-        'Falkenstein Allemagne':  'Falkenstein Allemagne',
-        'Singapour':              'Singapour',
-        'Hong Kong':              'Hong Kong',
-        'Naaldwijk, Pays-Bas':   'Naaldwijk, Pays-Bas',
-        'Helsinki, Finlande':     'Helsinki, Finlande',
-        'Sydney, Autralie':       'Sydney, Australie',
-      },
+  function isSupported(code) {
+    return canonical(code) !== null;
+  }
 
+  // Navigateur : essaie chaque langue déclarée, région exacte puis langue de base
+  // (« pt-BR » → pt-BR, « es-AR » → es, « en-US » → en…).
+  function matchBrowserLang(raw) {
+    if (!raw) return null;
+    const lower = String(raw).toLowerCase();
+    if (LANGUAGE_BY_CODE[lower]) return LANGUAGE_BY_CODE[lower].code;
+    const base = lower.split('-')[0];
+    if (LANGUAGE_BY_CODE[base]) return LANGUAGE_BY_CODE[base].code;
+    return null;
+  }
 
-      /* Download page */
-      'download.subtitle':     'Téléchargez MultiCraft pour Android et choisissez la version de votre choix.',
-      'download.androidTitle': 'Android',
-      'download.androidDesc':  'Fichier APK à installer sur votre appareil Android.',
-      'download.windowsTitle': 'Windows',
-      'download.windowsDesc':  'Installateur à exécuter sur votre PC Windows.',
-      'download.chooseVersion':'Choisir la version',
-      'download.btnAndroid':   'Télécharger pour Android',
-      'download.btnWindows':   'Télécharger pour Windows',
-      'download.latest':       '(dernière version)',
-      'download.error':        'Impossible de charger les versions disponibles.',
-
-      /* Footer */
-      'footer.legal': 'Mentions légales et politique de confidentialité',
-
-      /* Modal – server */
-      'modal.serverInfo':     'Informations du serveur',
-      'modal.server':         'Serveur',
-      'modal.descriptionTitle': 'Description',
-      'modal.inviteCode':     'Code d\'invitation',
-      'modal.copy':           'Copier',
-      'modal.copied':         'Copié !',
-      'modal.share':          '🔗 Partager',
-      'modal.close':          'Fermer',
-
-      /* Modal – players */
-      'modal.connectedPlayers': 'Joueurs connectés',
-      'modal.searchPlayer':     'Rechercher un joueur…',
-      'modal.noPlayers':        'Aucun joueur en ligne pour le moment.',
-      'modal.noPlayerMatch':    'Aucun joueur ne correspond à votre recherche.',
-      'modal.loadingPlayers':   'Chargement des joueurs…',
-      'modal.errorPlayers':     'Impossible de charger la liste des joueurs.',
-      'modal.errorPlayersHint': 'Vérifiez votre connexion et réessayez dans un instant.',
-      'modal.noInviteCode':     'Code d\'invitation introuvable pour ce serveur.',
-      'modal.playerOnline1':    'joueur en ligne',
-      'modal.playerOnlineN':    'joueurs en ligne',
-
-      /* Modal – serveur officiel */
-      'official.eyebrow': 'Serveur officiel',
-      'official.title':   'Serveur officiel',
-      'official.text':    'Ce serveur appartient directement à MultiCraft. Les mises à jour y seront en avance.',
-
-      /* Interface */
-      'ui.scrollTop': 'Revenir en haut de la page',
-
-      /* Reviews */
-      'reviews.title':       '⭐ Avis de la communauté',
-      'reviews.loading':     'Chargement…',
-      'reviews.sortRecent':  'Plus récents',
-      'reviews.sortDesc':    'Note ↓',
-      'reviews.sortAsc':     'Note ↑',
-      'reviews.noReviews':   'Aucun avis pour l\'instant. Soyez le premier !',
-      'reviews.noReviewsBadge': 'Aucun avis',
-      'reviews.alreadyDone': '✓ Vous avez déjà soumis un avis pour ce serveur récemment.',
-      'reviews.success':     '✓ Avis publié — merci !',
-      'reviews.alreadyLeft': 'Vous avez déjà laissé un avis pour ce serveur.',
-      'reviews.error':       'Erreur : ',
-      'reviews.ratingLabel': 'Note :',
-      'reviews.placeholder': 'Votre commentaire (optionnel)',
-      'reviews.submit':      'Envoyer',
-      'reviews.loginPrompt': 'Connectez-vous avec Deblock pour laisser un avis.',
-      'reviews.loginBtn':    'Se connecter',
-
-      /* Deblock Auth */
-      'deblock.login':       'Connexion',
-      'deblock.loginTitle':  'Connexion Deblock',
-      'deblock.loginBtn':    'Se connecter',
-      'deblock.createAccount': 'Créer un compte',
-      'deblock.noAccount':   'Pas encore de compte ?',
-      'deblock.hasAccount':  'Déjà un compte ?',
-      'deblock.signUpBtn':   'Créer mon compte',
-      'deblock.pseudo':      'Pseudo',
-      'deblock.pseudoPlaceholder': 'Choisissez un pseudo',
-      'deblock.forgotPassword': 'Mot de passe oublié ?',
-      'deblock.sendReset':   'Envoyer le lien de réinitialisation',
-      'deblock.backToLogin': '← Retour à la connexion',
-      'deblock.loading':     'Chargement…',
-      'deblock.user':        'Compte',
-      'deblock.logout':      'Déconnexion',
-      'deblock.consent': 'J\'accepte la <a href="/legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">politique de confidentialité</a> et les <a href="/legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">conditions d\'utilisation</a>.',
-      'deblock.consentRequired': 'Veuillez accepter la politique de confidentialité et les conditions d\'utilisation.',
-      /* Profile page */
-      'nav.profile':        'Profil',
-      'profile.title':      'Mon Profil',
-      'profile.subtitle':   'Gérez vos informations personnelles',
-      'profile.settings':   'Paramètres',
-      'profile.showPortholes':     'Afficher des hublots',
-      'profile.showPortholesHint': 'Affiche l’image des hublots à côté des titres du site. Ce réglage est enregistré uniquement sur cet appareil.',
-      'profile.pseudo':     'Pseudo',
-      'profile.pseudoPlaceholder': 'Votre pseudo',
-      'profile.email':      'Email',
-      'profile.password':   'Mot de passe',
-      'profile.newPassword': 'Nouveau mot de passe (6 caractères minimum)',
-      'profile.confirmPassword': 'Confirmer le mot de passe',
-      'profile.save':       'Enregistrer',
-      'profile.saved':      '✓ Enregistré !',
-      'profile.error':      'Erreur : ',
-      'profile.deleteAccount': 'Supprimer mon compte',
-      'profile.deleteConfirm': 'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
-      'profile.deleteCancel': 'Annuler',
-      'profile.deleteConfirmBtn': 'Oui, supprimer',
-      'profile.deleted':    '✓ Compte supprimé.',
-      'profile.passwordChanged': '✓ Mot de passe changé !',
-      'profile.emailChanged': '✓ Un email de confirmation a été envoyé à votre nouvelle adresse.',
-      'profile.pseudoChanged': '✓ Pseudo mis à jour !',
-      'profile.reauthNeeded': 'Veuillez vous reconnecter pour continuer.',
-      'profile.avatar':        'Photo de profil',
-      'profile.avatarHint':    'JPG, PNG ou GIF · max 2 Mo',
-      'profile.avatarSave':    'Enregistrer',
-      'profile.avatarRemove':  'Supprimer',
-      'profile.avatarSaved':   '✓ Photo de profil mise à jour !',
-      'profile.avatarRemoved': '✓ Photo supprimée.',
-      'profile.avatarTooBig':  '❌ Image trop lourde (max 2 Mo).',
-      'profile.logout':       'Déconnexion',
-      'profile.logoutBtn':    'Se déconnecter',
-
-      /* Chat */
-      'chat.title': 'Chat Global',
-      'chat.placeholder': 'Écrire un message...',
-      'chat.loginPrompt': 'Connectez-vous avec Deblock pour discuter.',
-      'chat.send': 'Envoyer',
-
-      /* Lag test modal */
-      'lagTest.btnOpen':        '📡 Tester la latence',
-      'lagTest.eyebrow':        'Test de latence',
-      'lagTest.title':          '📡 Tester la latence',
-      'lagTest.subtitle':       'Veuillez choisir un lieu pour faire le test.',
-      'lagTest.selectLabel':    'Serveur de test',
-      'lagTest.selectDefault':  'Choisir un serveur…',
-      'lagTest.selectLoading':  'Chargement des serveurs…',
-      'lagTest.selectError':    'Erreur de chargement',
-      'lagTest.runBtn':         'Effectuer le test',
-      'lagTest.runBtnAgain':    'Relancer le test',
-      'lagTest.running':        'Test en cours…',
-      'lagTest.resultsTitle':   'Résultats :',
-      'lagTest.searchPlaceholder': 'Rechercher un serveur…',
-      'lagTest.noResults':    'Aucun serveur trouvé',
-      'lagTest.recommended':  'Serveurs recommandés',
-      'lagTest.recommendedNear': 'Près de vous',
-      'lagTest.testingTitle':   'Test en cours',
-      'lagTest.usingServer':    'Serveur utilisé :',
-      'lagTest.fastest':        'Serveur le plus rapide :',
-      'lagTest.colUrl':         'URL',
-      'lagTest.colLatency':     'Latence',
-
-      'deblock.heroTitle':    'COMPTE DEBLOCK',
-      'deblock.tagline':      'Un seul compte pour tout un univers',
-      'deblock.signUpTitle':  'Créer un compte',
-      'deblock.forgotTitle':  'Mot de passe oublié',
-      'deblock.email':        'Email',
-      'deblock.password':     'Mot de passe',
-      'deblock.confirmPassword': 'Confirmer le mot de passe',
-
-      /* Meta */
-      'meta.description': 'MultiCraft Info — Actualités, mises à jour et informations sur les serveurs MultiCraft.',
-    },
-
-    en: {
-      /* Navigation */
-      'nav.home':     'Home',
-      'nav.updates':  'Updates',
-      'nav.servers':  'Servers',
-      'nav.gameInfo': 'Physical servers',
-      'nav.download': 'Download',
-      'nav.theGame':  'The Game',
-
-      /* Home */
-      'home.title':    'All about <span class="gradient-text">MultiCraft</span>',
-      'home.subtitle': 'Find the list of game updates and all their servers right here.',
-      'home.cardServersTitle': 'Server list',
-      'home.cardServersDesc':  'Discover new servers in our huge database of 5100+ servers.',
-      'home.cardUpdatesTitle': 'Updates',
-      'home.cardUpdatesDesc':  'Discover the game updates before everyone else!',
-      'home.statServers': 'servers listed',
-
-      /* Footer */
-      'footer.tagline':      'The ultimate site for MultiCrafters.',
-      'footer.source':       'Source code',
-      'footer.notAffiliated':'We are not affiliated with MultiCraft.',
-      'footer.madeBy':       'MultiCraft Info is a creation of',
-      'footer.rights':       '© Deblock Studios 2026 — All rights reserved',
-
-      /* Updates page */
-      'updates.subtitle': 'Latest game news, sorted from most recent to oldest.',
-      'updates.loading':  'Loading updates…',
-      'updates.empty':    'No updates yet.',
-      'updates.error':    'Oops. Looks like it does not work :/ One of the developers broke everything again... Sorry! Feel free to email us to report the issue: deblock-studios@proton.me',
-
-      /* Servers page */
-      'servers.subtitle':       'Live server list. Find a server and join in one click.',
-      'servers.loading':        'Loading servers…',
-      'servers.searchPlaceholder': 'Search for a server…',
-      'servers.allCountries':   '🌍 All countries',
-      'servers.sortRatingDesc': 'Rating (descending)',
-      'servers.sortRatingAsc':  'Rating (ascending)',
-      'servers.sortNameAsc':    'Name (A-Z)',
-      'servers.sortNameDesc':   'Name (Z-A)',
-      'servers.filterAll':      'All servers',
-      'servers.modeCreative':   'Creative',
-      'servers.modeSurvival':   'Survival',
-      'servers.modePvp':        'PvP',
-      'servers.filterAllAges':  'All ages',
-      'servers.filterAdult':    '18+',
-      'servers.filterMinor':    '-18',
-      'servers.dataDate':       'Data date: 30/07/2026',
-      'servers.empty':          'No server matches your search.',
-      'servers.errorLoad':      'The server list is unreachable. Check if it is working on our Status page.',
-      'servers.errorBtn':       'Status page',
-      'servers.noDesc':         'No description available.',
-      'servers.noName':         'Unnamed server',
-      'servers.noRating':       'No reviews',
-      'servers.officialBadge':  'Official',
-      'servers.count1':         'server',
-      'servers.countN':         'servers',
-      'servers.playersList':    '👥 Player list',
-      'servers.addMyServer':    'Add my server',
-      'servers.descLangLabel':   'Description language',
-      'servers.descLangOriginal':'Original',
-      'servers.descLangEnglish': 'English',
-      'servers.descLangFrench':  'French',
-
-      /* Modal */
-      'modal.addServer':    'Add my server',
-      'modal.addServerMsg': 'If you would like to add your server to this list, contact .lucas76. on Discord.',
-
-      /* Game Info page */
-      'gameInfo.subtitle': 'List of MultiCraft physical servers.',
-      'gameInfo.locations': {
-        'Falkenstein, Allemagne': 'Falkenstein, Germany',
-        'Falkenstein Allemagne':  'Falkenstein Germany',
-        'Singapour':              'Singapore',
-        'Hong Kong':              'Hong Kong',
-        'Naaldwijk, Pays-Bas':   'Naaldwijk, Netherlands',
-        'Helsinki, Finlande':     'Helsinki, Finland',
-        'Sydney, Autralie':       'Sydney, Australia',
-      },
-
-
-      /* Download page */
-      'download.subtitle':     'Download MultiCraft for Android and pick the version you want.',
-      'download.androidTitle': 'Android',
-      'download.androidDesc':  'APK file to install on your Android device.',
-      'download.windowsTitle': 'Windows',
-      'download.windowsDesc':  'Installer to run on your Windows PC.',
-      'download.chooseVersion':'Choose version',
-      'download.btnAndroid':   'Download for Android',
-      'download.btnWindows':   'Download for Windows',
-      'download.latest':       '(latest version)',
-      'download.error':        'Could not load the available versions.',
-
-      /* Footer */
-      'footer.legal': 'Legal notice & privacy policy',
-
-      /* Modal – server */
-      'modal.serverInfo':     'Server Information',
-      'modal.server':         'Server',
-      'modal.descriptionTitle': 'Description',
-      'modal.inviteCode':     'Invite Code',
-      'modal.copy':           'Copy',
-      'modal.copied':         'Copied!',
-      'modal.share':          '🔗 Share',
-      'modal.close':          'Close',
-
-      /* Modal – players */
-      'modal.connectedPlayers': 'Online Players',
-      'modal.searchPlayer':     'Search for a player…',
-      'modal.noPlayers':        'No players online right now.',
-      'modal.noPlayerMatch':    'No player matches your search.',
-      'modal.loadingPlayers':   'Loading players…',
-      'modal.errorPlayers':     'Could not load the player list.',
-      'modal.errorPlayersHint': 'Check your connection and try again in a moment.',
-      'modal.noInviteCode':     'No invite code found for this server.',
-      'modal.playerOnline1':    'player online',
-      'modal.playerOnlineN':    'players online',
-
-      /* Modal – official server */
-      'official.eyebrow': 'Official server',
-      'official.title':   'Official server',
-      'official.text':    'This server belongs directly to MultiCraft. Game updates will be available there early.',
-
-      /* Interface */
-      'ui.scrollTop': 'Back to top of page',
-
-      /* Reviews */
-      'reviews.title':       '⭐ Community Reviews',
-      'reviews.loading':     'Loading…',
-      'reviews.sortRecent':  'Most recent',
-      'reviews.sortDesc':    'Rating ↓',
-      'reviews.sortAsc':     'Rating ↑',
-      'reviews.noReviews':   'No reviews yet. Be the first!',
-      'reviews.noReviewsBadge': 'No reviews',
-      'reviews.alreadyDone': '✓ You have already submitted a review for this server recently.',
-      'reviews.success':     '✓ Review submitted — thank you!',
-      'reviews.alreadyLeft': 'You have already left a review for this server.',
-      'reviews.error':       'Error: ',
-      'reviews.ratingLabel': 'Rating:',
-      'reviews.placeholder': 'Your comment (optional)',
-      'reviews.submit':      'Submit',
-      'reviews.loginPrompt': 'Log in with Deblock to leave a review.',
-      'reviews.loginBtn':    'Log in',
-
-      /* Deblock Auth */
-      'deblock.login':       'Log in',
-      'deblock.loginTitle':  'Deblock Login',
-      'deblock.loginBtn':    'Log in',
-      'deblock.createAccount': 'Create an account',
-      'deblock.noAccount':   'No account yet?',
-      'deblock.hasAccount':  'Already have an account?',
-      'deblock.signUpBtn':   'Create my account',
-      'deblock.pseudo':      'Username',
-      'deblock.pseudoPlaceholder': 'Choose a username',
-      'deblock.forgotPassword': 'Forgot password?',
-      'deblock.sendReset':   'Send reset link',
-      'deblock.backToLogin': '← Back to login',
-      'deblock.loading':     'Loading…',
-      'deblock.user':        'Account',
-      'deblock.logout':      'Log out',
-      'deblock.consent': 'I accept the <a href="/legal.html#deblock-privacy" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Privacy Policy</a> and the <a href="/legal.html#deblock-tos" target="_blank" rel="noopener noreferrer" style="color:var(--green);">Terms of Use</a>.',
-      'deblock.consentRequired': 'Please accept the Privacy Policy and the Terms of Use.',
-
-      /* Profile page */
-      'nav.profile':        'Profile',
-      'profile.title':      'My Profile',
-      'profile.subtitle':   'Manage your personal information',
-      'profile.settings':   'Settings',
-      'profile.showPortholes':     'Show portholes',
-      'profile.showPortholesHint': 'Show the porthole image next to site titles. This setting is saved only on this device.',
-      'profile.pseudo':     'Username',
-      'profile.pseudoPlaceholder': 'Your username',
-      'profile.email':      'Email',
-      'profile.password':   'Password',
-      'profile.newPassword': 'New password (6 characters minimum)',
-      'profile.confirmPassword': 'Confirm password',
-      'profile.save':       'Save',
-      'profile.saved':      '✓ Saved!',
-      'profile.error':      'Error: ',
-      'profile.deleteAccount': 'Delete my account',
-      'profile.deleteConfirm': 'Are you sure you want to delete your account? This action is irreversible.',
-      'profile.deleteCancel': 'Cancel',
-      'profile.deleteConfirmBtn': 'Yes, delete',
-      'profile.deleted':    '✓ Account deleted.',
-      'profile.passwordChanged': '✓ Password changed!',
-      'profile.emailChanged': '✓ A confirmation email has been sent to your new address.',
-      'profile.pseudoChanged': '✓ Username updated!',
-      'profile.reauthNeeded': 'Please log in again to continue.',
-      'profile.avatar':        'Profile picture',
-      'profile.avatarHint':    'JPG, PNG or GIF · max 2 MB',
-      'profile.avatarSave':    'Save',
-      'profile.avatarRemove':  'Remove',
-      'profile.avatarSaved':   '✓ Profile picture updated!',
-      'profile.avatarRemoved': '✓ Picture removed.',
-      'profile.avatarTooBig':  '❌ Image too large (max 2 MB).',
-      'profile.logout':       'Log out',
-      'profile.logoutBtn':    'Log out',
-
-      /* Chat */
-      'chat.title': 'Global Chat',
-      'chat.placeholder': 'Type a message...',
-      'chat.loginPrompt': 'Log in with Deblock to chat.',
-      'chat.send': 'Send',
-
-      /* Lag test modal */
-      'lagTest.btnOpen':        '📡 Test latency',
-      'lagTest.eyebrow':        'Latency test',
-      'lagTest.title':          '📡 Test latency',
-      'lagTest.subtitle':       'Please choose a location to run the test.',
-      'lagTest.selectLabel':    'Test server',
-      'lagTest.selectDefault':  'Choose a server…',
-      'lagTest.selectLoading':  'Loading servers…',
-      'lagTest.selectError':    'Failed to load',
-      'lagTest.runBtn':         'Run test',
-      'lagTest.runBtnAgain':    'Run again',
-      'lagTest.running':        'Testing…',
-      'lagTest.resultsTitle':   'Results:',
-      'lagTest.searchPlaceholder': 'Search servers…',
-      'lagTest.noResults':    'No servers found',
-      'lagTest.recommended':  'Recommended servers',
-      'lagTest.recommendedNear': 'Near you',
-      'lagTest.testingTitle':   'Test in progress',
-      'lagTest.usingServer':    'Server used:',
-      'lagTest.fastest':        'Fastest server:',
-      'lagTest.colUrl':         'URL',
-      'lagTest.colLatency':     'Latency',
-
-      'deblock.heroTitle':    'DEBLOCK ACCOUNT',
-      'deblock.tagline':      'One account for a whole universe',
-      'deblock.signUpTitle':  'Create an account',
-      'deblock.forgotTitle':  'Forgot password',
-      'deblock.email':        'Email',
-      'deblock.password':     'Password',
-      'deblock.confirmPassword': 'Confirm password',
-
-      /* Meta */
-      'meta.description': 'MultiCraft Info — News, updates and information about MultiCraft servers.',
+  function detectBrowserLang() {
+    const candidates = [];
+    if (Array.isArray(navigator.languages)) candidates.push.apply(candidates, navigator.languages);
+    if (navigator.language) candidates.push(navigator.language);
+    if (navigator.userLanguage) candidates.push(navigator.userLanguage);
+    for (let i = 0; i < candidates.length; i++) {
+      const match = matchBrowserLang(candidates[i]);
+      if (match) return match;
     }
-  };
+    return null;
+  }
 
-  /* ────────────────────────────────────────
-     Language detection & persistence
-  ──────────────────────────────────────── */
   function detectLang() {
-    // 1. Check URL prefix (/en/ or /fr/) — explicit language in the link
-    const path = (window.location.pathname || '').toLowerCase();
-    const prefixMatch = path.match(/^\/(en|fr)(\/|$)/);
-    if (prefixMatch) return prefixMatch[1];
-
-    // 2. Check localStorage preference
-    const stored = localStorage.getItem('mc_lang');
-    if (stored === 'fr' || stored === 'en') return stored;
-
-    // 3. Auto-detect from browser
-    const browserLang = (navigator.language || navigator.userLanguage || 'fr').toLowerCase();
-    return browserLang.startsWith('fr') ? 'fr' : 'en';
-  }
-
-  /* ────────────────────────────────────────
-     Public API
-  ──────────────────────────────────────── */
-  window.i18n = {
-    lang: detectLang(),
-
-    t: function (key) {
-      const dict = TRANSLATIONS[window.i18n.lang] || TRANSLATIONS['fr'];
-      return dict[key] !== undefined ? dict[key] : (TRANSLATIONS['fr'][key] || key);
-    },
-
-    /* Translate a location name (used by script.js) */
-    loc: function (locationStr) {
-      const dict = TRANSLATIONS[window.i18n.lang] || TRANSLATIONS['fr'];
-      const map = dict['gameInfo.locations'] || {};
-      return map[locationStr] || locationStr;
+    // 1. Préfixe d'URL (/ja/…, /pt-BR/…, /es-MX/…) : choix explicite du lien partagé.
+    const prefix = (window.location.pathname || '').match(/^\/([a-z]{2,3}(?:-[a-z]{2})?)(\/|$)/i);
+    if (prefix) {
+      const fromUrl = canonical(prefix[1]);
+      if (fromUrl) return fromUrl;
     }
-  };
 
-  /* ────────────────────────────────────────
-     Apply translations to the DOM
-  ──────────────────────────────────────── */
+    // 2. Choix mémorisé de l'utilisateur.
+    let stored = null;
+    try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) { /* stockage indisponible */ }
+    if (isSupported(stored)) return canonical(stored);
+
+    // 3. Langue du navigateur, sinon langue par défaut du site.
+    return detectBrowserLang() || DEFAULT_LANGUAGE;
+  }
+
+  let currentLang = detectLang();
+  const dictionaries = {}; // cache mémoire : { 'en': {…}, 'es': {…} }
+  const fileRequests = {}; // cache des requêtes réseau, partagé entre variantes
+
+  /* ── Chargement des fichiers de traduction ── */
+
+  function localeFile(code) {
+    const lang = LANGUAGE_BY_CODE[code.toLowerCase()];
+    return (lang && lang.file) || (lang && lang.code) || code;
+  }
+
+  function loadDictionary(code) {
+    if (dictionaries[code]) return Promise.resolve(dictionaries[code]);
+    const file = localeFile(code);
+    if (!fileRequests[file]) {
+      fileRequests[file] = fetch(LOCALES_PATH + file + '.json')
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .catch(function (err) {
+          console.error('[i18n] chargement impossible : ' + LOCALES_PATH + file + '.json', err);
+          return {};
+        });
+    }
+    return fileRequests[file].then(function (data) {
+      dictionaries[code] = data || {};
+      return dictionaries[code];
+    });
+  }
+
+  /* ── Accès aux traductions ── */
+
+  const warned = {}; // évite de répéter indéfiniment le même avertissement
+
+  function warnOnce(message) {
+    if (warned[message]) return;
+    warned[message] = true;
+    console.warn('[i18n] ' + message);
+  }
+
+  function rawValue(key, lang) {
+    const dict = dictionaries[lang];
+    if (!dict) return undefined;
+    return Object.prototype.hasOwnProperty.call(dict, key) ? dict[key] : undefined;
+  }
+
+  // Remplace les jetons {nom} par les valeurs de vars (utilisé seulement si fourni).
+  function interpolate(text, vars) {
+    if (!vars) return text;
+    return text.replace(/\{(\w+)\}/g, function (token, name) {
+      return Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : token;
+    });
+  }
+
+  function t(key, vars) {
+    // Fichier de langue pas encore arrivé (chargement asynchrone) : on renvoie la
+    // clé sans avertir — les contenus seront traduits à l'événement « langchange ».
+    if (!dictionaries[currentLang]) return key;
+
+    let value = rawValue(key, currentLang);
+    if (value === undefined && currentLang !== REFERENCE_LANGUAGE) {
+      value = rawValue(key, REFERENCE_LANGUAGE);
+      if (value !== undefined) warnOnce('clé « ' + key + ' » absente en « ' + currentLang + ' »');
+    }
+    if (value === undefined) {
+      warnOnce('clé inconnue : « ' + key + ' »');
+      return key;
+    }
+    if (typeof value !== 'string') return value; // objets (gameInfo.locations…)
+    return interpolate(value, vars);
+  }
+
+  // Traduit un nom de lieu via la mappe « gameInfo.locations ».
+  function loc(locationStr) {
+    const map = t('gameInfo.locations');
+    return (map && map[locationStr]) || locationStr;
+  }
+
+  /* ── Application au DOM ── */
+
+  // [attribut porté par l'élément, façon d'appliquer la traduction]
+  const DOM_BINDINGS = [
+    ['data-i18n', function (el, value) { el.textContent = value; }],
+    ['data-i18n-html', function (el, value) { el.innerHTML = value; }],
+    ['data-i18n-placeholder', function (el, value) { el.placeholder = value; }],
+    ['data-i18n-title', function (el, value) { el.title = value; }],
+    ['data-i18n-aria-label', function (el, value) { el.setAttribute('aria-label', value); }],
+    ['data-i18n-content', function (el, value) { el.setAttribute('content', value); }],
+  ];
+
   function applyTranslations() {
-    const lang = window.i18n.lang;
-    document.documentElement.lang = lang;
+    document.documentElement.lang = currentLang;
 
-    // Update meta description
-    const metaDesc = document.getElementById('meta-description');
-    if (metaDesc) metaDesc.setAttribute('content', window.i18n.t('meta.description'));
-
-    // Keep Open Graph / Twitter descriptions in sync
-    const ogDesc = document.getElementById('meta-og-description');
-    if (ogDesc) ogDesc.setAttribute('content', window.i18n.t('meta.description'));
-    const twDesc = document.getElementById('meta-twitter-description');
-    if (twDesc) twDesc.setAttribute('content', window.i18n.t('meta.description'));
-
-    // Update nav toggle aria-label
-    const navToggle = document.querySelector('.nav-toggle');
-    if (navToggle) navToggle.setAttribute('aria-label', lang === 'fr' ? 'Ouvrir le menu' : 'Open menu');
-
-    // Update deblock logout aria-label
-    const logoutBtn = document.getElementById('deblock-logout-btn');
-    if (logoutBtn) logoutBtn.setAttribute('aria-label', lang === 'fr' ? 'Se déconnecter' : 'Log out');
-
-    // Update modal close aria-label
-    document.querySelectorAll('.modal-close').forEach(function (btn) {
-      btn.setAttribute('aria-label', lang === 'fr' ? 'Fermer' : 'Close');
+    DOM_BINDINGS.forEach(function (binding) {
+      const attr = binding[0];
+      const apply = binding[1];
+      document.querySelectorAll('[' + attr + ']').forEach(function (el) {
+        const key = el.getAttribute(attr);
+        const value = t(key);
+        // Clé absente (ou fichier non chargé) : on laisse le contenu d'origine.
+        if (value !== key) apply(el, value);
+      });
     });
 
-    // data-i18n elements (innerHTML for those containing HTML tags)
-    document.querySelectorAll('[data-i18n]').forEach(function (el) {
-      const key = el.getAttribute('data-i18n');
-      const val = window.i18n.t(key);
-      if (val && val !== key) {
-        // Use innerHTML for elements that may contain HTML (links, spans…)
-        el.innerHTML = val;
-      }
-    });
-
-    // data-i18n-placeholder elements
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
-      const key = el.getAttribute('data-i18n-placeholder');
-      const val = window.i18n.t(key);
-      if (val && val !== key) el.placeholder = val;
-    });
-
-    // Select options with data-i18n
-    document.querySelectorAll('option[data-i18n]').forEach(function (el) {
-      const key = el.getAttribute('data-i18n');
-      const val = window.i18n.t(key);
-      if (val && val !== key) el.textContent = val;
-    });
-
-    // Update language switcher buttons
-    document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
-    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+    renderLangSwitcher();
   }
 
-  /* ────────────────────────────────────────
-     Public setLang — called by the buttons
-  ──────────────────────────────────────── */
-  window.setLang = function (lang) {
-    if (lang !== 'fr' && lang !== 'en') return;
-    window.i18n.lang = lang;
-    localStorage.setItem('mc_lang', lang);
-    applyTranslations();
+  /* ── Sélecteur de langue : un bouton (drapeau courant) + menu déroulant ──
+     Tout est généré depuis LANGUAGES : ajouter une langue ne touche pas au HTML. */
 
-    // Notify script.js to re-render dynamic content
-    document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: lang } }));
+  function currentLanguage() {
+    return LANGUAGE_BY_CODE[currentLang.toLowerCase()] || LANGUAGE_BY_CODE[DEFAULT_LANGUAGE];
+  }
+
+  // L'en-tête rogne son contenu (overflow: hidden) : on le libère pendant l'ouverture
+  // sinon le menu déroulant est coupé par la barre de navigation.
+  function setHeaderOverflow(container, open) {
+    const header = container.closest ? container.closest('.site-header') : null;
+    if (header) header.classList.toggle('lang-menu-open', open);
+  }
+
+  function setMenuOpen(open) {
+    const container = document.getElementById('lang-switcher');
+    if (!container) return;
+    container.classList.toggle('open', open);
+    const toggle = container.querySelector('.lang-toggle');
+    if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    setHeaderOverflow(container, open);
+  }
+
+  // Drapeau affiché dans le bouton et le menu : une image SVG par langue
+  // (/flags/<code>.svg), y compris pour la Bretagne et la Normandie qui n'ont pas
+  // d'emoji. L'emoji défini dans LANGUAGES sert de repli si l'image est absente.
+  function buildFlag(lang) {
+    const img = document.createElement('img');
+    img.className = 'lang-flag-img';
+    img.src = lang.flagImg || FLAGS_PATH + lang.code + '.svg';
+    img.alt = ''; // décoratif : le nom de la langue est juste à côté
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    if (lang.flag) {
+      img.addEventListener('error', function () {
+        const span = document.createElement('span');
+        span.className = 'lang-flag';
+        span.textContent = lang.flag;
+        img.replaceWith(span);
+      }, { once: true });
+    }
+    return img;
+  }
+
+  function buildLanguageItem(lang) {
+    const active = lang.code.toLowerCase() === currentLang.toLowerCase();
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'lang-item' + (active ? ' active' : '');
+    item.setAttribute('role', 'option');
+    item.setAttribute('aria-selected', active ? 'true' : 'false');
+    item.dataset.lang = lang.code;
+
+    const flag = buildFlag(lang);
+    const name = document.createElement('span');
+    name.className = 'lang-name';
+    name.textContent = lang.name;
+
+    item.appendChild(flag);
+    item.appendChild(name);
+    item.addEventListener('click', function () {
+      setMenuOpen(false);
+      setLang(lang.code);
+    });
+    return item;
+  }
+
+  function renderLangSwitcher() {
+    const container = document.getElementById('lang-switcher');
+    if (!container) return;
+    container.innerHTML = '';
+    container.classList.remove('open');
+    setHeaderOverflow(container, false);
+
+    const current = currentLanguage();
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.id = 'lang-toggle';
+    toggle.className = 'lang-toggle';
+    toggle.setAttribute('aria-haspopup', 'listbox');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Language / Langue');
+    toggle.innerHTML =
+      '<span class="lang-flag"></span>' +
+      '<span class="lang-code"></span>' +
+      '<svg class="lang-caret" width="10" height="7" viewBox="0 0 10 7" aria-hidden="true">' +
+      '<path d="M1 1.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    toggle.querySelector('.lang-flag').appendChild(buildFlag(current));
+    toggle.querySelector('.lang-code').textContent = current.code.toUpperCase();
+    toggle.addEventListener('click', function (event) {
+      event.stopPropagation();
+      setMenuOpen(!container.classList.contains('open'));
+    });
+    container.appendChild(toggle);
+
+    const menu = document.createElement('ul');
+    menu.className = 'lang-menu';
+    menu.id = 'lang-menu';
+    menu.setAttribute('role', 'listbox');
+    LANGUAGES.forEach(function (lang) {
+      const li = document.createElement('li');
+      li.appendChild(buildLanguageItem(lang));
+      menu.appendChild(li);
+    });
+    container.appendChild(menu);
+  }
+
+  // Fermeture du menu : clic à l'extérieur ou touche Échap (une seule fois).
+  document.addEventListener('click', function (event) {
+    const container = document.getElementById('lang-switcher');
+    if (container && !container.contains(event.target)) setMenuOpen(false);
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') setMenuOpen(false);
+  });
+
+  /* ── Changement de langue ── */
+
+  function setLang(lang) {
+    const target = canonical(lang);
+    if (!target || target === currentLang) return Promise.resolve();
+    try { localStorage.setItem(STORAGE_KEY, target); } catch (e) { /* stockage indisponible */ }
+    return loadDictionary(target).then(function () {
+      currentLang = target;
+      window.i18n.lang = currentLang;
+      applyTranslations();
+      // script.js, banner.js… re-traduisent ici leurs contenus générés en JS.
+      document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: currentLang } }));
+    });
+  }
+
+  /* ── API publique ── */
+
+  window.i18n = {
+    lang: currentLang,
+    t: t,
+    loc: loc,
+    apply: applyTranslations,
+    ready: null, // promesse : traductions de la langue courante chargées
+    isLang: isSupported, // pour script.js : « ce préfixe d'URL est-il une langue ? »
+    languages: LANGUAGES,
+    defaultLang: DEFAULT_LANGUAGE,
   };
 
-  /* ────────────────────────────────────────
-     Init on DOM ready
-  ──────────────────────────────────────── */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyTranslations);
-  } else {
+  window.setLang = setLang;
+
+  /* ── Init ── */
+
+  window.i18n.ready = loadDictionary(currentLang).then(function () {
     applyTranslations();
-  }
+    // Première traduction des contenus générés en JavaScript : les autres
+    // scripts (script.js, banner.js…) écoutent déjà « langchange ».
+    document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: currentLang } }));
+  });
 })();

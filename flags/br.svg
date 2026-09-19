@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Gwenn ha Du (banniel Breizh) : drapeau de la Bretagne.
+     Artwork : Wikimedia Commons, « Flag of Brittany (Gwenn ha du).svg »
+     (Open Clip Art Library, 2006) :
+     https://commons.wikimedia.org/wiki/File:Flag_of_Brittany_(Gwenn_ha_du).svg
+     Licence : CC0 1.0 (domaine public). Insigne officiel, usage réglementé dans certains pays.
+     Modifications locales : viewBox ajouté pour un rendu correct aux petites tailles,
+     et moucheture du centre ajoutée pour la disposition canonique 4 + 3 + 4 = 11
+     (le fichier publié n'en comptait que 10). -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1350 900" width="1350" height="900">
+	<rect width="1350" height="900" fill="#fff"/>
+	<rect x="600" width="1350" height="100" fill="#000"/>
+	<rect x="600" y="200" width="1350" height="100" fill="#000"/>
+	<rect y="400" width="1350" height="100" fill="#000"/>
+	<rect y="600" width="1350" height="100" fill="#000"/>
+	<rect y="800" width="1350" height="100" fill="#000"/>
+	<use xlink:href="#ermine" x="-225" y="-122.5"/>
+	<use xlink:href="#ermine" x="-75" y="-122.5"/>
+	<use xlink:href="#ermine" x="75" y="-122.5"/>
+	<use xlink:href="#ermine" x="225" y="-122.5"/>
+	<use xlink:href="#ermine" x="-150"/>
+	<g id="ermine" fill="#000">
+		<use xlink:href="#s" transform="rotate(-90 300,167.5)"/>
+		<path id="s" d="M 300,167.5 l -9,-13.5 l 9,-22.5 l 9,22.5 z"/>
+		<use xlink:href="#s" transform="rotate(90 300,167.5)"/>
+		<path d="M 300,167.5 l 40.5,99 l -31.5,-13.5 l -9,18 l -9,-18 l -31.5,13.5 z"/>
+	</g>
+	<use xlink:href="#ermine" x="0"/>
+	<use xlink:href="#ermine" x="150"/>
+	<use xlink:href="#ermine" x="-225" y="122.5"/>
+	<use xlink:href="#ermine" x="-75" y="122.5"/>
+	<use xlink:href="#ermine" x="75" y="122.5"/>
+	<use xlink:href="#ermine" x="225" y="122.5"/>
+</svg>

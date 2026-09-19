@@ -2,7 +2,7 @@
 // Discord, Twitter/X, Facebook, etc. read the raw HTML and do NOT run
 // JavaScript. Since the site is a SPA served by the same index.html for every
 // path, we rewrite the <title> and Open Graph / Twitter meta tags here, based
-// on the requested path (and its optional /en/ language prefix), so each page
+// on the requested path (and its optional language prefix, e.g. /en/ or /ja/), so each page
 // preview matches its real URL.
 
 const SITE_URL = 'https://multicraft-info.netlify.app';
@@ -31,6 +31,24 @@ const META = {
     '/telecharger':  { title: 'MultiCraft Info - The Game', desc: 'Download MultiCraft for Android and discover the game\'s physical servers.' },
   },
 };
+
+// Langues dont le préfixe d'URL est reconnu (miroir de LANGUAGES dans i18n.js).
+// Ajouter une langue ici active son préfixe et son <html lang> ; sans entrée
+// META dédiée ci-dessus, l'aperçu retombe sur l'anglais (langue de référence).
+const LANG_CODES = [
+  'fr', 'br', 'nrm', 'en', 'es', 'es-mx', 'de', 'pt', 'pt-br', 'nl', 'ru', 'uk',
+  'tr', 'zh', 'ja', 'ko', 'hi', 'bn', 'ar', 'id',
+];
+const DEFAULT_LANG = 'fr';
+
+// « /ja/serveurs » → { lang: 'ja', routePath: '/serveurs' } ; null si pas de préfixe.
+function parseLangPrefix(pathname) {
+  const match = pathname.match(/^\/([a-z]{2,3}(?:-[a-z]{2})?)(\/.*)?$/i);
+  if (!match) return null;
+  const code = match[1].toLowerCase();
+  if (!LANG_CODES.includes(code)) return null;
+  return { lang: code, routePath: match[2] || '/' };
+}
 
 function escapeAttr(value) {
   return String(value)
@@ -75,26 +93,23 @@ export default async function handler(request, context) {
   const url = new URL(request.url);
   const pathname = url.pathname.toLowerCase();
 
-  // Parse an optional /en/ or /fr/ language prefix.
-  let lang = 'fr';
-  let routePath = pathname;
-  const prefix = pathname.match(/^\/(en|fr)(\/.*)?$/);
-  if (prefix) {
-    lang = prefix[1];
-    routePath = prefix[2] || '/';
-  }
+  // Parse an optional language prefix (/en/, /ja/, /pt-br/, …).
+  const parsed = parseLangPrefix(pathname);
+  const lang = parsed ? parsed.lang : DEFAULT_LANG;
+  const routePath = parsed ? parsed.routePath : pathname;
 
   const normalized = (routePath === '/' ? '/' : routePath.replace(/\/+$/, '')).toLowerCase();
-  const meta = (META[lang] || META.fr)[normalized];
+  // Pas d'entrée META pour cette langue : aperçu en anglais (langue de référence).
+  const meta = (META[lang] || META.en)[normalized];
   if (!meta) return context.next();
 
   const response = await context.next();
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('text/html')) return response;
 
-  const canonicalUrl = lang === 'en'
-    ? SITE_URL + (normalized === '/' ? '/en' : '/en' + normalized)
-    : SITE_URL + normalized;
+  const canonicalUrl = lang === DEFAULT_LANG
+    ? SITE_URL + normalized
+    : SITE_URL + '/' + lang + (normalized === '/' ? '' : normalized);
 
   const html = injectMeta(await response.text(), meta, canonicalUrl, lang);
 

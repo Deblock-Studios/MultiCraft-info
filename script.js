@@ -878,15 +878,24 @@
   }
 
   function pagePath(pageId) {
-    const langPrefix = (window.i18n && window.i18n.lang === 'en') ? '/en' : '';
+    // La langue par défaut du site (fr) n'apparaît pas dans l'URL ; les autres
+    // langues utilisent leur code comme préfixe (/en/…, /ja/…, /pt-BR/…).
+    const lang = (window.i18n && window.i18n.lang) || 'fr';
+    const defaultLang = (window.i18n && window.i18n.defaultLang) || 'fr';
+    const langPrefix = lang === defaultLang ? '' : '/' + lang;
     if (pageId === 'accueil') return langPrefix || '/';
     return langPrefix + '/' + pageId;
   }
 
   function currentPageFromPath() {
     const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
-    if (path === '/' || /^\/(en|fr)$/.test(path)) return 'accueil';
-    const slug = path.split('/').pop();
+    // Retire un éventuel préfixe de langue (/en/…, /ja/…, /pt-BR/…) avant de
+    // déterminer la page : /ja/serveurs et /serveurs donnent la même page.
+    const segments = path.split('/').filter(Boolean);
+    const first = segments[0];
+    const rest = (first && window.i18n && window.i18n.isLang(first)) ? segments.slice(1) : segments;
+    if (rest.length === 0) return 'accueil';
+    const slug = rest[rest.length - 1];
     return legacyPageRedirects[slug] || slug;
   }
 
@@ -1022,7 +1031,7 @@
   function formatDate(dateStr) {
     try {
       const d = new Date(dateStr);
-      const locale = window.i18n && window.i18n.lang === 'en' ? 'en-US' : 'fr-FR';
+      const locale = (window.i18n && window.i18n.lang) || 'fr';
       return d.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     } catch (e) { return dateStr; }
   }
@@ -2409,8 +2418,10 @@
   }
 
   // Valeur par défaut du sélecteur de langue des descriptions : la langue du site (i18n).
+  // La base ne propose que « original », « english » et « french » : seul le site en
+  // français tombe donc sur les descriptions françaises, les autres langues sur l'anglais.
   function getDefaultDescLangValue() {
-    return (window.i18n && window.i18n.lang === 'en') ? 'english' : 'french';
+    return (window.i18n && window.i18n.lang === 'fr') ? 'french' : 'english';
   }
 
   // Serveur partagé (?server=ID) pas encore chargé : on rouvre la modale dès

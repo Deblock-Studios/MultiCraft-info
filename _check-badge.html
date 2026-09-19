@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>check-badge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main id="app">
+  <section class="page active">
+    <div class="servers-grid">
+
+      <!-- 1. carte officielle, nom court (markup exact de renderServerCard) -->
+      <article class="server-card" id="card-official">
+        <div class="server-card-head">
+          <div class="server-name-wrapper">
+            <h2 class="server-name">MultiCraft Officiel</h2>
+            <span class="server-location">📍 Falkenstein, Allemagne</span>
+          </div>
+          <button type="button" class="server-official btn-official" aria-haspopup="dialog"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>Officiel</button>
+        </div>
+        <div class="server-admin">👑 .lucas76.</div>
+        <div class="server-meta-row">
+          <span class="server-rating">★ 4.8 <span class="server-rating-count">(12)</span></span>
+          <span class="server-mode" title="Créatif"><img src="/files/logos/server_creative_icon.png" alt="Créatif" width="16" height="16"></span>
+        </div>
+        <p class="server-desc">Serveur officiel de test pour vérifier le badge.</p>
+        <div class="server-actions">
+          <a href="#" class="btn btn-discord">Discord</a>
+          <button type="button" class="btn btn-primary btn-details">Détails</button>
+        </div>
+      </article>
+
+      <!-- 2. carte officielle, nom long : vérifie que le badge n'est pas poussé hors du cadre -->
+      <article class="server-card" id="card-longname">
+        <div class="server-card-head">
+          <div class="server-name-wrapper">
+            <h2 class="server-name">Serveur officiel MultiCraft avec un nom vraiment très long qui passe à la ligne</h2>
+            <span class="server-location">📍 Singapour</span>
+          </div>
+          <button type="button" class="server-official btn-official" aria-haspopup="dialog"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>Officiel</button>
+        </div>
+        <div class="server-meta-row">
+          <span class="server-rating server-rating-none">Aucun avis</span>
+        </div>
+        <p class="server-desc">Deuxième carte de contrôle.</p>
+        <div class="server-actions">
+          <button type="button" class="btn btn-primary btn-details">Détails</button>
+        </div>
+      </article>
+
+      <!-- 3. témoin : carte sans badge -->
+      <article class="server-card" id="card-plain">
+        <div class="server-card-head">
+          <div class="server-name-wrapper">
+            <h2 class="server-name">Serveur normal</h2>
+            <span class="server-location">📍 Sydney, Australie</span>
+          </div>
+        </div>
+        <p class="server-desc">Contrôle sans badge.</p>
+      </article>
+
+    </div>
+  </section>
+</main>
+<pre id="report" style="max-width:1080px;margin:0 auto;padding:0 1.5rem 3rem;color:#9fb1c7;font:12px/1.55 monospace;white-space:pre-wrap"></pre>
+
+<script>
+(async function () {
+  const lines = [];
+  const add = (s) => lines.push(s);
+  const r2 = (n) => Math.round(n * 100) / 100;
+
+  try { await document.fonts.ready; } catch (e) { add('fonts: erreur ' + e); }
+  add('font chargée (Inter) : ' + (document.fonts.check('16px Inter') ? 'oui' : 'NON'));
+  add('viewport : ' + window.innerWidth + 'x' + window.innerHeight + '  dpr=' + window.devicePixelRatio);
+
+  // ── 1. styles calculés du badge ──
+  const badge = document.querySelector('#card-official .server-official');
+  const cs = getComputedStyle(badge);
+  add('\n== styles calculés (.server-official) ==');
+  ['display', 'alignItems', 'gap', 'padding', 'border', 'borderRadius', 'backgroundImage',
+   'backgroundColor', 'color', 'boxShadow', 'fontFamily', 'fontSize', 'fontWeight',
+   'letterSpacing', 'textTransform', 'whiteSpace', 'cursor', 'appearance',
+   'textDecoration', 'width', 'height', 'lineHeight'].forEach(function (p) {
+    add('  ' + p + ': ' + cs[p]);
+  });
+  add('  stopPropagation? non testé ici');
+  add('  texte du bouton (source): "' + badge.textContent.trim() + '"');
+
+  // ── 2. géométrie ──
+  const head = document.querySelector('#card-official .server-card-head');
+  const card = document.getElementById('card-official');
+  const svg = badge.querySelector('svg');
+  const b = badge.getBoundingClientRect();
+  const h = head.getBoundingClientRect();
+  const c = card.getBoundingClientRect();
+  const s = svg.getBoundingClientRect();
+  add('\n== géométrie (px CSS) ==');
+  add('  badge : ' + r2(b.width) + 'x' + r2(b.height) + ' @ (' + r2(b.left) + ',' + r2(b.top) + ')');
+  add('  icône : ' + r2(s.width) + 'x' + r2(s.height));
+  add('  head  : ' + r2(h.width) + 'x' + r2(h.height) + ' @ (' + r2(h.left) + ',' + r2(h.top) + ')');
+  add('  carte : ' + r2(c.width) + 'x' + r2(c.height));
+  add('  badge dans la head verticalement : ' + (b.top >= h.top - 1 && b.bottom <= h.bottom + 1 ? 'oui' : 'NON'));
+  add('  badge dans la carte à droite : ' + (b.right <= c.right + 0.5 ? 'oui' : 'NON (' + r2(b.right - c.right) + 'px dehors)'));
+  add('  marge badge → bord droit carte : ' + r2(c.right - b.right) + 'px');
+  add('  écart icône/texte : ' + r2(badge.querySelector('svg').getBoundingClientRect().right >= 0 ? s.width : 0) + 'px d\'icône, gap=' + cs.gap);
+  add('  hauteur badge ≥ 18px : ' + (b.height >= 18 ? 'oui' : 'NON'));
+
+  // ── 3. carte à nom long : pas de débordement ──
+  const badge2 = document.querySelector('#card-longname .server-official');
+  const b2 = badge2.getBoundingClientRect();
+  const c2 = document.getElementById('card-longname').getBoundingClientRect();
+  const name2 = document.querySelector('#card-longname .server-name').getBoundingClientRect();
+  add('\n== carte à nom long ==');
+  add('  badge : ' + r2(b2.width) + 'x' + r2(b2.height) + ' @ (' + r2(b2.left) + ',' + r2(b2.top) + ')');
+  add('  nom   : ' + r2(name2.width) + 'x' + r2(name2.height));
+  add('  badge dans la carte : ' + (b2.right <= c2.right + 0.5 ? 'oui' : 'NON'));
+  add('  badge chevauche le nom : ' + (b2.left < name2.right - 0.5 ? 'OUI' : 'non'));
+  add('  badge rogné (scrollHeight>clientHeight) : ' + (badge2.scrollHeight > badge2.clientHeight + 1 ? 'OUI' : 'non'));
+
+  // ── 4. pas de débordement horizontal global ──
+  add('\n== débordement ==');
+  add('  document.scrollWidth=' + document.documentElement.scrollWidth + ' clientWidth=' + document.documentElement.clientWidth);
+  add('  débordement horizontal : ' + (document.documentElement.scrollWidth > document.documentElement.clientWidth ? 'OUI' : 'non'));
+
+  // ── 5. contrastes ──
+  function parse(c) { const m = c.match(/[\d.]+/g).map(Number); return m.slice(0, 3); }
+  function lum(rgb) {
+    const a = rgb.map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+  }
+  function ratio(f, b) { const l1 = lum(f), l2 = lum(b); const hi = Math.max(l1, l2), lo = Math.min(l1, l2); return (hi + 0.05) / (lo + 0.05); }
+  const cardBg = parse(getComputedStyle(card).backgroundColor);
+  const textCol = parse(cs.color);
+  add('\n== contraste (WCAG) ==');
+  add('  texte ' + cs.color + ' sur fond de carte ' + getComputedStyle(card).backgroundColor + ' : ' + r2(ratio(textCol, cardBg)) + ':1');
+  add('  bordure rgba(34,197,94,.35) sur fond de carte : ~' + r2(ratio([34, 197, 94], cardBg)) + ':1 (bordure décorative, seuil 3:1)');
+
+  // ── 6. les règles CSS du badge sont-elles bien parsées ? ──
+  add('\n== règles CSS trouvées dans la feuille ==');
+  const wanted = ['.server-official', '.server-official svg', '.server-official:hover', '.server-official:active', '.server-official:focus-visible'];
+  const found = {};
+  for (let i = 0; i < document.styleSheets.length; i++) {
+    let rules;
+    try { rules = document.styleSheets[i].cssRules; } catch (e) { add('  feuille ' + i + ' illisible (CORS)'); continue; }
+    for (let j = 0; j < rules.length; j++) {
+      const rule = rules[j];
+      if (!rule.selectorText) continue;
+      wanted.forEach(function (w) { if (rule.selectorText === w) found[w] = rule.style.cssText; });
+    }
+  }
+  wanted.forEach(function (w) {
+    add('  ' + w + ' : ' + (found[w] ? 'OK → ' + found[w].slice(0, 88) + (found[w].length > 88 ? '…' : '') : 'ABSENTE'));
+  });
+
+  // ── 7. rect pour l'analyse de pixels (facteur d'échelle appliqué par l'appelant) ──
+  add('\n== rect badge #1 (px CSS, à multiplier par le dpr) ==');
+  add('  ' + JSON.stringify({ x: r2(b.left), y: r2(b.top), w: r2(b.width), h: r2(b.height) }));
+
+  document.getElementById('report').textContent = lines.join('\n');
+  document.title = 'REPORT-READY';
+})();
+</script>
+</body>
+</html>

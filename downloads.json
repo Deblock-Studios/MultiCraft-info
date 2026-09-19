@@ -5,12 +5,6 @@
       "build": "525",
       "url": "https://deblock-storage.creatif-france.workers.dev/multicraft.apk",
       "latest": true
-    },
-    {
-      "version": "2.0.17",
-      "build": "525 - torrent",
-      "url": "https://multicraft-info.netlify.app/files/multicraft-2.0.17-525-multicraft-info.apk.torrent",
-      "latest": true
     }
   ]
 }

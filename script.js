@@ -37,9 +37,12 @@
 
   function applyPortholePreference() {
     const enabled = arePortholesEnabled();
-    document.body.classList.toggle('show-portholes', enabled);
+    // Les hublots sont réservés aux comptes connectés : déconnecté, ils ne
+    // s'affichent jamais, même si la préférence locale est activée.
+    const loggedIn = !!(window.Deblock && Deblock.getUser());
+    document.body.classList.toggle('show-portholes', enabled && loggedIn);
     const toggle = document.getElementById('profile-show-portholes');
-    if (toggle) toggle.checked = enabled;
+    if (toggle) toggle.checked = enabled && loggedIn;
   }
 
   function setPortholesEnabled(enabled) {
@@ -279,6 +282,8 @@
       }
     }
 
+    // Connexion/déconnexion : met à jour l'affichage des hublots (compte requis).
+    applyPortholePreference();
     updateChatAuthState();
   }
 
@@ -844,7 +849,11 @@
     const key = PAGE_TITLE_KEYS[pageId];
     if (!key) return base;
     const label = (window.i18n && window.i18n.t(key)) || '';
-    return label ? base + ' - ' + label : base;
+    // Le moteur i18n renvoie la clé telle quelle tant que le dictionnaire n'est
+    // pas chargé : dans ce cas on n'affiche que le titre de base (jamais
+    // « MultiCraft Info - nav.serveurs » dans l'onglet).
+    if (!label || label === key) return base;
+    return base + ' - ' + label;
   }
 
   const navLinks = document.querySelectorAll('[data-nav]');
@@ -1290,6 +1299,8 @@
   let serversApiSort = 'rating_desc';   // tri API en cours : 'asc'/'desc' (alphabétique), 'rating_desc'/'rating_inv' (notes) ; null = ordre par défaut de l'API
   let serversApiCountry = null;      // filtre pays appliqué par l'API (&country=) : code ISO (ex. 'FR'), null = tous les pays
   let serversSearchResults = null;   // résultats de /db/<lang>/search?q= ; null = liste complète
+  let serversById = new Map();       // server_id → serveur, pour la délégation d'événements des cartes
+  let serverCardsBound = false;      // délégation activée une seule fois sur le conteneur
   let serversSearchQuery = '';       // terme de la recherche serveur en cours
   let serversSearchRequestId = 0;    // ignore une réponse de recherche obsolète
   let serversSeenIds = new Set();
@@ -1474,12 +1485,24 @@
   // réduirait le sélecteur aux 2-3 pays de la page 1 filtrée.
   const COUNTRY_CODES_CACHE_KEY = 'mc_country_codes';
   const knownCountryCodes = new Set();
+  let countryFilterSignature = '';    // liste de pays rendue, pour ne pas reconstruire le <select> à l'identique
   (function loadKnownCountryCodes() {
     try {
       const saved = JSON.parse(sessionStorage.getItem(COUNTRY_CODES_CACHE_KEY) || '[]');
       if (Array.isArray(saved)) saved.forEach(function (code) { if (/^[A-Z]{2}$/.test(code)) knownCountryCodes.add(code); });
     } catch (e) { /* ignore */ }
   })();
+
+  // Indexe les serveurs par server_id : les cartes ne portent plus leur JSON
+  // complet en attribut (copié à chaque carte, donc en mémoire), seulement
+  // leur identifiant, résolu au clic via la délégation d'événements.
+  function registerServers(list) {
+    if (!list) return;
+    for (let i = 0; i < list.length; i++) {
+      const server = list[i];
+      if (server && server.server_id != null) serversById.set(String(server.server_id), server);
+    }
+  }
 
   // Mémorise les pays des serveurs actuellement chargés (liste courante).
   function rememberCountryCodes() {
@@ -1498,6 +1521,8 @@
     if (!filterCountrySelect) return;
     const previous = filterCountrySelect.value || 'all';
     rememberCountryCodes();
+    // La langue du site change les libellés de pays : on force la reconstruction.
+    if (filterCountrySelect.dataset.i18nSig && filterCountrySelect.dataset.i18nSig !== window.i18n.lang) countryFilterSignature = '';
     const codes = new Set(knownCountryCodes);
     // Le pays sélectionné doit rester disponible même s'il n'est pas (encore)
     // dans la liste chargée : sinon la sélection retomberait sur « Tous les pays ».
@@ -1505,6 +1530,16 @@
     const sortedCodes = Array.from(codes).sort(function (a, b) {
       return (countryCodeToName(a) || a).localeCompare(countryCodeToName(b) || b);
     });
+    // Le sélecteur est reconstruit à chaque page de serveurs chargée : on
+    // n'y touche que si la liste de pays a réellement changé (et si la langue
+    // n'a pas changé les libellés, cf. countryFilterSignature).
+    const signature = sortedCodes.join(',');
+    if (signature === countryFilterSignature && filterCountrySelect.dataset.i18nSig === window.i18n.lang) {
+      filterCountrySelect.value = previous;
+      return;
+    }
+    countryFilterSignature = signature;
+    filterCountrySelect.dataset.i18nSig = window.i18n.lang;
     filterCountrySelect.innerHTML = '<option value="all">' + escapeHtml(window.i18n.t('servers.allCountries')) + '</option>';
     sortedCodes.forEach(function (code) {
       const option = document.createElement('option');
@@ -1739,28 +1774,38 @@
     const modeLabel = getModeLabel(mode);
     const modeHtml = '<span class="server-mode" title="' + modeLabel + '"><img src="/files/logos/server_' + mode + '_icon.png" alt="' + modeLabel + '" width="16" height="16"></span>';
     const ratingHtml = server._avgRating != null ? '<span class="server-rating">★ ' + server._avgRating.toFixed(1) + ' <span class="server-rating-count">(' + server._reviewsCount + ')</span></span>' : '<span class="server-rating server-rating-none">' + window.i18n.t('servers.noRating') + '</span>';
-    const serverDataAttr = escapeHtml(JSON.stringify(server));
+    const serverIdAttr = escapeHtml(String(server.server_id != null ? server.server_id : ''));
     const officialBadge = isOfficialServer(server)
       ? '<button type="button" class="server-official btn-official" aria-haspopup="dialog">' + OFFICIAL_BADGE_ICON + escapeHtml(window.i18n.t('servers.officialBadge')) + '</button>'
       : '';
-    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div>' + officialBadge + '<!-- <span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span> --></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + adultHtml + modeHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<!-- <button type="button" class="btn btn-players">' + window.i18n.t('servers.playersList') + '</button> --><button type="button" class="btn btn-primary btn-details" data-server="' + serverDataAttr + '">Détails</button></div></article>';
+    return '<article class="server-card"><div class="server-card-head"><div class="server-name-wrapper"><h2 class="server-name">' + name + '</h2><span class="server-location">📍 ' + escapeHtml(location) + '</span></div>' + officialBadge + '<!-- <span class="server-players' + (online ? '' : ' offline') + '"><span class="dot"></span>' + players + '</span> --></div>' + adminHtml + '<div class="server-meta-row">' + ratingHtml + adultHtml + modeHtml + '</div><p class="server-desc">' + description.substring(0, 100) + (description.length > 100 ? '...' : '') + '</p><div class="server-actions">' + discordBtn + '<!-- <button type="button" class="btn btn-players">' + window.i18n.t('servers.playersList') + '</button> --><button type="button" class="btn btn-primary btn-details" data-server-id="' + serverIdAttr + '">Détails</button></div></article>';
   }
 
+  // Délégation d'événements : un seul écouteur sur le conteneur, posé une fois,
+  // quelle que soit la quantité de cartes ajoutées par la pagination infinie.
+  // Auparavant un nouvel écouteur était attaché à *chaque* carte à chaque lot
+  // (les anciennes cartes en recevaient un de plus), ce qui faisait croître la
+  // mémoire sans limite jusqu'à plus de 1 Go. Les cartes ne transportent plus
+  // leur JSON complet en attribut : seul leur identifiant est conservé et le
+  // serveur est résolu dans l'index `serversById` au moment du clic.
   function bindServerCardActions() {
-    if (!serversContainer) return;
-    // Badge « Officiel » : ouvre la pop-up explicative (serveurs de MultiCraft).
-    serversContainer.querySelectorAll('.btn-official').forEach(function (btn) {
-      btn.addEventListener('click', function () { openOfficialServerModal(); });
-    });
-    serversContainer.querySelectorAll('.btn-details').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        try { const serverData = JSON.parse(btn.dataset.server); openServerDetailsModal(serverData); } catch (e) { console.error('Erreur lors du parsing des données du serveur', e); }
-      });
-    });
-    serversContainer.querySelectorAll('.btn-players').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        try { const serverData = JSON.parse(btn.dataset.server); openPlayersModal(serverData); } catch (e) { console.error('Erreur lors du parsing des données du serveur', e); }
-      });
+    if (!serversContainer || serverCardsBound) return;
+    serverCardsBound = true;
+    serversContainer.addEventListener('click', function (e) {
+      const detailsBtn = e.target.closest('.btn-details');
+      if (detailsBtn) {
+        const server = serversById.get(detailsBtn.dataset.serverId);
+        if (server) openServerDetailsModal(server);
+        return;
+      }
+      const playersBtn = e.target.closest('.btn-players');
+      if (playersBtn) {
+        const server = serversById.get(playersBtn.dataset.serverId);
+        if (server) openPlayersModal(server);
+        return;
+      }
+      // Badge « Officiel » : ouvre la pop-up explicative (serveurs de MultiCraft).
+      if (e.target.closest('.btn-official')) openOfficialServerModal();
     });
   }
 
@@ -1778,6 +1823,7 @@
     } else {
       var firstBatch = list.slice(0, Math.min(batchEnd, list.length));
       serversDisplayedCount = firstBatch.length;
+      registerServers(firstBatch);
       serversContainer.innerHTML = firstBatch.map(renderServerCard).join('');
       bindServerCardActions();
       // Une recherche renvoie toutes ses correspondances d'un coup : pas de pagination.
@@ -1791,6 +1837,7 @@
   function appendNextBatch(list) {
     var nextBatch = list.slice(serversDisplayedCount, serversDisplayedCount + SERVERS_PER_PAGE);
     if (!nextBatch.length) return;
+    registerServers(nextBatch);
     // Si l'état vide (« Aucun serveur… ») est affiché, on le vide d'abord.
     if (!serversContainer.querySelector('.server-card')) serversContainer.innerHTML = '';
     serversDisplayedCount += nextBatch.length;
@@ -1850,10 +1897,12 @@
     if (serversSearchResults !== null) return;
     if (!serversLoaded || serversLoadingMore || serversNoMore) return;
     serversLoadingMore = true;
+    let fetchedAny = false;
     try {
       while (serversLoaded && !serversNoMore && serversNextPage <= SERVERS_MAX_PAGES) {
         const result = await fetchServersPage(serversNextPage);
         if (!serversLoaded) return;
+        fetchedAny = true;
         serversNextPage++;
         // Page plus courte que demandé : dernière page réelle ou entrée résiduelle —
         // on le confirme avec la page suivante avant de déclarer la liste terminée.
@@ -1871,6 +1920,10 @@
         if (serversDisplayedCount === 0 && filteredServers.length === 0) continue;
         break;
       }
+      // Garde-fou atteint sans signal de fin de l'API : on arrête proprement la
+      // pagination. Sans cela, la relance automatique ci-dessous bouclait toutes
+      // les 50 ms à l'infini (page toujours « en chargement », CPU à 100 %).
+      if (!serversNoMore && serversNextPage > SERVERS_MAX_PAGES) serversNoMore = true;
     } catch (err) {
       console.error('Erreur de chargement des serveurs (page ' + serversNextPage + ')', err);
     } finally {
@@ -1885,7 +1938,9 @@
       // Utilisateur toujours en bas de liste sans rien de plus à afficher :
       // on relance le chargement (le sentinel visible ne redéclenche pas
       // l'IntersectionObserver tant qu'il n'a pas quitté le champ).
-      if (!serversNoMore && serversSentinel && serversSentinel.getBoundingClientRect().top < window.innerHeight && serversDisplayedCount >= filteredServers.length) {
+      // On ne relance que si une page a réellement été chargée et qu'il reste du
+      // contenu : une relance sans progrès créait une boucle infinie.
+      if (fetchedAny && !serversNoMore && serversSentinel && serversSentinel.getBoundingClientRect().top < window.innerHeight && serversDisplayedCount >= filteredServers.length) {
         setTimeout(fetchNextServersPage, 50);
       }
     }
@@ -2123,6 +2178,7 @@
     serversConfirmingEnd = false;
     serversNextPage = 1;
     serversSeenIds = new Set();
+    serversById.clear();
     allServers = [];
     serversTotalCount = 0;
     // Total pour le compteur : endpoint stats (comme la page d'accueil), filtré
@@ -4080,28 +4136,40 @@
   applyPortholePreference();
   initDeblockAuth();
 
-  // Migrate legacy hash URLs (#serveurs → /serveurs) without reloading the page.
-  (function migrateLegacyHash() {
-    const rawHash = location.hash || '';
-    if (!rawHash) return;
-    const hash = rawHash.replace(/^#/, '');
-    const slug = (hash.split('?')[0] || '').trim();
-    const legacyPage = legacyPageRedirects[slug] || slug;
-    if (!pages[legacyPage]) return;
-    if (currentPageFromPath() !== 'accueil') return;
-    const query = hash.indexOf('?') !== -1 ? hash.slice(hash.indexOf('?')) : '';
-    history.replaceState(null, '', pagePath(legacyPage) + query);
-  })();
+  function startApp() {
+    // Migrate legacy hash URLs (#serveurs → /serveurs) without reloading the page.
+    (function migrateLegacyHash() {
+      const rawHash = location.hash || '';
+      if (!rawHash) return;
+      const hash = rawHash.replace(/^#/, '');
+      const slug = (hash.split('?')[0] || '').trim();
+      const legacyPage = legacyPageRedirects[slug] || slug;
+      if (!pages[legacyPage]) return;
+      if (currentPageFromPath() !== 'accueil') return;
+      const query = hash.indexOf('?') !== -1 ? hash.slice(hash.indexOf('?')) : '';
+      history.replaceState(null, '', pagePath(legacyPage) + query);
+    })();
 
-  handleRoute();
+    handleRoute();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const hashParams = new URLSearchParams((window.location.hash || '').split('?')[1] || '');
-  if (urlParams.get('server') || hashParams.get('server')) {
-    if (!document.getElementById('page-serveurs').classList.contains('active')) {
-      if (!serversLoaded) loadServers();
-      else handleServerShare();
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams((window.location.hash || '').split('?')[1] || '');
+    if (urlParams.get('server') || hashParams.get('server')) {
+      if (!document.getElementById('page-serveurs').classList.contains('active')) {
+        if (!serversLoaded) loadServers();
+        else handleServerShare();
+      }
     }
+  }
+
+  // On attend le chargement des traductions de la langue courante avant le
+  // premier rendu : sans cela, le titre d'onglet et les contenus générés en JS
+  // (messages d'erreur, compteurs…) affichent les clés i18n en clair
+  // (ex. « servers.errorLoad ») au lieu du texte.
+  if (window.i18n && window.i18n.ready) {
+    window.i18n.ready.then(startApp, startApp);
+  } else {
+    startApp();
   }
 
   setInterval(function () { fetchUserRoles(); }, 300000);

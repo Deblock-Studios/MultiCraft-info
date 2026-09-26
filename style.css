@@ -738,6 +738,17 @@ html:not([lang='fr']):not([lang='en']) .updates-lang-notice {
   display: block;
 }
 
+/* Une seule image (ou vidéo) dans une mise à jour : sur grand écran elle
+   prendrait toute la largeur du post. On la borne et on la centre pour une
+   lecture plus confortable. */
+@media (min-width: 769px) {
+  .update-images > img:only-child,
+  .update-images > video:only-child {
+    max-width: 520px;
+    justify-self: center;
+  }
+}
+
 /* ── Sentinels de chargement auto (updates + serveurs) ── */
 .updates-sentinel,
 .servers-sentinel {
@@ -3269,6 +3280,19 @@ body.modal-open {
   margin-top: 0.4rem;
   max-height: 340px;
   overflow-y: auto;
+}
+
+.lag-test-powered {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.lag-test-powered a {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* État « test en cours » : cercle qui tourne */

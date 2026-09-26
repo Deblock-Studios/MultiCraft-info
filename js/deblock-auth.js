@@ -40,16 +40,32 @@
       // Wait for supabase-js to be loaded on the page
       var attempts = 0;
       var MAX_ATTEMPTS = 200; // ~10s : abandonne si le CDN supabase ne charge pas
+      // Libère l'initialisation une seule fois : sans cela, un getSession() qui
+      // échoue ou ne répond jamais laissait le site bloqué sur « chargement »
+      // pour toujours (Deblock.ready() n'était jamais résolu).
+      function settleReady() {
+        if (ready) return;
+        ready = true;
+        notifyListeners(currentUser);
+        resolve();
+      }
+
       function tryInit() {
         if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-              persistSession: true,
-              autoRefreshToken: true,
-              detectSessionInUrl: true,
-              flowType: 'pkce',
-            },
-          });
+          try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+              auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                flowType: 'pkce',
+              },
+            });
+          } catch (e) {
+            console.error('[Deblock] createClient failed:', e);
+            settleReady();
+            return;
+          }
 
           // Get current session
           supabase.auth.getSession().then(function (result) {
@@ -58,10 +74,15 @@
               currentUser = session.user;
               cachedAccessToken = session.access_token;
             }
-            ready = true;
-            notifyListeners(currentUser);
-            resolve();
+            settleReady();
+          }).catch(function (err) {
+            console.error('[Deblock] getSession failed:', err);
+            settleReady();
           });
+
+          // Filet de sécurité : si getSession() ne répond jamais, on n'attend pas
+          // indéfiniment pour libérer le reste de l'application.
+          setTimeout(settleReady, 8000);
 
           // Listen for future auth changes
           supabase.auth.onAuthStateChange(function (event, session) {

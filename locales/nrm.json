@@ -170,7 +170,7 @@
   "profile.deleteCancel": "Annuler",
   "profile.deleteConfirmBtn": "Oui, supprimer",
   "profile.deleted": "✓ Compte supprimé.",
-  "profile.pôswordChanged": "✓ Mot d'pôse changé !",
+  "profile.passwordChanged": "✓ Mot d'pôse changé !",
   "profile.emailChanged": "✓ Un email d'confirmation a été envoyé à vot' nouvelle adresse.",
   "profile.pseudoChanged": "✓ Pseudo mis à jou !",
   "profile.reauthNeeded": "Veuillez vous r'connecter pour continuer.",

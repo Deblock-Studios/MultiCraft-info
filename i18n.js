@@ -128,6 +128,10 @@
   let currentLang = detectLang();
   const dictionaries = {}; // cache mémoire : { 'en': {…}, 'es': {…} }
   const fileRequests = {}; // cache des requêtes réseau, partagé entre variantes
+  // Langues dont le dictionnaire a réellement été chargé AVEC du contenu : un
+  // fichier vide ou une réponse parasite ne doit pas être pris pour une
+  // traduction (sinon toutes les clés s'afficheraient en clair).
+  const usable = {};
 
   /* ── Chargement des fichiers de traduction ── */
 
@@ -136,23 +140,41 @@
     return (lang && lang.file) || (lang && lang.code) || code;
   }
 
+  // Une requête de fichier de langue : erreur sur réponse non-2xx, refus de tout
+  // ce qui n'est pas un objet JSON (une page HTML servie à la place, par exemple).
+  function fetchLocale(url) {
+    return fetch(url)
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || typeof data !== 'object') throw new Error('format de fichier invalide');
+        return data;
+      });
+  }
+
   function loadDictionary(code) {
     if (dictionaries[code]) return Promise.resolve(dictionaries[code]);
     const file = localeFile(code);
     if (!fileRequests[file]) {
-      fileRequests[file] = fetch(LOCALES_PATH + file + '.json')
-        .then(function (res) {
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return res.json();
-        })
+      // Chemin absolu d'abord ; si le site est servi dans un sous-dossier (racine
+      // « / » non disponible), on retente en relatif au document.
+      fileRequests[file] = fetchLocale(LOCALES_PATH + file + '.json')
+        .catch(function () { return fetchLocale('locales/' + file + '.json'); })
         .catch(function (err) {
           console.error('[i18n] chargement impossible : ' + LOCALES_PATH + file + '.json', err);
-          return {};
+          // On ne mémorise PAS l'échec : sinon la langue resterait cassée pour
+          // toute la session (toutes les clés affichées, impossible de réessayer).
+          fileRequests[file] = null;
+          return null;
         });
     }
     return fileRequests[file].then(function (data) {
-      dictionaries[code] = data || {};
-      return dictionaries[code];
+      if (!data) return dictionaries[code] || {};
+      dictionaries[code] = data;
+      usable[code] = Object.keys(data).length > 0;
+      return data;
     });
   }
 
@@ -181,12 +203,18 @@
   }
 
   function t(key, vars) {
-    // Fichier de langue pas encore arrivé (chargement asynchrone) : on renvoie la
-    // clé sans avertir — les contenus seront traduits à l'événement « langchange ».
-    if (!dictionaries[currentLang]) return key;
+    // Aucun dictionnaire utilisable (fichier pas encore arrivé, ou chargement
+    // impossible) : on renvoie la clé sans avertir — les contenus seront traduits
+    // à l'événement « langchange ». On se rabat sur la langue de référence si elle
+    // est disponible, pour ne jamais afficher de clé brute.
+    let lang = currentLang;
+    if (!usable[lang]) {
+      if (!usable[REFERENCE_LANGUAGE]) return key;
+      lang = REFERENCE_LANGUAGE;
+    }
 
-    let value = rawValue(key, currentLang);
-    if (value === undefined && currentLang !== REFERENCE_LANGUAGE) {
+    let value = rawValue(key, lang);
+    if (value === undefined && lang !== REFERENCE_LANGUAGE) {
       value = rawValue(key, REFERENCE_LANGUAGE);
       if (value !== undefined) warnOnce('clé « ' + key + ' » absente en « ' + currentLang + ' »');
     }
@@ -352,11 +380,21 @@
 
   /* ── Changement de langue ── */
 
+  // Numéro de la dernière demande de changement de langue : si l'utilisateur
+  // clique plusieurs langues à la suite, une réponse lente plus ancienne ne doit
+  // pas écraser la sélection la plus récente.
+  let langRequestId = 0;
+
   function setLang(lang) {
     const target = canonical(lang);
     if (!target || target === currentLang) return Promise.resolve();
     try { localStorage.setItem(STORAGE_KEY, target); } catch (e) { /* stockage indisponible */ }
-    return loadDictionary(target).then(function () {
+    const requestId = ++langRequestId;
+    return loadDictionary(target).then(function (dict) {
+      if (requestId !== langRequestId) return; // une sélection plus récente est en cours
+      // Le dictionnaire n'a pas pu être chargé : on garde la langue précédente
+      // (sinon toutes les clés s'afficheraient en clair).
+      if (!dict || Object.keys(dict).length === 0) return;
       currentLang = target;
       window.i18n.lang = currentLang;
       applyTranslations();
@@ -382,10 +420,20 @@
 
   /* ── Init ── */
 
-  window.i18n.ready = loadDictionary(currentLang).then(function () {
-    applyTranslations();
-    // Première traduction des contenus générés en JavaScript : les autres
-    // scripts (script.js, banner.js…) écoutent déjà « langchange ».
-    document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: currentLang } }));
-  });
+  window.i18n.ready = loadDictionary(currentLang)
+    .then(function () {
+      // Langue courante indisponible (fichier absent ou vide) : on charge la
+      // langue de référence, qui sert alors de secours à t().
+      if (usable[currentLang]) return;
+      return loadDictionary(REFERENCE_LANGUAGE);
+    })
+    .then(function () {
+      if (!usable[currentLang] && !usable[REFERENCE_LANGUAGE]) {
+        console.error('[i18n] aucune traduction chargée : le contenu HTML d\'origine est conservé.');
+      }
+      applyTranslations();
+      // Première traduction des contenus générés en JavaScript : les autres
+      // scripts (script.js, banner.js…) écoutent déjà « langchange ».
+      document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: currentLang } }));
+    });
 })();

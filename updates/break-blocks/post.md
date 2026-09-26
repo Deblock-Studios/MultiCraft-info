@@ -4,5 +4,5 @@ title: Choix des blocs cassés par les outils
 images: [1.png]
 ---
 
-Il est dsromais possible de choisir le rayon de casse des blocs faits par les outils créés via /ie.
-Il est désormais donc possible de détruire des murs de 3x3 blocs avec des outils /ie.
+Il est désromais possible de choisir le rayon de casse des blocs faits par les outils créés via /ie. Jusqu'à 3x3 !s
+

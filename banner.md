@@ -1,7 +1,7 @@
 ---
-isDisplayed: non
-color: vert
+isDisplayed: yes
+color: orange
 ---
 
-**fr:** Nous effectuons des opérations de maintenance sur la base de données. La page serveurs ne marche donc pas. Ca revient bientôt :)
-**en:** We are making some maintenances on the databse. The servers page don't work for now. It come back soon :)
+**fr:** Des erreurs arrivent sur la page des mises à jours. Nous travaillons dessus.
+**en:** Some errors comes with updates page. We are working on it.

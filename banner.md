@@ -1,5 +1,5 @@
 ---
-isDisplayed: yes
+isDisplayed: no
 color: orange
 ---
 

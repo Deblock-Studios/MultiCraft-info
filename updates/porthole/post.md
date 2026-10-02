@@ -1,7 +1,7 @@
 ---
 date: 2026-10-02
 title: Arrivée des hublots en jeu !
-images: [1.png, 2.jpg, 3.jpg, 4.jpg]
+images: [1.jpg, 2.jpg, 3.jpg, 4.jpg]
 ---
 
 Les hublots sont désormais arrivés et ce sur tous les serveurs !

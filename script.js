@@ -216,13 +216,8 @@
 
   async function isUserBanned(userId) {
     try {
-      const url = SUPABASE_URL + '/rest/v1/banned_users?user_id=eq.' + encodeURIComponent(userId) + '&select=*';
-      const res = await fetch(url, { headers: getApiHeaders() });
-      if (res.status === 404) return false;
-      if (res.status === 400) { console.warn('isUserBanned: table banned_users manquante'); return false; }
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      return data && data.length > 0;
+      // Délégué au module Deblock (chec fail-open si la table est absente)
+      return !!(await Deblock.checkBan(userId));
     } catch (err) { console.error('Erreur vérification bannissement:', err); return false; }
   }
 
@@ -233,25 +228,55 @@
       return;
     }
     try {
-      const url = SUPABASE_URL + '/rest/v1/banned_users';
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=minimal' }),
-        body: JSON.stringify({
-          user_id: userId,
-          banned_by: currentUser.id,
-          reason: reason || 'Comportement inapproprié',
-          banned_at: new Date().toISOString(),
-        }),
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await Deblock.banUser(userId, reason || 'Comportement inapproprié');
       const messagesToRemove = chatMessages.filter(function (m) { return m.user_id === userId; });
       messagesToRemove.forEach(function (msg) { removeMessageFromUI(msg.id); });
-      showTemporaryNotification('✅ Utilisateur banni !', true);
+      showTemporaryNotification('✅ Compte banni !', true);
     } catch (err) {
       console.error('Erreur bannissement:', err);
       showTemporaryNotification('❌ Erreur lors du bannissement');
     }
+  }
+
+  async function unbanChatUser(userId) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser || !isAdminUser(currentUser.id)) {
+      showTemporaryNotification('❌ Seul un admin peut débannir');
+      return;
+    }
+    try {
+      await Deblock.unbanUser(userId);
+      showTemporaryNotification('✅ Compte débanni !', true);
+    } catch (err) {
+      console.error('Erreur débannissement:', err);
+      showTemporaryNotification('❌ Erreur lors du débannissement');
+    }
+  }
+
+  /* Bandeau plein écran affiché quand un compte vient d'être banni */
+  function showBanNotice(ban) {
+    var old = document.getElementById('ban-notice');
+    if (old) old.remove();
+    var el = document.createElement('div');
+    el.id = 'ban-notice';
+    el.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:10000;' +
+      'max-width:min(92vw,460px);background:rgba(248,113,113,0.97);color:#fff;padding:12px 16px;' +
+      'border-radius:10px;font-size:0.85rem;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,0.35);' +
+      'display:flex;gap:12px;align-items:flex-start;animation:fadeIn 0.3s ease;';
+    var text = document.createElement('span');
+    text.textContent = '🚫 Votre compte a été banni' +
+      (ban && ban.reason ? ' : ' + ban.reason : '') +
+      '. Vous avez été déconnecté.';
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = '✕';
+    close.setAttribute('aria-label', 'Fermer');
+    close.style.cssText = 'background:none;border:none;color:#fff;cursor:pointer;font-size:0.9rem;padding:0 2px;flex-shrink:0;';
+    close.addEventListener('click', function () { el.remove(); });
+    el.appendChild(text);
+    el.appendChild(close);
+    document.body.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.remove(); }, 15000);
   }
 
   /* ── Deblock Auth ── */
@@ -365,6 +390,17 @@
           loadChatMessagesForTab(currentChatTab, currentPrivatePartner);
         }
       });
+
+      // Un compte banni pendant la session → bandeau + la session est coupée par Deblock
+      if (Deblock.onBanStateChanged) {
+        Deblock.onBanStateChanged(function (ban) {
+          if (ban) {
+            showBanNotice(ban);
+            updateDeblockUI();
+            if (chatOpen) closeChat();
+          }
+        });
+      }
     });
 
     // ── Login modal event listeners ──
@@ -1055,18 +1091,41 @@
   let updatesObserver = null;
   let updatesScrollHandler = null;
 
+  /* Code du fichier de traduction à charger pour la langue courante :
+     pt-BR → pt, es-MX → es, ja → ja. fr et en n'ont pas de fichier traduit
+     (post.md et post-en.md sont les sources). */
+  function updatesLangFile() {
+    var lang = String(window.i18n.lang || 'fr');
+    var entry = (window.i18n.languages || []).find(function (l) {
+      return String(l.code).toLowerCase() === lang.toLowerCase();
+    });
+    if (entry && entry.file) return entry.file;
+    return lang.split('-')[0].toLowerCase();
+  }
+
   async function loadUpdates() {
     try {
       const manifestRes = await fetch('/updates/manifest.json');
       if (!manifestRes.ok) throw new Error('Manifest introuvable');
       const folders = await manifestRes.json();
+      const langFile = updatesLangFile();
+      // Traductions automatiques disponibles pour la langue courante ?
+      const localized = langFile !== 'fr' && langFile !== 'en';
+      let missingTranslation = false;
       const posts = await Promise.all(folders.map(async function (folder) {
-        const lang = window.i18n.lang;
         let raw = null;
-        if (lang === 'en') {
-          try { const enRes = await fetch('/updates/' + folder + '/post-en.md'); if (enRes.ok) raw = await enRes.text(); } catch (e) { /* ignore */ }
+        let isLocalized = false;
+        if (localized) {
+          try {
+            const res = await fetch('/updates/' + folder + '/post-' + langFile + '.md');
+            if (res.ok) { raw = await res.text(); isLocalized = true; }
+          } catch (e) { /* repli */ }
+        }
+        if (!isLocalized && langFile !== 'en') {
+          try { const enRes = await fetch('/updates/' + folder + '/post-en.md'); if (enRes.ok) raw = await enRes.text(); } catch (e) { /* repli */ }
         }
         if (raw === null) { const res = await fetch('/updates/' + folder + '/post.md'); if (!res.ok) return null; raw = await res.text(); }
+        if (!isLocalized) missingTranslation = true;
         const parsed = parseFrontmatter(raw);
         return {
           folder: folder,
@@ -1087,6 +1146,9 @@
         renderUpdatesBatch();
       }
       updatesLoaded = true;
+      // L'avis « non traduit » n'a de sens que si un article est réellement resté en français.
+      var langNotice = document.querySelector('.updates-lang-notice');
+      if (langNotice) langNotice.classList.toggle('is-shown', localized && missingTranslation);
     } catch (err) {
       console.error(err);
       updatesContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('updates.error') + '</p></div>';
@@ -3143,12 +3205,19 @@
           this.style.background = 'none';
           this.style.color = 'var(--text-dim)';
         };
-        banBtn.addEventListener('click', function (e) {
+        banBtn.addEventListener('click', async function (e) {
           e.stopPropagation();
           var userToBan = msg.user_id || msg.sender_id;
           var userName = msg.username || 'Inconnu';
+          var existingBan = await isUserBanned(userToBan);
+          if (existingBan) {
+            if (confirm('"' + userName + '" est banni. Débannir ce compte ?')) {
+              unbanChatUser(userToBan);
+            }
+            return;
+          }
           var reason = prompt('Raison du bannissement de "' + userName + '" ?', 'Comportement inapproprié');
-          if (reason !== null && confirm('Bannir définitivement "' + userName + '" du chat ?')) {
+          if (reason !== null && confirm('Bannir le compte de "' + userName + '" ?\nIl ne pourra plus se connecter, et sa session sera coupée.')) {
             banChatUser(userToBan, reason);
           }
         });
@@ -3168,7 +3237,7 @@
 
     var banned = await isUserBanned(currentUser.id);
     if (banned) {
-      showTemporaryNotification('❌ Vous avez été banni du chat');
+      showTemporaryNotification('❌ Votre compte est banni');
       return;
     }
 

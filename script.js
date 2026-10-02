@@ -1103,29 +1103,52 @@
     return lang.split('-')[0].toLowerCase();
   }
 
+  /* Un article manquant ne renvoie pas 404 : _redirects contient un rewrite
+     « catch-all » vers index.html, donc /updates/.../post-de.md inexistant
+     répond 200 avec le HTML de la page d'accueil. Sans ce contrôle, c'est
+     l'index du site qui s'affiche dans les mises à jour. */
+  function isMarkdownPost(text) {
+    if (typeof text !== 'string' || !text.trim()) return false;
+    var head = text.trim().slice(0, 300).toLowerCase();
+    return head.indexOf('<!doctype') !== 0 && head.indexOf('<html') !== 0;
+  }
+
+  async function fetchUpdatePost(folder, fileName) {
+    try {
+      const res = await fetch('/updates/' + folder + '/' + fileName);
+      if (!res.ok) return null;
+      const text = await res.text();
+      if (!isMarkdownPost(text)) {
+        console.warn('[updates] ' + folder + '/' + fileName + ' : contenu HTML ignoré');
+        return null;
+      }
+      return text;
+    } catch (e) { return null; }
+  }
+
   async function loadUpdates() {
     try {
       const manifestRes = await fetch('/updates/manifest.json');
       if (!manifestRes.ok) throw new Error('Manifest introuvable');
       const folders = await manifestRes.json();
       const langFile = updatesLangFile();
-      // Traductions automatiques disponibles pour la langue courante ?
-      const localized = langFile !== 'fr' && langFile !== 'en';
+      // fr = source (post.md), en = post-en.md, autres langues = post-<lang>.md
+      const wantsTranslation = langFile !== 'fr';
+      const preferredFile = 'post-' + langFile + '.md';
       let missingTranslation = false;
       const posts = await Promise.all(folders.map(async function (folder) {
+        // Ordre de recherche : langue courante, puis anglais, puis français
+        const candidates = wantsTranslation
+          ? [preferredFile, 'post-en.md', 'post.md']
+          : ['post.md'];
         let raw = null;
-        let isLocalized = false;
-        if (localized) {
-          try {
-            const res = await fetch('/updates/' + folder + '/post-' + langFile + '.md');
-            if (res.ok) { raw = await res.text(); isLocalized = true; }
-          } catch (e) { /* repli */ }
+        let usedFile = null;
+        for (const candidate of candidates) {
+          const text = await fetchUpdatePost(folder, candidate);
+          if (text) { raw = text; usedFile = candidate; break; }
         }
-        if (!isLocalized && langFile !== 'en') {
-          try { const enRes = await fetch('/updates/' + folder + '/post-en.md'); if (enRes.ok) raw = await enRes.text(); } catch (e) { /* repli */ }
-        }
-        if (raw === null) { const res = await fetch('/updates/' + folder + '/post.md'); if (!res.ok) return null; raw = await res.text(); }
-        if (!isLocalized) missingTranslation = true;
+        if (raw === null) return null;
+        if (wantsTranslation && usedFile !== preferredFile) missingTranslation = true;
         const parsed = parseFrontmatter(raw);
         return {
           folder: folder,
@@ -1148,7 +1171,7 @@
       updatesLoaded = true;
       // L'avis « non traduit » n'a de sens que si un article est réellement resté en français.
       var langNotice = document.querySelector('.updates-lang-notice');
-      if (langNotice) langNotice.classList.toggle('is-shown', localized && missingTranslation);
+      if (langNotice) langNotice.classList.toggle('is-shown', wantsTranslation && missingTranslation);
     } catch (err) {
       console.error(err);
       updatesContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('updates.error') + '</p></div>';

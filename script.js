@@ -3099,7 +3099,7 @@
         timeElement.textContent = timeElement.textContent + ' modifié';
       }
     }
-    var msgIndex = chatMessages.findIndex(function (m) { return m.id === messageId; });
+    var msgIndex = chatMessages.findIndex(function (m) { return String(m.id) === String(messageId); });
     if (msgIndex !== -1) {
       chatMessages[msgIndex].message = finalText;
       chatMessages[msgIndex].is_edited = true;
@@ -3113,7 +3113,10 @@
       if (msgElement.querySelector('.chat-msg-actions')) return;
 
       var msgId = msgElement.dataset.msgId;
-      var msg = chatMessages.find(function (m) { return m.id === msgId; });
+      // dataset renvoie toujours une chaîne alors que msg.id est un nombre :
+      // sans normalisation, la comparaison stricte échoue, msg reste undefined
+      // et AUCUN bouton d'action (voir, privé, supprimer, bannir) n'est ajouté.
+      var msg = chatMessages.find(function (m) { return String(m.id) === String(msgId); });
       if (!msg) return;
 
       var isAdmin = isAdminUser(currentUser.id);

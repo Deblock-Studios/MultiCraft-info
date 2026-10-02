@@ -1972,6 +1972,35 @@ body.modal-open {
   border-color: var(--border-strong);
 }
 
+/* Actions de modération sur un avis (suppression, bannissement) */
+.review-moderation {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: 0.4rem;
+}
+
+.review-mod-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.review-mod-btn.delete:hover {
+  background: rgba(255, 100, 100, 0.1);
+  color: #f87171;
+}
+
+.review-mod-btn.ban:hover {
+  background: rgba(255, 50, 50, 0.15);
+  color: #ff4444;
+}
+
 .review-header {
   display: flex;
   align-items: center;

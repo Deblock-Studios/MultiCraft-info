@@ -2480,10 +2480,89 @@
 
   function buildReviewCardsHtml(reviews) {
     if (!reviews.length) return '<p class="reviews-empty">' + window.i18n.t('reviews.noReviews') + '</p>';
+    const currentUser = Deblock.getUser();
+    const canModerateReviews = !!currentUser && canModerate(currentUser.id);
     return reviews.map(function (r) {
       // Aucun avis ne porte de statut « vérifié » : le pseudo et la date suffisent.
-      return '<div class="review-card"><div class="review-header"><span class="review-stars">' + buildStarsHtml(r.rating) + '</span><span class="review-pseudo">' + escapeHtml(r.pseudo || 'Anonyme') + '</span><span class="review-date">' + escapeHtml(r.date || new Date(r.created_at).toLocaleDateString('fr-FR')) + '</span></div>' + (r.text ? '<p class="review-text">' + escapeHtml(r.text) + '</p>' : '') + '</div>';
+      var actions = '';
+      if (canModerateReviews) {
+        // Le bannissement n'est possible que si l'avis est rattaché à un compte
+        // Deblock : les avis importés de Discord n'ont pas de user_id.
+        var banBtn = r.user_id
+          ? '<button type="button" class="review-mod-btn ban" data-review-action="ban" data-review-id="' + escapeHtml(r.id) + '" data-user-id="' + escapeHtml(r.user_id) + '" title="Bannir le compte de ' + escapeHtml(r.pseudo || 'cet avis') + '">🚫</button>'
+          : '';
+        actions = '<div class="review-moderation">'
+          + '<button type="button" class="review-mod-btn delete" data-review-action="delete" data-review-id="' + escapeHtml(r.id) + '" title="' + (r.user_id ? 'Supprimer cet avis' : 'Supprimer cet avis (auteur non rattaché à un compte)') + '">🗑️</button>'
+          + banBtn
+          + '</div>';
+      }
+      return '<div class="review-card"><div class="review-header"><span class="review-stars">' + buildStarsHtml(r.rating) + '</span><span class="review-pseudo">' + escapeHtml(r.pseudo || 'Anonyme') + '</span><span class="review-date">' + escapeHtml(r.date || new Date(r.created_at).toLocaleDateString('fr-FR')) + '</span></div>' + (r.text ? '<p class="review-text">' + escapeHtml(r.text) + '</p>' : '') + actions + '</div>';
     }).join('');
+  }
+
+  /* Message éphémère dans la section des avis (la notification du chat n'est
+     pas visible quand le chat est fermé). */
+  function showReviewMsg(section, text, isError) {
+    if (!section) return;
+    var old = section.querySelector('.review-mod-msg');
+    if (old) old.remove();
+    var el = document.createElement('p');
+    el.className = 'review-mod-msg';
+    el.textContent = text;
+    el.style.cssText = 'margin:0 0 .6rem;padding:.5rem .7rem;border-radius:6px;font-size:.85rem;'
+      + 'background:' + (isError ? 'rgba(248,113,113,.14)' : 'rgba(74,222,128,.14)') + ';'
+      + 'color:' + (isError ? '#f87171' : '#22c55e') + ';';
+    var list = section.querySelector('.reviews-list');
+    if (list) list.insertBefore(el, list.firstChild);
+    setTimeout(function () { el.remove(); }, 4000);
+  }
+
+  /* Suppression d'un avis (modérateur ou admin) */
+  async function deleteServerReview(reviewId, section) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser || !canModerate(currentUser.id)) {
+      showReviewMsg(section, '❌ Réservé aux modérateurs', true);
+      return;
+    }
+    if (!confirm('Supprimer définitivement cet avis ?')) return;
+    try {
+      const res = await fetchWithTimeout(SUPABASE_URL + '/rest/v1/reviews?id=eq.' + encodeURIComponent(reviewId), {
+        method: 'DELETE',
+        headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=minimal' }),
+      }, 15000);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const serverId = section && section.dataset ? section.dataset.serverId : null;
+      if (serverId) refreshReviewsList(await fetchReviews(serverId), section);
+      showReviewMsg(section, '✅ Avis supprimé', false);
+    } catch (err) {
+      console.error('Erreur suppression avis:', err);
+      showReviewMsg(section, '❌ Erreur lors de la suppression', true);
+    }
+  }
+
+  /* Bannissement de l'auteur d'un avis : bascule ban/unban, comme dans le chat.
+     Le bannissement porte sur le compte entier (Deblock.banUser), pas sur l'avis. */
+  async function moderateReviewAuthor(userId, section) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser || !isAdminUser(currentUser.id)) {
+      showReviewMsg(section, '❌ Seul un admin peut bannir', true);
+      return;
+    }
+    if (!userId) {
+      showReviewMsg(section, "Cet avis n'est rattaché à aucun compte Deblock : supprimez-le plutôt", true);
+      return;
+    }
+    if (await isUserBanned(userId)) {
+      unbanChatUser(userId);
+      showReviewMsg(section, '✅ Compte débanni', false);
+      return;
+    }
+    const reason = prompt('Raison du bannissement ?', 'Comportement inapproprié');
+    if (reason === null) return;
+    if (confirm('Bannir ce compte ? Il ne pourra plus se connecter ni publier d’avis.')) {
+      banChatUser(userId, reason);
+      showReviewMsg(section, '✅ Compte banni', false);
+    }
   }
 
   function bindStarPicker(picker) {
@@ -2500,6 +2579,7 @@
   function renderReviewsSection(serverId) {
     const section = document.getElementById('modal-reviews-section');
     if (!section) return;
+    section.dataset.serverId = serverId;
     const currentUser = Deblock.getUser();
     const alreadyReviewed = hasRecentlyReviewed(serverId);
     let formHtml;
@@ -2514,6 +2594,17 @@
     section.innerHTML = '<div class="reviews-divider"></div><div class="reviews-header"><h3 class="reviews-title">' + window.i18n.t('reviews.title') + '</h3><div class="reviews-header-right"><span class="reviews-avg-wrap"><span class="reviews-no-badge">' + window.i18n.t('reviews.loading') + '</span></span><select class="reviews-sort-select" id="reviews-sort-select" aria-label="Trier les avis"><option value="recent">' + window.i18n.t('reviews.sortRecent') + '</option><option value="desc">' + window.i18n.t('reviews.sortDesc') + '</option><option value="asc">' + window.i18n.t('reviews.sortAsc') + '</option></select></div></div><div class="reviews-list" id="reviews-list-inner"><div class="reviews-spinner"><div class="spinner"></div></div></div>' + formHtml;
     const reviewLoginBtn = section.querySelector('#review-deblock-login-btn');
     if (reviewLoginBtn) reviewLoginBtn.addEventListener('click', function () { if (!Deblock.getUser()) openAuthPage(); });
+    // Actions de modération sur les avis : délégation d'événement, car la liste
+    // est reconstruite à chaque rafraîchissement.
+    section.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-review-action]');
+      if (!btn) return;
+      e.preventDefault();
+      const action = btn.getAttribute('data-review-action');
+      const reviewId = btn.getAttribute('data-review-id');
+      if (action === 'delete') deleteServerReview(reviewId, section);
+      else if (action === 'ban') moderateReviewAuthor(btn.getAttribute('data-user-id'), section);
+    });
     bindStarPicker(section.querySelector('.review-star-picker'));
     const textarea = section.querySelector('.review-text-input');
     const charCount = section.querySelector('#review-char-count');

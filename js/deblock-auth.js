@@ -12,6 +12,14 @@
  *   Deblock.getDisplayName() → string
  *   Deblock.getAvatarUrl()   → string
  *   Deblock.onAuthStateChanged(callback)
+ *   Deblock.onBanStateChanged(callback)
+ *   Deblock.checkBan(userId)      → Promise<ban | null>
+ *   (anti-contournement inscription : via la RPC SQL is_email_banned)
+ *   Deblock.refreshBanStatus()    → Promise<ban | null>
+ *   Deblock.isBanned()            → boolean
+ *   Deblock.getBanInfo()          → ban object ou null
+ *   Deblock.banUser(userId, reason) → Promise (admin)
+ *   Deblock.unbanUser(userId)       → Promise (admin)
  *   Deblock.getApiHeaders()  → headers object for REST calls
  *   Deblock.getSupabaseUrl() → string
  *   Deblock.getAnonKey()     → string
@@ -29,6 +37,8 @@
   var currentUser = null;
   var cachedAccessToken = null;
   var authListeners = [];
+  var banListeners = [];
+  var currentBan = null;
   var ready = false;
   var initializationPromise = null;
 
@@ -74,7 +84,9 @@
               currentUser = session.user;
               cachedAccessToken = session.access_token;
             }
-            settleReady();
+            // Un compte banni ne doit jamais voir sa session restaurée
+            var check = session ? enforceUserBan(session.user) : Promise.resolve(null);
+            return check.then(settleReady, settleReady);
           }).catch(function (err) {
             console.error('[Deblock] getSession failed:', err);
             settleReady();
@@ -89,6 +101,8 @@
             if (session) {
               currentUser = session.user;
               cachedAccessToken = session.access_token;
+              // Re-vérifie le ban à chaque connexion / rotation de token
+              enforceUserBan(session.user);
             } else {
               currentUser = null;
               cachedAccessToken = null;
@@ -119,6 +133,106 @@
     for (var i = 0; i < authListeners.length; i++) {
       try { authListeners[i](user); } catch (e) { console.error('[Deblock] Listener error:', e); }
     }
+  }
+
+  /* ── Système de bannissement (table 'banned_users') ──
+   * Colonnes attendues : user_id, banned_by, reason, banned_at (email optionnel).
+   * Fail-open : si la table est absente (400/404) ou si la requête échoue,
+   * l'utilisateur est considéré non banni — comme avant l'existence du module. */
+  function notifyBanListeners(ban) {
+    for (var i = 0; i < banListeners.length; i++) {
+      try { banListeners[i](ban); } catch (e) { console.error('[Deblock] Ban listener error:', e); }
+    }
+  }
+
+  function setBan(ban) {
+    var prevJson = currentBan ? JSON.stringify(currentBan) : null;
+    var nextJson = ban ? JSON.stringify(ban) : null;
+    currentBan = ban || null;
+    if (prevJson !== nextJson) notifyBanListeners(currentBan);
+  }
+
+  function restHeaders() {
+    var headers = { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    headers['Authorization'] = 'Bearer ' + (cachedAccessToken || SUPABASE_ANON_KEY);
+    return headers;
+  }
+
+  /* query : paramètres PostgREST du début (ex. 'user_id=eq.xxx' ou 'email=eq.x') */
+  function fetchBanRecord(query) {
+    if (!supabase) return Promise.resolve(null);
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = controller ? setTimeout(function () { controller.abort(); }, 8000) : null;
+    return fetch(SUPABASE_URL + '/rest/v1/banned_users?' + query + '&select=*', {
+      headers: restHeaders(),
+      signal: controller ? controller.signal : undefined,
+    }).then(function (res) {
+      if (timer) clearTimeout(timer);
+      // 400/404 : table ou colonne inexistante → pas de bannissement
+      if (res.status === 400 || res.status === 404) return null;
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).then(function (rows) {
+      return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+    }).catch(function (err) {
+      if (timer) clearTimeout(timer);
+      console.warn('[Deblock] Vérification du bannissement impossible:', err);
+      return null;
+    });
+  }
+
+  /* Motif de ban pour un email, via la RPC is_email_banned (option C).
+     Retourne le motif (string) ou null. Fail-open si la fonction n'existe pas
+     encore (404) ou si le réseau échoue → l'inscription n'est pas bloquée. */
+  function fetchEmailBan(email) {
+    if (!supabase) return Promise.resolve(null);
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = controller ? setTimeout(function () { controller.abort(); }, 8000) : null;
+    return fetch(SUPABASE_URL + '/rest/v1/rpc/is_email_banned', {
+      method: 'POST',
+      headers: restHeaders(),
+      body: JSON.stringify({ p_email: String(email || '').trim().toLowerCase() }),
+      signal: controller ? controller.signal : undefined,
+    }).then(function (res) {
+      if (timer) clearTimeout(timer);
+      // 404 : RPC pas encore créée en base → fail-open
+      if (res.status === 404 || res.status === 400) return null;
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    }).then(function (txt) {
+      // PostgREST renvoie un scalaire JSON : "motif" ou null
+      var raw = String(txt || '').trim();
+      if (!raw || raw === 'null') return null;
+      if (raw.charAt(0) === '"') {
+        try { return JSON.parse(raw); } catch (e) { return raw.replace(/^"|"$/g, ''); }
+      }
+      return raw;
+    }).catch(function (err) {
+      if (timer) clearTimeout(timer);
+      console.warn('[Deblock] Vérification email banni impossible:', err);
+      return null;
+    });
+  }
+
+  /* Vérifie le bannissement de `user` ; si banni, révoque sa session. */
+  function enforceUserBan(user) {
+    if (!user) return Promise.resolve(null);
+    return fetchBanRecord('user_id=eq.' + encodeURIComponent(user.id)).then(function (ban) {
+      if (!ban) {
+        // currentBan décrit toujours l'utilisateur de la session courante
+        if (!currentUser || currentUser.id === user.id) setBan(null);
+        return null;
+      }
+      setBan(ban);
+      if (currentUser && currentUser.id === user.id) {
+        return supabase.auth.signOut().catch(function () {}).then(function () {
+          currentUser = null;
+          cachedAccessToken = null;
+          return ban;
+        });
+      }
+      return ban;
+    });
   }
 
   /* ── Expose once supabase-js is available ── */
@@ -203,6 +317,14 @@
       if (!supabase) await init();
       var result = await supabase.auth.signInWithPassword({ email: email, password: password });
       if (result.error) throw result.error;
+      // Un compte banni ne doit pas rester connecté
+      var ban = await enforceUserBan(result.data && result.data.user ? result.data.user : null);
+      if (ban) {
+        var err = new Error('🚫 Compte banni : ' + (ban.reason || 'raison non communiquée'));
+        err.code = 'banned';
+        err.ban = ban;
+        throw err;
+      }
       return result.data;
     },
 
@@ -214,6 +336,15 @@
       };
       if (displayName && displayName.trim()) {
         options.data = { display_name: displayName.trim() };
+      }
+      // Empêche la création d'un nouveau compte pour contourner un bannissement.
+      // Passe par la RPC is_email_banned() : elle ne renvoie que le motif d'un email
+      // testé, donc la table reste inaccessible avec la clé anon.
+      var bannedReason = await fetchEmailBan(email);
+      if (bannedReason) {
+        var banErr = new Error('🚫 Inscription refusée : cet email est banni (' + bannedReason + ')');
+        banErr.code = 'banned';
+        throw banErr;
       }
       var result = await supabase.auth.signUp({
         email: email,
@@ -271,6 +402,80 @@
 
     /* Check if user is authenticated (convenience) */
     isLoggedIn: function () { return currentUser !== null; },
+
+    /* ── Bannissement ── */
+
+    /* Vérifie si un utilisateur est banni → Promise<ban | null> */
+    checkBan: function (userId) {
+      if (!userId) return Promise.resolve(null);
+      return fetchBanRecord('user_id=eq.' + encodeURIComponent(userId));
+    },
+
+    /* Re-vérifie le bannissement de l'utilisateur courant (et coupe la session si banni) */
+    refreshBanStatus: function () {
+      if (!currentUser) { setBan(null); return Promise.resolve(null); }
+      return enforceUserBan(currentUser);
+    },
+
+    /* true si l'utilisateur courant est banni */
+    isBanned: function () { return currentBan !== null; },
+
+    /* Détail du bannissement courant ({ user_id, reason, banned_at, banned_by }) ou null */
+    getBanInfo: function () { return currentBan; },
+
+    /* Bannit un compte (admin/modérateur) — nécessite une session */
+    banUser: async function (userId, reason) {
+      if (!supabase) await init();
+      if (!currentUser) throw new Error('Not authenticated');
+      if (!userId) throw new Error('userId manquant');
+      var res = await fetch(SUPABASE_URL + '/rest/v1/banned_users', {
+        method: 'POST',
+        headers: Object.assign(restHeaders(), { 'Prefer': 'return=representation' }),
+        body: JSON.stringify({
+          user_id: userId,
+          banned_by: currentUser.id,
+          reason: reason || 'Comportement inapproprié',
+          banned_at: new Date().toISOString(),
+        }),
+      });
+      if (!res.ok) throw new Error('Erreur bannissement (HTTP ' + res.status + ')');
+      var rows = await res.json().catch(function () { return []; });
+      var ban = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+      // L'admin s'est banni lui-même → on coupe sa session
+      if (currentUser && currentUser.id === userId) {
+        setBan(ban || { user_id: userId, reason: reason || 'Comportement inapproprié' });
+        await supabase.auth.signOut().catch(function () {});
+        currentUser = null;
+        cachedAccessToken = null;
+      }
+      return ban || { user_id: userId, reason: reason || 'Comportement inapproprié' };
+    },
+
+    /* Retire un bannissement (admin/modérateur) */
+    unbanUser: async function (userId) {
+      if (!supabase) await init();
+      if (!currentUser) throw new Error('Not authenticated');
+      if (!userId) throw new Error('userId manquant');
+      var res = await fetch(SUPABASE_URL + '/rest/v1/banned_users?user_id=eq.' + encodeURIComponent(userId), {
+        method: 'DELETE',
+        headers: Object.assign(restHeaders(), { 'Prefer': 'return=representation' }),
+      });
+      if (!res.ok) throw new Error('Erreur débannissement (HTTP ' + res.status + ')');
+      if (currentBan && currentBan.user_id === userId) setBan(null);
+      return true;
+    },
+
+    /* Callback(ban | null) à chaque changement de statut de bannissement.
+     * Retourne une fonction de désabonnement. */
+    onBanStateChanged: function (callback) {
+      banListeners.push(callback);
+      if (ready) {
+        setTimeout(function () { callback(currentBan); }, 0);
+      }
+      return function () {
+        banListeners = banListeners.filter(function (cb) { return cb !== callback; });
+      };
+    },
 
     /* Register a callback for auth state changes.
      * Callback receives user (object) or null.

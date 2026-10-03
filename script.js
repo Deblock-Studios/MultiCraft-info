@@ -216,13 +216,8 @@
 
   async function isUserBanned(userId) {
     try {
-      const url = SUPABASE_URL + '/rest/v1/banned_users?user_id=eq.' + encodeURIComponent(userId) + '&select=*';
-      const res = await fetch(url, { headers: getApiHeaders() });
-      if (res.status === 404) return false;
-      if (res.status === 400) { console.warn('isUserBanned: table banned_users manquante'); return false; }
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      return data && data.length > 0;
+      // Délégué au module Deblock (chec fail-open si la table est absente)
+      return !!(await Deblock.checkBan(userId));
     } catch (err) { console.error('Erreur vérification bannissement:', err); return false; }
   }
 
@@ -233,25 +228,55 @@
       return;
     }
     try {
-      const url = SUPABASE_URL + '/rest/v1/banned_users';
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=minimal' }),
-        body: JSON.stringify({
-          user_id: userId,
-          banned_by: currentUser.id,
-          reason: reason || 'Comportement inapproprié',
-          banned_at: new Date().toISOString(),
-        }),
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await Deblock.banUser(userId, reason || 'Comportement inapproprié');
       const messagesToRemove = chatMessages.filter(function (m) { return m.user_id === userId; });
       messagesToRemove.forEach(function (msg) { removeMessageFromUI(msg.id); });
-      showTemporaryNotification('✅ Utilisateur banni !', true);
+      showTemporaryNotification('✅ Compte banni !', true);
     } catch (err) {
       console.error('Erreur bannissement:', err);
       showTemporaryNotification('❌ Erreur lors du bannissement');
     }
+  }
+
+  async function unbanChatUser(userId) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser || !isAdminUser(currentUser.id)) {
+      showTemporaryNotification('❌ Seul un admin peut débannir');
+      return;
+    }
+    try {
+      await Deblock.unbanUser(userId);
+      showTemporaryNotification('✅ Compte débanni !', true);
+    } catch (err) {
+      console.error('Erreur débannissement:', err);
+      showTemporaryNotification('❌ Erreur lors du débannissement');
+    }
+  }
+
+  /* Bandeau plein écran affiché quand un compte vient d'être banni */
+  function showBanNotice(ban) {
+    var old = document.getElementById('ban-notice');
+    if (old) old.remove();
+    var el = document.createElement('div');
+    el.id = 'ban-notice';
+    el.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:10000;' +
+      'max-width:min(92vw,460px);background:rgba(248,113,113,0.97);color:#fff;padding:12px 16px;' +
+      'border-radius:10px;font-size:0.85rem;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,0.35);' +
+      'display:flex;gap:12px;align-items:flex-start;animation:fadeIn 0.3s ease;';
+    var text = document.createElement('span');
+    text.textContent = '🚫 Votre compte a été banni' +
+      (ban && ban.reason ? ' : ' + ban.reason : '') +
+      '. Vous avez été déconnecté.';
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = '✕';
+    close.setAttribute('aria-label', 'Fermer');
+    close.style.cssText = 'background:none;border:none;color:#fff;cursor:pointer;font-size:0.9rem;padding:0 2px;flex-shrink:0;';
+    close.addEventListener('click', function () { el.remove(); });
+    el.appendChild(text);
+    el.appendChild(close);
+    document.body.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.remove(); }, 15000);
   }
 
   /* ── Deblock Auth ── */
@@ -365,6 +390,17 @@
           loadChatMessagesForTab(currentChatTab, currentPrivatePartner);
         }
       });
+
+      // Un compte banni pendant la session → bandeau + la session est coupée par Deblock
+      if (Deblock.onBanStateChanged) {
+        Deblock.onBanStateChanged(function (ban) {
+          if (ban) {
+            showBanNotice(ban);
+            updateDeblockUI();
+            if (chatOpen) closeChat();
+          }
+        });
+      }
     });
 
     // ── Login modal event listeners ──
@@ -1055,18 +1091,64 @@
   let updatesObserver = null;
   let updatesScrollHandler = null;
 
+  /* Code du fichier de traduction à charger pour la langue courante :
+     pt-BR → pt, es-MX → es, ja → ja. fr et en n'ont pas de fichier traduit
+     (post.md et post-en.md sont les sources). */
+  function updatesLangFile() {
+    var lang = String(window.i18n.lang || 'fr');
+    var entry = (window.i18n.languages || []).find(function (l) {
+      return String(l.code).toLowerCase() === lang.toLowerCase();
+    });
+    if (entry && entry.file) return entry.file;
+    return lang.split('-')[0].toLowerCase();
+  }
+
+  /* Un article manquant ne renvoie pas 404 : _redirects contient un rewrite
+     « catch-all » vers index.html, donc /updates/.../post-de.md inexistant
+     répond 200 avec le HTML de la page d'accueil. Sans ce contrôle, c'est
+     l'index du site qui s'affiche dans les mises à jour. */
+  function isMarkdownPost(text) {
+    if (typeof text !== 'string' || !text.trim()) return false;
+    var head = text.trim().slice(0, 300).toLowerCase();
+    return head.indexOf('<!doctype') !== 0 && head.indexOf('<html') !== 0;
+  }
+
+  async function fetchUpdatePost(folder, fileName) {
+    try {
+      const res = await fetch('/updates/' + folder + '/' + fileName);
+      if (!res.ok) return null;
+      const text = await res.text();
+      if (!isMarkdownPost(text)) {
+        console.warn('[updates] ' + folder + '/' + fileName + ' : contenu HTML ignoré');
+        return null;
+      }
+      return text;
+    } catch (e) { return null; }
+  }
+
   async function loadUpdates() {
     try {
       const manifestRes = await fetch('/updates/manifest.json');
       if (!manifestRes.ok) throw new Error('Manifest introuvable');
       const folders = await manifestRes.json();
+      const langFile = updatesLangFile();
+      // fr = source (post.md), en = post-en.md, autres langues = post-<lang>.md
+      const wantsTranslation = langFile !== 'fr';
+      const preferredFile = 'post-' + langFile + '.md';
+      let missingTranslation = false;
       const posts = await Promise.all(folders.map(async function (folder) {
-        const lang = window.i18n.lang;
+        // Ordre de recherche : langue courante, puis anglais, puis français
+        const candidates = wantsTranslation
+          ? [preferredFile, 'post-en.md', 'post.md']
+          : ['post.md'];
         let raw = null;
-        if (lang === 'en') {
-          try { const enRes = await fetch('/updates/' + folder + '/post-en.md'); if (enRes.ok) raw = await enRes.text(); } catch (e) { /* ignore */ }
+        let usedFile = null;
+        for (const candidate of candidates) {
+          const text = await fetchUpdatePost(folder, candidate);
+          if (text) { raw = text; usedFile = candidate; break; }
         }
-        if (raw === null) { const res = await fetch('/updates/' + folder + '/post.md'); if (!res.ok) return null; raw = await res.text(); }
+        if (raw === null) return null;
+        if (wantsTranslation && usedFile !== preferredFile) missingTranslation = true;
         const parsed = parseFrontmatter(raw);
         return {
           folder: folder,
@@ -1087,6 +1169,9 @@
         renderUpdatesBatch();
       }
       updatesLoaded = true;
+      // L'avis « non traduit » n'a de sens que si un article est réellement resté en français.
+      var langNotice = document.querySelector('.updates-lang-notice');
+      if (langNotice) langNotice.classList.toggle('is-shown', wantsTranslation && missingTranslation);
     } catch (err) {
       console.error(err);
       updatesContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('updates.error') + '</p></div>';
@@ -2395,10 +2480,89 @@
 
   function buildReviewCardsHtml(reviews) {
     if (!reviews.length) return '<p class="reviews-empty">' + window.i18n.t('reviews.noReviews') + '</p>';
+    const currentUser = Deblock.getUser();
+    const canModerateReviews = !!currentUser && canModerate(currentUser.id);
     return reviews.map(function (r) {
       // Aucun avis ne porte de statut « vérifié » : le pseudo et la date suffisent.
-      return '<div class="review-card"><div class="review-header"><span class="review-stars">' + buildStarsHtml(r.rating) + '</span><span class="review-pseudo">' + escapeHtml(r.pseudo || 'Anonyme') + '</span><span class="review-date">' + escapeHtml(r.date || new Date(r.created_at).toLocaleDateString('fr-FR')) + '</span></div>' + (r.text ? '<p class="review-text">' + escapeHtml(r.text) + '</p>' : '') + '</div>';
+      var actions = '';
+      if (canModerateReviews) {
+        // Le bannissement n'est possible que si l'avis est rattaché à un compte
+        // Deblock : les avis importés de Discord n'ont pas de user_id.
+        var banBtn = r.user_id
+          ? '<button type="button" class="review-mod-btn ban" data-review-action="ban" data-review-id="' + escapeHtml(r.id) + '" data-user-id="' + escapeHtml(r.user_id) + '" title="Bannir le compte de ' + escapeHtml(r.pseudo || 'cet avis') + '">🚫</button>'
+          : '';
+        actions = '<div class="review-moderation">'
+          + '<button type="button" class="review-mod-btn delete" data-review-action="delete" data-review-id="' + escapeHtml(r.id) + '" title="' + (r.user_id ? 'Supprimer cet avis' : 'Supprimer cet avis (auteur non rattaché à un compte)') + '">🗑️</button>'
+          + banBtn
+          + '</div>';
+      }
+      return '<div class="review-card"><div class="review-header"><span class="review-stars">' + buildStarsHtml(r.rating) + '</span><span class="review-pseudo">' + escapeHtml(r.pseudo || 'Anonyme') + '</span><span class="review-date">' + escapeHtml(r.date || new Date(r.created_at).toLocaleDateString('fr-FR')) + '</span></div>' + (r.text ? '<p class="review-text">' + escapeHtml(r.text) + '</p>' : '') + actions + '</div>';
     }).join('');
+  }
+
+  /* Message éphémère dans la section des avis (la notification du chat n'est
+     pas visible quand le chat est fermé). */
+  function showReviewMsg(section, text, isError) {
+    if (!section) return;
+    var old = section.querySelector('.review-mod-msg');
+    if (old) old.remove();
+    var el = document.createElement('p');
+    el.className = 'review-mod-msg';
+    el.textContent = text;
+    el.style.cssText = 'margin:0 0 .6rem;padding:.5rem .7rem;border-radius:6px;font-size:.85rem;'
+      + 'background:' + (isError ? 'rgba(248,113,113,.14)' : 'rgba(74,222,128,.14)') + ';'
+      + 'color:' + (isError ? '#f87171' : '#22c55e') + ';';
+    var list = section.querySelector('.reviews-list');
+    if (list) list.insertBefore(el, list.firstChild);
+    setTimeout(function () { el.remove(); }, 4000);
+  }
+
+  /* Suppression d'un avis (modérateur ou admin) */
+  async function deleteServerReview(reviewId, section) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser || !canModerate(currentUser.id)) {
+      showReviewMsg(section, '❌ Réservé aux modérateurs', true);
+      return;
+    }
+    if (!confirm('Supprimer définitivement cet avis ?')) return;
+    try {
+      const res = await fetchWithTimeout(SUPABASE_URL + '/rest/v1/reviews?id=eq.' + encodeURIComponent(reviewId), {
+        method: 'DELETE',
+        headers: Object.assign({}, getApiHeaders(), { 'Prefer': 'return=minimal' }),
+      }, 15000);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const serverId = section && section.dataset ? section.dataset.serverId : null;
+      if (serverId) refreshReviewsList(await fetchReviews(serverId), section);
+      showReviewMsg(section, '✅ Avis supprimé', false);
+    } catch (err) {
+      console.error('Erreur suppression avis:', err);
+      showReviewMsg(section, '❌ Erreur lors de la suppression', true);
+    }
+  }
+
+  /* Bannissement de l'auteur d'un avis : bascule ban/unban, comme dans le chat.
+     Le bannissement porte sur le compte entier (Deblock.banUser), pas sur l'avis. */
+  async function moderateReviewAuthor(userId, section) {
+    const currentUser = Deblock.getUser();
+    if (!currentUser || !isAdminUser(currentUser.id)) {
+      showReviewMsg(section, '❌ Seul un admin peut bannir', true);
+      return;
+    }
+    if (!userId) {
+      showReviewMsg(section, "Cet avis n'est rattaché à aucun compte Deblock : supprimez-le plutôt", true);
+      return;
+    }
+    if (await isUserBanned(userId)) {
+      unbanChatUser(userId);
+      showReviewMsg(section, '✅ Compte débanni', false);
+      return;
+    }
+    const reason = prompt('Raison du bannissement ?', 'Comportement inapproprié');
+    if (reason === null) return;
+    if (confirm('Bannir ce compte ? Il ne pourra plus se connecter ni publier d’avis.')) {
+      banChatUser(userId, reason);
+      showReviewMsg(section, '✅ Compte banni', false);
+    }
   }
 
   function bindStarPicker(picker) {
@@ -2415,6 +2579,7 @@
   function renderReviewsSection(serverId) {
     const section = document.getElementById('modal-reviews-section');
     if (!section) return;
+    section.dataset.serverId = serverId;
     const currentUser = Deblock.getUser();
     const alreadyReviewed = hasRecentlyReviewed(serverId);
     let formHtml;
@@ -2429,6 +2594,17 @@
     section.innerHTML = '<div class="reviews-divider"></div><div class="reviews-header"><h3 class="reviews-title">' + window.i18n.t('reviews.title') + '</h3><div class="reviews-header-right"><span class="reviews-avg-wrap"><span class="reviews-no-badge">' + window.i18n.t('reviews.loading') + '</span></span><select class="reviews-sort-select" id="reviews-sort-select" aria-label="Trier les avis"><option value="recent">' + window.i18n.t('reviews.sortRecent') + '</option><option value="desc">' + window.i18n.t('reviews.sortDesc') + '</option><option value="asc">' + window.i18n.t('reviews.sortAsc') + '</option></select></div></div><div class="reviews-list" id="reviews-list-inner"><div class="reviews-spinner"><div class="spinner"></div></div></div>' + formHtml;
     const reviewLoginBtn = section.querySelector('#review-deblock-login-btn');
     if (reviewLoginBtn) reviewLoginBtn.addEventListener('click', function () { if (!Deblock.getUser()) openAuthPage(); });
+    // Actions de modération sur les avis : délégation d'événement, car la liste
+    // est reconstruite à chaque rafraîchissement.
+    section.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-review-action]');
+      if (!btn) return;
+      e.preventDefault();
+      const action = btn.getAttribute('data-review-action');
+      const reviewId = btn.getAttribute('data-review-id');
+      if (action === 'delete') deleteServerReview(reviewId, section);
+      else if (action === 'ban') moderateReviewAuthor(btn.getAttribute('data-user-id'), section);
+    });
     bindStarPicker(section.querySelector('.review-star-picker'));
     const textarea = section.querySelector('.review-text-input');
     const charCount = section.querySelector('#review-char-count');
@@ -3014,7 +3190,7 @@
         timeElement.textContent = timeElement.textContent + ' modifié';
       }
     }
-    var msgIndex = chatMessages.findIndex(function (m) { return m.id === messageId; });
+    var msgIndex = chatMessages.findIndex(function (m) { return String(m.id) === String(messageId); });
     if (msgIndex !== -1) {
       chatMessages[msgIndex].message = finalText;
       chatMessages[msgIndex].is_edited = true;
@@ -3028,7 +3204,10 @@
       if (msgElement.querySelector('.chat-msg-actions')) return;
 
       var msgId = msgElement.dataset.msgId;
-      var msg = chatMessages.find(function (m) { return m.id === msgId; });
+      // dataset renvoie toujours une chaîne alors que msg.id est un nombre :
+      // sans normalisation, la comparaison stricte échoue, msg reste undefined
+      // et AUCUN bouton d'action (voir, privé, supprimer, bannir) n'est ajouté.
+      var msg = chatMessages.find(function (m) { return String(m.id) === String(msgId); });
       if (!msg) return;
 
       var isAdmin = isAdminUser(currentUser.id);
@@ -3143,12 +3322,19 @@
           this.style.background = 'none';
           this.style.color = 'var(--text-dim)';
         };
-        banBtn.addEventListener('click', function (e) {
+        banBtn.addEventListener('click', async function (e) {
           e.stopPropagation();
           var userToBan = msg.user_id || msg.sender_id;
           var userName = msg.username || 'Inconnu';
+          var existingBan = await isUserBanned(userToBan);
+          if (existingBan) {
+            if (confirm('"' + userName + '" est banni. Débannir ce compte ?')) {
+              unbanChatUser(userToBan);
+            }
+            return;
+          }
           var reason = prompt('Raison du bannissement de "' + userName + '" ?', 'Comportement inapproprié');
-          if (reason !== null && confirm('Bannir définitivement "' + userName + '" du chat ?')) {
+          if (reason !== null && confirm('Bannir le compte de "' + userName + '" ?\nIl ne pourra plus se connecter, et sa session sera coupée.')) {
             banChatUser(userToBan, reason);
           }
         });
@@ -3168,7 +3354,7 @@
 
     var banned = await isUserBanned(currentUser.id);
     if (banned) {
-      showTemporaryNotification('❌ Vous avez été banni du chat');
+      showTemporaryNotification('❌ Votre compte est banni');
       return;
     }
 

@@ -33,5 +33,6 @@
   "break-blocks",
   "cars-on-servers",
   "porthole",
-  "armor"
+  "armor",
+  "opengl-vs-vulkan"
 ]

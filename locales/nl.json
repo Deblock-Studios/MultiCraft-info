@@ -212,5 +212,27 @@
   "lagTest.colLatency": "Latentie",
 
   "ui.openMenu": "Menu openen",
-  "ui.scrollTop": "Terug naar boven"
+  "ui.scrollTop": "Terug naar boven",
+
+  "settings.ariaLabel": "Instellingen",
+  "settings.theme": "Thema",
+  "settings.themeNormal": "Normaal",
+  "settings.themeNormalDesc": "Het huidige thema van de site",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "Achtergrond",
+  "settings.schemeAuto": "Automatisch",
+  "settings.schemeLight": "Licht",
+  "settings.schemeDark": "Donker",
+  "settings.schemeAmoled": "AMOLED-zwart",
+  "settings.accent": "Accentkleur",
+  "settings.accentHint": "Het Material-palet wordt uit deze kleur gegenereerd.",
+  "settings.accentGreen": "Groen",
+  "settings.accentTeal": "Blauwgroen",
+  "settings.accentBlue": "Blauw",
+  "settings.accentViolet": "Violet",
+  "settings.accentPink": "Roze",
+  "settings.accentRed": "Rood",
+  "settings.accentOrange": "Oranje",
+  "settings.accentAmber": "Amber"
 }

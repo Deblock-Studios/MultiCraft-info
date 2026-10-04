@@ -212,5 +212,27 @@
   "lagTest.colLatency": "Затримка",
 
   "ui.openMenu": "Відкрити меню",
-  "ui.scrollTop": "Повернутися вгору сторінки"
+  "ui.scrollTop": "Повернутися вгору сторінки",
+
+  "settings.ariaLabel": "Налаштування",
+  "settings.theme": "Тема",
+  "settings.themeNormal": "Звичайна",
+  "settings.themeNormalDesc": "Поточна тема сайту",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "Тло",
+  "settings.schemeAuto": "Авто",
+  "settings.schemeLight": "Світлий",
+  "settings.schemeDark": "Темний",
+  "settings.schemeAmoled": "Чорний AMOLED",
+  "settings.accent": "Акцентний колір",
+  "settings.accentHint": "Палітра Material обчислюється на основі цього кольору.",
+  "settings.accentGreen": "Зелений",
+  "settings.accentTeal": "Бірюзовий",
+  "settings.accentBlue": "Синій",
+  "settings.accentViolet": "Фіолетовий",
+  "settings.accentPink": "Рожевий",
+  "settings.accentRed": "Червоний",
+  "settings.accentOrange": "Оранжевий",
+  "settings.accentAmber": "Бурштиновий"
 }

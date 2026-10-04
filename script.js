@@ -35,6 +35,15 @@
     }
   }
 
+  /* L'interrupteur est un <md-switch> de Material Web (propriété « selected »)
+       une fois le composant enregistré par le navigateur, une case à coquer
+       simple tant que le CDN n'a pas répondu. On lit donc l'état courant à
+       chaque appel plutôt que de le déduire au chargement. */
+  function isToggleOn(toggle) {
+    if (!toggle) return false;
+    return typeof toggle.selected === 'boolean' ? toggle.selected : !!toggle.checked;
+  }
+
   function applyPortholePreference() {
     const enabled = arePortholesEnabled();
     // Les hublots sont réservés aux comptes connectés : déconnecté, ils ne
@@ -42,7 +51,9 @@
     const loggedIn = !!(window.Deblock && Deblock.getUser());
     document.body.classList.toggle('show-portholes', enabled && loggedIn);
     const toggle = document.getElementById('profile-show-portholes');
-    if (toggle) toggle.checked = enabled && loggedIn;
+    if (!toggle) return;
+    if (typeof toggle.selected === 'boolean') toggle.selected = enabled && loggedIn;
+    else toggle.checked = enabled && loggedIn;
   }
 
   function setPortholesEnabled(enabled) {
@@ -597,9 +608,27 @@
     const portholeToggle = document.getElementById('profile-show-portholes');
     if (portholeToggle) {
       portholeToggle.addEventListener('change', function () {
-        setPortholesEnabled(portholeToggle.checked);
+        setPortholesEnabled(isToggleOn(portholeToggle));
       });
       applyPortholePreference();
+      // Un <md-switch> n'est pas un élément associable à <label> : le clic sur
+      // le texte du réglage ne le déclencherait pas. On le fait à la main.
+      const settingLabel = portholeToggle.closest('.profile-setting-toggle');
+      if (settingLabel) {
+        settingLabel.addEventListener('click', function (event) {
+          if (portholeToggle.tagName !== 'MD-SWITCH') return; // <input> : le <label> suffit
+          if (portholeToggle.contains(event.target)) return;
+          event.preventDefault();
+          setPortholesEnabled(!isToggleOn(portholeToggle));
+        });
+      }
+      // Le <md-switch> n'existe qu'une fois le module importé : on réaligne
+      // son état quand le navigateur l'enregistre.
+      if (window.customElements && customElements.whenDefined) {
+        customElements.whenDefined('md-switch').then(function () {
+          applyPortholePreference();
+        }).catch(function () { /* md-switch indisponible */ });
+      }
     }
 
     /* ── Avatar upload ── */
@@ -1198,7 +1227,7 @@
     updatesSentinel = document.createElement('div');
     updatesSentinel.className = 'updates-sentinel';
     updatesSentinel.setAttribute('aria-hidden', 'true');
-    updatesSentinel.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('updates.loading') + '</p></div>';
+    updatesSentinel.innerHTML = '<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress><p>' + window.i18n.t('updates.loading') + '</p></div>';
     updatesContainer.appendChild(updatesSentinel);
 
     if ('IntersectionObserver' in window) {
@@ -2064,7 +2093,7 @@
     serversSentinel.id = 'servers-sentinel';
     serversSentinel.className = 'servers-sentinel';
     serversSentinel.setAttribute('aria-hidden', 'true');
-    serversSentinel.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+    serversSentinel.innerHTML = '<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress></div>';
     serversContainer.after(serversSentinel);
 
     if ('IntersectionObserver' in window) {
@@ -2313,7 +2342,7 @@
   // une recherche.
   function reloadServersFromApi() {
     serversLoaded = false;
-    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
+    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress><p>' + window.i18n.t('servers.loading') + '</p></div>';
     if (serversCountEl) serversCountEl.textContent = '';
     loadServers();
   }
@@ -2339,7 +2368,7 @@
     // La liste paginée laisse la place aux résultats de recherche : son sentinel
     // de chargement (spinner sous la liste) doit disparaître avec elle.
     removeServersSentinel();
-    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
+    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress><p>' + window.i18n.t('servers.loading') + '</p></div>';
     if (serversCountEl) serversCountEl.textContent = '';
     fetchWithTimeout(getServersSearchUrl(null, query), {}, 12000)
       .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
@@ -2387,7 +2416,7 @@
     serversApiSort = getApiSortParam(v);
     if (serversApiSort && serversSearchResults === null) {
       // On affiche temporairement un loader, et on recharge la liste paginée.
-      if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
+      if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress><p>' + window.i18n.t('servers.loading') + '</p></div>';
       if (serversCountEl) serversCountEl.textContent = '';
       loadServers().then(function () { applyFiltersAndSort(); });
       return;
@@ -2420,7 +2449,7 @@
     // Recherche en cours : on la relance dans la nouvelle langue.
     if (serversSearchQuery) { applyServerSearch(); return; }
     serversLoaded = false;
-    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('servers.loading') + '</p></div>';
+    if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress><p>' + window.i18n.t('servers.loading') + '</p></div>';
     if (serversCountEl) serversCountEl.textContent = '';
     loadServers();
   });
@@ -2591,7 +2620,7 @@
       formHtml = '<div class="review-form" id="review-form-wrap"><p class="review-form-title">Laisser un avis en tant que <strong style="color:var(--green-muted)">' + escapeHtml(Deblock.getDisplayName()) + '</strong></p><div class="review-form-fields"><div class="review-form-row"><div class="review-star-picker" data-selected="0"><span class="review-star-picker-label">' + window.i18n.t('reviews.ratingLabel') + '</span><span class="star-pick" data-val="1">★</span><span class="star-pick" data-val="2">★</span><span class="star-pick" data-val="3">★</span><span class="star-pick" data-val="4">★</span><span class="star-pick" data-val="5">★</span></div></div><textarea class="review-input review-text-input" placeholder="' + window.i18n.t('reviews.placeholder') + '" maxlength="280" rows="2"></textarea><div class="review-form-footer"><span class="review-char-count" id="review-char-count">0 / 280</span><button type="button" class="btn btn-primary review-submit-btn">Publier</button></div></div></div>';
     }
 
-    section.innerHTML = '<div class="reviews-divider"></div><div class="reviews-header"><h3 class="reviews-title">' + window.i18n.t('reviews.title') + '</h3><div class="reviews-header-right"><span class="reviews-avg-wrap"><span class="reviews-no-badge">' + window.i18n.t('reviews.loading') + '</span></span><select class="reviews-sort-select" id="reviews-sort-select" aria-label="Trier les avis"><option value="recent">' + window.i18n.t('reviews.sortRecent') + '</option><option value="desc">' + window.i18n.t('reviews.sortDesc') + '</option><option value="asc">' + window.i18n.t('reviews.sortAsc') + '</option></select></div></div><div class="reviews-list" id="reviews-list-inner"><div class="reviews-spinner"><div class="spinner"></div></div></div>' + formHtml;
+    section.innerHTML = '<div class="reviews-divider"></div><div class="reviews-header"><h3 class="reviews-title">' + window.i18n.t('reviews.title') + '</h3><div class="reviews-header-right"><span class="reviews-avg-wrap"><span class="reviews-no-badge">' + window.i18n.t('reviews.loading') + '</span></span><select class="reviews-sort-select" id="reviews-sort-select" aria-label="Trier les avis"><option value="recent">' + window.i18n.t('reviews.sortRecent') + '</option><option value="desc">' + window.i18n.t('reviews.sortDesc') + '</option><option value="asc">' + window.i18n.t('reviews.sortAsc') + '</option></select></div></div><div class="reviews-list" id="reviews-list-inner"><div class="reviews-spinner"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress></div></div>' + formHtml;
     const reviewLoginBtn = section.querySelector('#review-deblock-login-btn');
     if (reviewLoginBtn) reviewLoginBtn.addEventListener('click', function () { if (!Deblock.getUser()) openAuthPage(); });
     // Actions de modération sur les avis : délégation d'événement, car la liste
@@ -2822,7 +2851,7 @@
     if (playersSearchInput) playersSearchInput.value = '';
     currentPlayersList = [];
     if (playersModalCount) playersModalCount.textContent = '';
-    if (playersListContainer) playersListContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>' + window.i18n.t('modal.loadingPlayers') + '</p></div>';
+    if (playersListContainer) playersListContainer.innerHTML = '<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress><p>' + window.i18n.t('modal.loadingPlayers') + '</p></div>';
     playersModal.hidden = false;
     syncModalOpenState();
     if (!serverId) { playersListContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('modal.noInviteCode') + '</p></div>'; return; }

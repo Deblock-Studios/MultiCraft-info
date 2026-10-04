@@ -771,16 +771,31 @@ html:not([lang='fr']):not([lang='en']) .updates-lang-notice {
   color: var(--text-muted);
 }
 
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--border);
-  border-top-color: var(--green);
-  border-radius: 50%;
+/* ── Indicateur de chargement Material 3 (<md-circular-progress>) ──
+   Composant officiel chargé via import map (index.html) : sa couleur suit la
+   variable --green du thème actif, donc les deux thèmes restent cohérents.
+   `:not(:defined)` couvre le cas où le CDN est injoignable : l'élément non
+   enregistré retombe alors sur un simple tourneur aux couleurs du site. */
+md-circular-progress {
+  display: block;
   margin: 0 auto 0.85rem;
+  width: 36px;
+  height: 36px;
+  color: var(--green, #22c55e);
+}
+
+md-circular-progress:not(:defined) {
+  border: 2px solid var(--border-strong, rgba(255, 255, 255, 0.12));
+  border-top-color: var(--green, #22c55e);
+  border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
+.lag-test-progress {
+  margin: 0 auto;
+}
+
+/* Rotation du repli md-circular-progress:not(:defined) (voir plus haut). */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -1945,10 +1960,10 @@ body.modal-open {
   padding: 1.1rem 0;
 }
 
-.reviews-spinner .spinner {
+.reviews-spinner md-circular-progress {
   width: 22px;
   height: 22px;
-  border-width: 2px;
+  margin: 0;
 }
 
 .reviews-empty {
@@ -2970,6 +2985,13 @@ body.modal-open {
   cursor: pointer;
 }
 
+/* L'interrupteur Material Web (<md-switch>) remplace la case à coquer :
+   même alignement dans les deux thèmes. */
+.profile-setting-toggle md-switch {
+  margin: 0.15rem 0 0;
+  flex-shrink: 0;
+}
+
 .profile-setting-copy {
   display: flex;
   flex-direction: column;
@@ -3346,6 +3368,8 @@ body.modal-open {
   border-radius: 50%;
   animation: lag-spin 0.8s linear infinite;
 }
+
+/* Remplacé par <md-circular-progress class="lag-test-progress"> (voir plus haut). */
 
 @keyframes lag-spin {
   to { transform: rotate(360deg); }

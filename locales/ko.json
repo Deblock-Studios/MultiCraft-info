@@ -212,5 +212,27 @@
   "lagTest.colLatency": "지연 시간",
 
   "ui.openMenu": "메뉴 열기",
-  "ui.scrollTop": "맨 위로 돌아가기"
+  "ui.scrollTop": "맨 위로 돌아가기",
+
+  "settings.ariaLabel": "설정",
+  "settings.theme": "테마",
+  "settings.themeNormal": "기본",
+  "settings.themeNormalDesc": "사이트의 현재 테마",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "배경",
+  "settings.schemeAuto": "자동",
+  "settings.schemeLight": "밝게",
+  "settings.schemeDark": "어둡게",
+  "settings.schemeAmoled": "AMOLED 블랙",
+  "settings.accent": "강조 색상",
+  "settings.accentHint": "Material 팔레트는 이 색상으로 생성됩니다.",
+  "settings.accentGreen": "초록",
+  "settings.accentTeal": "청록",
+  "settings.accentBlue": "파랑",
+  "settings.accentViolet": "보라",
+  "settings.accentPink": "분홍",
+  "settings.accentRed": "빨강",
+  "settings.accentOrange": "주황",
+  "settings.accentAmber": "호박색"
 }

@@ -212,5 +212,27 @@
   "lagTest.colLatency": "زمن الاستجابة",
 
   "ui.openMenu": "فتح القائمة",
-  "ui.scrollTop": "العودة إلى الأعلى"
+  "ui.scrollTop": "العودة إلى الأعلى",
+
+  "settings.ariaLabel": "الإعدادات",
+  "settings.theme": "المظهر",
+  "settings.themeNormal": "عادي",
+  "settings.themeNormalDesc": "المظهر الحالي للموقع",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "الخلفية",
+  "settings.schemeAuto": "تلقائي",
+  "settings.schemeLight": "فاتح",
+  "settings.schemeDark": "داكن",
+  "settings.schemeAmoled": "أسود AMOLED",
+  "settings.accent": "لون التمييز",
+  "settings.accentHint": "تُشتق لوحة Material من هذا اللون.",
+  "settings.accentGreen": "أخضر",
+  "settings.accentTeal": "أزرق مخضر",
+  "settings.accentBlue": "أزرق",
+  "settings.accentViolet": "بنفسجي",
+  "settings.accentPink": "وردي",
+  "settings.accentRed": "أحمر",
+  "settings.accentOrange": "برتقالي",
+  "settings.accentAmber": "كهرماني"
 }

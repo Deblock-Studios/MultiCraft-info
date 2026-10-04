@@ -21,9 +21,44 @@
   <title>MultiCraft Info</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/style.css">
+  <!-- Thème Material Design 3 : surcharge de style.css, activée par la classe
+       « theme-material » sur <html> (appliquée ci-dessous avant le rendu). -->
+  <link rel="stylesheet" href="/material.css">
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <script>
+    /* Applique le thème mémorisé avant le premier rendu : sans cela, le site
+       s'afficherait brièvement en thème « Normal » avant que js/theme.js ne
+       prenne la main. La palette Material calculée lors de la visite précédente
+       est reappliquée en même temps (mc_theme_tokens), sinon l'accent et le fond
+       changeraient une fraction de seconde plus tard. */
+    (function () {
+      try {
+        if (localStorage.getItem('mc_theme') !== 'material') return;
+        var root = document.documentElement;
+        root.classList.add('theme-material');
+        root.setAttribute('data-scheme', localStorage.getItem('mc_scheme') || 'auto');
+        var cached = JSON.parse(localStorage.getItem('mc_theme_tokens') || 'null');
+        if (cached && cached.colors) {
+          var colors = cached.colors;
+          Object.keys(colors).forEach(function (role) {
+            root.style.setProperty('--md-sys-color-' + role.replace(/[A-Z]/g, function (c) { return '-' + c.toLowerCase(); }), colors[role]);
+          });
+        }
+      } catch (e) { /* stockage indisponible : on garde le thème Normal */ }
+    })();
+  </script>
+  <!-- Composants Material Web officiels (interrupteur du réglage « hublots »,
+       indicateurs de chargement). Chargés en différé : si le CDN est
+       injoignable, le reste du site fonctionne exactement pareil. -->
+  <script type="importmap">
+    { "imports": { "@material/web/": "https://esm.run/@material/web/" } }
+  </script>
+  <script type="module">
+    import '@material/web/switch/switch.js';
+    import '@material/web/progress/circular-progress.js';
+  </script>
   <style>
     /* ── Language Switcher : bouton drapeau + menu déroulant ── */
     .lang-switcher {
@@ -33,7 +68,9 @@
     /* Le menu déroulant dépasse du cadre de l'en-tête : on autorise le débordement
        tant qu'il est ouvert (sinon il est rogné par l'overflow de la barre). */
     .site-header.lang-menu-open,
-    .site-header.lang-menu-open .header-inner {
+    .site-header.lang-menu-open .header-inner,
+    .site-header.settings-menu-open,
+    .site-header.settings-menu-open .header-inner {
       overflow: visible;
     }
     .lang-toggle {
@@ -137,6 +174,213 @@
     .lang-item .lang-name {
       flex: 1;
       white-space: nowrap;
+    }
+    /* ── Sélecteur de thème : bouton_paramètres + menu Normal / Material ── */
+    .settings-switcher {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .settings-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 50%;
+      color: var(--text, #eee);
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, transform 0.18s;
+    }
+    .settings-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: rotate(35deg);
+    }
+    .settings-toggle svg {
+      width: 17px;
+      height: 17px;
+      display: block;
+    }
+    .settings-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 268px;
+      max-height: min(80vh, 560px);
+      overflow-y: auto;
+      margin: 0;
+      padding: 10px;
+      background: var(--bg-card, #11161c);
+      border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.12));
+      border-radius: 12px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+      z-index: 1200;
+    }
+    .settings-switcher.open .settings-menu {
+      display: block;
+    }
+    /* Les réglages propres au thème Material sont masqués en thème « Normal ». */
+    html:not(.theme-material) .settings-material-only {
+      display: none;
+    }
+    .settings-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .settings-row-chips {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .settings-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px 6px 6px;
+      background: var(--bg-card-hover, #161d26);
+      border: 1px solid transparent;
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--text, #eee);
+      font: inherit;
+      font-size: 0.76rem;
+      font-weight: 600;
+      line-height: 1;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .settings-chip:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .settings-chip[aria-checked='true'] {
+      border-color: var(--green, #22c55e);
+      background: rgba(34, 197, 94, 0.12);
+    }
+    /* Vignettes : aperçu du fond choisi. */
+    .settings-chip-preview {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      flex-shrink: 0;
+    }
+    .preview-auto {
+      background: linear-gradient(135deg, #fbfdf8 0 50%, #101410 50% 100%);
+    }
+    .preview-light {
+      background: #fbfdf8;
+    }
+    .preview-dark {
+      background: #101410;
+    }
+    .preview-amoled {
+      background: #000;
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+    .settings-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 2px 2px 0;
+    }
+    .settings-swatch {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      background: var(--swatch, #22c55e);
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .settings-swatch:hover {
+      transform: scale(1.1);
+    }
+    .settings-swatch[aria-checked='true'] {
+      box-shadow: 0 0 0 2px var(--bg-card, #11161c), 0 0 0 4px var(--swatch, #22c55e);
+    }
+    .settings-hint {
+      margin: 8px 6px 2px;
+      font-size: 0.7rem;
+      line-height: 1.4;
+      color: var(--text-dim, #888);
+    }
+    .settings-menu-title:not(:first-child) {
+      margin-top: 14px;
+    }
+    .settings-menu-title {
+      margin: 2px 6px 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-dim, #888);
+    }
+    .settings-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 10px;
+      background: none;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text, #eee);
+      font: inherit;
+      text-align: left;
+      transition: background 0.15s;
+    }
+    .settings-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .settings-item-icon {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 1rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .settings-item-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      flex: 1;
+      min-width: 0;
+    }
+    .settings-item-copy strong {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .settings-item-copy small {
+      font-size: 0.72rem;
+      color: var(--text-dim, #888);
+      line-height: 1.35;
+    }
+    .settings-check {
+      color: var(--green, #22c55e);
+      font-size: 0.9rem;
+      font-weight: 700;
+      opacity: 0;
+      flex-shrink: 0;
+    }
+    .settings-item[aria-checked='true'] {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .settings-item[aria-checked='true'] .settings-item-icon {
+      background: var(--green-dim, #16a34a);
+    }
+    .settings-item[aria-checked='true'] .settings-check {
+      opacity: 1;
     }
     @media (max-width: 480px) {
       .lang-toggle {
@@ -277,6 +521,80 @@
         <a href="/le-jeu" class="nav-link" data-nav="le-jeu" data-i18n="nav.theGame">Le jeu</a>
         <a href="https://multicraft-hub.netlify.app/" class="nav-link">Multicraft Hub</a>
       </nav>
+      <!-- Sélecteur de thème : bouton Paramètres + menu Normal / Material Design 3 -->
+      <div class="settings-switcher" id="settings-switcher">
+        <button type="button" class="settings-toggle" id="settings-toggle" aria-haspopup="true" aria-expanded="false"
+                data-i18n-aria-label="settings.ariaLabel" aria-label="Paramètres">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.67 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.12.22.38.31.6.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.04.24.24.42.49.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.48 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64ZM12 15.6a3.6 3.6 0 1 1 3.6-3.6 3.6 3.6 0 0 1-3.6 3.6Z" />
+          </svg>
+        </button>
+        <div class="settings-menu" role="group">
+          <p class="settings-menu-title" data-i18n="settings.theme">Thème</p>
+          <div class="settings-row">
+            <button type="button" class="settings-item" role="radio" aria-checked="true" data-theme-choice="normal">
+              <span class="settings-item-icon" aria-hidden="true">🌙</span>
+              <span class="settings-item-copy">
+                <strong data-i18n="settings.themeNormal">Normal</strong>
+                <small data-i18n="settings.themeNormalDesc">Le thème actuel du site</small>
+              </span>
+              <span class="settings-check" aria-hidden="true">✓</span>
+            </button>
+            <button type="button" class="settings-item" role="radio" aria-checked="false" data-theme-choice="material">
+              <span class="settings-item-icon" aria-hidden="true">🎨</span>
+              <span class="settings-item-copy">
+                <strong data-i18n="settings.themeMaterial">Material</strong>
+                <small data-i18n="settings.themeMaterialDesc">Material Design 3</small>
+              </span>
+              <span class="settings-check" aria-hidden="true">✓</span>
+            </button>
+          </div>
+
+          <!-- Les deux sections suivantes n'ont de sens qu'en thème Material. -->
+          <div class="settings-material-only">
+            <p class="settings-menu-title" data-i18n="settings.scheme">Fond</p>
+            <div class="settings-row settings-row-chips">
+              <button type="button" class="settings-chip" role="radio" aria-checked="false" data-scheme-choice="auto">
+                <span class="settings-chip-preview preview-auto" aria-hidden="true"></span>
+                <span data-i18n="settings.schemeAuto">Auto</span>
+              </button>
+              <button type="button" class="settings-chip" role="radio" aria-checked="false" data-scheme-choice="light">
+                <span class="settings-chip-preview preview-light" aria-hidden="true"></span>
+                <span data-i18n="settings.schemeLight">Clair</span>
+              </button>
+              <button type="button" class="settings-chip" role="radio" aria-checked="false" data-scheme-choice="dark">
+                <span class="settings-chip-preview preview-dark" aria-hidden="true"></span>
+                <span data-i18n="settings.schemeDark">Sombre</span>
+              </button>
+              <button type="button" class="settings-chip" role="radio" aria-checked="false" data-scheme-choice="amoled">
+                <span class="settings-chip-preview preview-amoled" aria-hidden="true"></span>
+                <span data-i18n="settings.schemeAmoled">Noir AMOLED</span>
+              </button>
+            </div>
+
+            <p class="settings-menu-title" data-i18n="settings.accent">Couleur d'accent</p>
+            <div class="settings-swatches">
+              <button type="button" class="settings-swatch" role="radio" aria-checked="false" data-accent-choice="green"
+                      style="--swatch: #22c55e" data-i18n-aria-label="settings.accentGreen" aria-label="Vert" title="Vert"></button>
+              <button type="button" class="settings-swatch" role="radio" aria-checked="false" data-accent-choice="teal"
+                      style="--swatch: #14b8a6" data-i18n-aria-label="settings.accentTeal" aria-label="Sarcelle" title="Sarcelle"></button>
+              <button type="button" class="settings-swatch" role="radio" aria-checked="false" data-accent-choice="blue"
+                      style="--swatch: #3b82f6" data-i18n-aria-label="settings.accentBlue" aria-label="Bleu" title="Bleu"></button>
+              <button type="button" class="settings-swatch" role="radio" aria-checked="false" data-accent-choice="violet"
+                      style="--swatch: #8b5cf6" data-i18n-aria-label="settings.accentViolet" aria-label="Violet" title="Violet"></button>
+              <button type="button" class="settings-swatch" role="radio" aria-checked="false" data-accent-choice="pink"
+                      style="--swatch: #ec4899" data-i18n-aria-label="settings.accentPink" aria-label="Rose" title="Rose"></button>
+              <button type="button" class="settings-swatch" role="radio" aria-checked="false" data-accent-choice="red"
+                      style="--swatch: #ef4444" data-i18n-aria-label="settings.accentRed" aria-label="Rouge" title="Rouge"></button>
+              <button type="button" class="settings-swatch" role="radio" aria-checked="false" data-accent-choice="orange"
+                      style="--swatch: #f97316" data-i18n-aria-label="settings.accentOrange" aria-label="Orange" title="Orange"></button>
+              <button type="button" class="settings-swatch" role="radio" aria-checked="false" data-accent-choice="amber"
+                      style="--swatch: #eab308" data-i18n-aria-label="settings.accentAmber" aria-label="Ambre" title="Ambre"></button>
+            </div>
+            <p class="settings-hint" data-i18n="settings.accentHint">La palette Material est calculée à partir de cette couleur.</p>
+          </div>
+        </div>
+      </div>
       <!-- Language Switcher : bouton drapeau + menu déroulant, généré par i18n.js (LANGUAGES) -->
       <div class="lang-switcher" id="lang-switcher" aria-label="Language / Langue"></div>
       <div id="deblock-auth-widget" class="deblock-auth-widget">
@@ -344,7 +662,7 @@
       </div>
       <div id="updates-container" class="updates-list">
         <div class="loading-state">
-          <div class="spinner"></div>
+          <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress>
           <p data-i18n="updates.loading">Chargement des mises à jour…</p>
         </div>
       </div>
@@ -394,7 +712,7 @@
    <!--   <p class="servers-data-date" data-i18n="servers.dataDate">Date des données : 30/07/2026</p> -->
       <div id="servers-container" class="servers-grid">
         <div class="loading-state">
-          <div class="spinner"></div>
+          <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress>
           <p data-i18n="servers.loading">Chargement des serveurs…</p>
         </div>
       </div>
@@ -509,7 +827,7 @@
           </div>
           <!-- Loading spinner for auth -->
           <div id="deblock-auth-loading" class="deblock-auth-loading" hidden>
-            <div class="spinner"></div>
+            <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress>
             <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-muted);" data-i18n="deblock.loading">Chargement…</p>
           </div>
         </div>
@@ -527,7 +845,9 @@
       <div class="profile-section profile-settings-section">
         <h3 data-i18n="profile.settings">Paramètres</h3>
         <label class="profile-setting-toggle" for="profile-show-portholes">
-          <input type="checkbox" id="profile-show-portholes">
+          <!-- Interrupteur Material Web officiel (<md-switch>) : si le module ne
+               se charge pas, l'élément reste inerte et le réglage est ignoré. -->
+          <md-switch id="profile-show-portholes"></md-switch>
           <span class="profile-setting-copy">
             <strong data-i18n="profile.showPortholes">Afficher des hublots</strong>
             <small data-i18n="profile.showPortholesHint">Affiche l’image des hublots à côté des titres du site. Ce réglage est enregistré uniquement sur cet appareil.</small>
@@ -770,7 +1090,7 @@
       <div id="lag-test-results" class="lag-test-results" hidden>
         <div id="lag-test-loading" class="lag-test-loading" hidden>
           <p class="lag-test-loading-title" data-i18n="lagTest.testingTitle">Test en cours</p>
-          <div class="lag-test-spinner" aria-hidden="true"></div>
+          <md-circular-progress class="lag-test-progress" indeterminate aria-hidden="true"></md-circular-progress>
           <p class="lag-test-loading-server">
             <span class="lag-test-loading-server-label" data-i18n="lagTest.usingServer">Serveur utilisé :</span>
             <span id="lag-test-loading-server-value" class="lag-test-loading-server-value"></span>
@@ -794,6 +1114,7 @@
   </div>
 <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script defer src="/i18n.js"></script>
+<script defer src="/js/theme.js"></script>
 <script defer src="/js/deblock-auth.js"></script>
 <script defer src="/script.js"></script>
 <script defer src="/banner.js"></script>

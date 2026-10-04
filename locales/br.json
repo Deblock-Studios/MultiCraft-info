@@ -212,5 +212,27 @@
   "lagTest.colLatency": "Laten",
 
   "ui.openMenu": "Digeriñ al lañser",
-  "ui.scrollTop": "Distreiñ e penn-krec'h ar bajenn"
+  "ui.scrollTop": "Distreiñ e penn-krec'h ar bajenn",
+
+  "settings.ariaLabel": "Arventennoù",
+  "settings.theme": "Neuz",
+  "settings.themeNormal": "Normal",
+  "settings.themeNormalDesc": "Ar neuz redaktoù a-vremañ",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "Arvloz",
+  "settings.schemeAuto": "Otomatik",
+  "settings.schemeLight": "Sklaer",
+  "settings.schemeDark": "Teñval",
+  "settings.schemeAmoled": "Du AMOLED",
+  "settings.accent": "Liv an implijout",
+  "settings.accentHint": "Ar palett Material a zo framet diouzh ar liv hiziv.",
+  "settings.accentGreen": "Gwer",
+  "settings.accentTeal": "Gwer-bleiz",
+  "settings.accentBlue": "Bleiz",
+  "settings.accentViolet": "Mouk",
+  "settings.accentPink": "Roz",
+  "settings.accentRed": "Ruzh",
+  "settings.accentOrange": "Orañj",
+  "settings.accentAmber": "Ambre"
 }

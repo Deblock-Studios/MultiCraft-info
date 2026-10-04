@@ -212,5 +212,27 @@
   "lagTest.colLatency": "Latencia",
 
   "ui.openMenu": "Abrir el menú",
-  "ui.scrollTop": "Volver arriba"
+  "ui.scrollTop": "Volver arriba",
+
+  "settings.ariaLabel": "Ajustes",
+  "settings.theme": "Tema",
+  "settings.themeNormal": "Normal",
+  "settings.themeNormalDesc": "El tema actual del sitio",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "Fondo",
+  "settings.schemeAuto": "Automático",
+  "settings.schemeLight": "Claro",
+  "settings.schemeDark": "Oscuro",
+  "settings.schemeAmoled": "Negro AMOLED",
+  "settings.accent": "Color de acento",
+  "settings.accentHint": "La paleta Material se genera a partir de este color.",
+  "settings.accentGreen": "Verde",
+  "settings.accentTeal": "Verde azulado",
+  "settings.accentBlue": "Azul",
+  "settings.accentViolet": "Violeta",
+  "settings.accentPink": "Rosa",
+  "settings.accentRed": "Rojo",
+  "settings.accentOrange": "Naranja",
+  "settings.accentAmber": "Ámbar"
 }

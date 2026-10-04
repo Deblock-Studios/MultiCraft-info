@@ -212,5 +212,27 @@
   "lagTest.colLatency": "Latensi",
 
   "ui.openMenu": "Buka menu",
-  "ui.scrollTop": "Kembali ke atas"
+  "ui.scrollTop": "Kembali ke atas",
+
+  "settings.ariaLabel": "Pengaturan",
+  "settings.theme": "Tema",
+  "settings.themeNormal": "Normal",
+  "settings.themeNormalDesc": "Tema situs saat ini",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "Latar belakang",
+  "settings.schemeAuto": "Otomatis",
+  "settings.schemeLight": "Terang",
+  "settings.schemeDark": "Gelap",
+  "settings.schemeAmoled": "Hitam AMOLED",
+  "settings.accent": "Warna aksen",
+  "settings.accentHint": "Palet Material dihitung dari warna ini.",
+  "settings.accentGreen": "Hijau",
+  "settings.accentTeal": "Biru kehijauan",
+  "settings.accentBlue": "Biru",
+  "settings.accentViolet": "Ungu",
+  "settings.accentPink": "Merah muda",
+  "settings.accentRed": "Merah",
+  "settings.accentOrange": "Oranye",
+  "settings.accentAmber": "Kuning kecoklatan"
 }

@@ -212,5 +212,27 @@
   "lagTest.colLatency": "Пинг",
 
   "ui.openMenu": "Открыть меню",
-  "ui.scrollTop": "Вернуться наверх страницы"
+  "ui.scrollTop": "Вернуться наверх страницы",
+
+  "settings.ariaLabel": "Настройки",
+  "settings.theme": "Тема",
+  "settings.themeNormal": "Обычная",
+  "settings.themeNormalDesc": "Текущая тема сайта",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "Фон",
+  "settings.schemeAuto": "Авто",
+  "settings.schemeLight": "Светлый",
+  "settings.schemeDark": "Тёмный",
+  "settings.schemeAmoled": "Чёрный AMOLED",
+  "settings.accent": "Акцентный цвет",
+  "settings.accentHint": "Палитра Material рассчитывается на основе этого цвета.",
+  "settings.accentGreen": "Зелёный",
+  "settings.accentTeal": "Бирюзовый",
+  "settings.accentBlue": "Синий",
+  "settings.accentViolet": "Фиолетовый",
+  "settings.accentPink": "Розовый",
+  "settings.accentRed": "Красный",
+  "settings.accentOrange": "Оранжевый",
+  "settings.accentAmber": "Янтарный"
 }

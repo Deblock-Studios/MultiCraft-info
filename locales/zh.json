@@ -212,5 +212,27 @@
   "lagTest.colLatency": "延迟",
 
   "ui.openMenu": "打开菜单",
-  "ui.scrollTop": "返回顶部"
+  "ui.scrollTop": "返回顶部",
+
+  "settings.ariaLabel": "设置",
+  "settings.theme": "主题",
+  "settings.themeNormal": "普通",
+  "settings.themeNormalDesc": "网站当前的主题",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "背景",
+  "settings.schemeAuto": "自动",
+  "settings.schemeLight": "浅色",
+  "settings.schemeDark": "深色",
+  "settings.schemeAmoled": "AMOLED 纯黑",
+  "settings.accent": "强调色",
+  "settings.accentHint": "Material 配色由此颜色生成。",
+  "settings.accentGreen": "绿色",
+  "settings.accentTeal": "青色",
+  "settings.accentBlue": "蓝色",
+  "settings.accentViolet": "紫色",
+  "settings.accentPink": "粉色",
+  "settings.accentRed": "红色",
+  "settings.accentOrange": "橙色",
+  "settings.accentAmber": "琥珀色"
 }

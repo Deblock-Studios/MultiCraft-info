@@ -212,5 +212,27 @@
   "lagTest.colLatency": "लेटेंसी",
 
   "ui.openMenu": "मेनू खोलें",
-  "ui.scrollTop": "ऊपर वापस जाएँ"
+  "ui.scrollTop": "ऊपर वापस जाएँ",
+
+  "settings.ariaLabel": "सेटिंग्स",
+  "settings.theme": "थीम",
+  "settings.themeNormal": "सामान्य",
+  "settings.themeNormalDesc": "साइट का मौजूदा थीम",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "पृष्ठभूमि",
+  "settings.schemeAuto": "स्वतः",
+  "settings.schemeLight": "हल्का",
+  "settings.schemeDark": "गहरा",
+  "settings.schemeAmoled": "AMOLED काला",
+  "settings.accent": "एक्सेंट रंग",
+  "settings.accentHint": "Material पैलेट इस रंग से बनाया जाता है।",
+  "settings.accentGreen": "हरा",
+  "settings.accentTeal": "हरा-नीला",
+  "settings.accentBlue": "नीला",
+  "settings.accentViolet": "बैंगनी",
+  "settings.accentPink": "गुलाबी",
+  "settings.accentRed": "लाल",
+  "settings.accentOrange": "नारंगी",
+  "settings.accentAmber": "अंबर"
 }

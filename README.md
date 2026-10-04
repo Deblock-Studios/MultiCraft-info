@@ -20,6 +20,51 @@ Developed with HTML/CSS/JS
 And other great features coming soon! <br>
 </p>
 
+## Themes
+
+The gear button in the header opens the appearance settings:
+
+```text
+material.css   Material Design 3 layer, loaded after style.css
+js/theme.js    the settings: menus, accent colour, Material palette generation
+```
+
+Three settings, all stored per device in `localStorage`:
+
+| key           | values                                | meaning                       |
+| ------------- | ------------------------------------- | ----------------------------- |
+| `mc_theme`    | `normal`, `material`                  | overall look of the site      |
+| `mc_scheme`   | `auto`, `light`, `dark`, `amoled`    | Material background           |
+| `mc_accent`   | `green`, `teal`, `blue`, `violet`, …  | seed colour of the palette    |
+
+`normal` is the default look and is left completely untouched: every rule in `material.css`
+is prefixed with `html.theme-material`. The choice is applied by putting that class and a
+`data-scheme` attribute on `<html>`; a small inline script in `<head>` does it before the
+first render, so there is no flash of the wrong theme.
+
+**The colours are computed, not hard-coded.** The accent colour is turned into a real
+Material 3 tonal palette by [`@material/material-color-utilities`][mcu] — the official
+library Material Web itself uses — and the result is written to `<html>` as
+`--md-sys-color-*` custom properties, which is the contract documented for theming Material
+Web components. `material.css` maps those tokens onto the site's own CSS variables, so a new
+accent recolours the whole site at once. The generated palette is cached in
+`mc_theme_tokens` and reapplied inline at page load; if the CDN cannot be reached
+(offline, blocked), `material.css` falls back to static Material palettes, one per
+background, and everything still works.
+
+`amoled` is the same dark palette with true-black surfaces (`#000`), for OLED screens.
+
+Material Web components are loaded from `https://esm.run` through an import map, and used
+where they replace hand-written markup one-for-one: `md-switch` for the profile setting and
+`md-circular-progress` for every loading indicator. They are optional: if the CDN fails,
+`md-circular-progress:not(:defined)` falls back to a plain CSS spinner and the rest of the
+site behaves identically.
+
+From the console: `Theme.set('material')`, `Theme.setScheme('amoled')`,
+`Theme.setAccent('violet')`, `Theme.get()`.
+
+[mcu]: https://github.com/material-foundation/material-color-utilities
+
 ## Internationalisation (i18n)
 
 The site is translated with plain JSON files — no framework, no dependency. Two places only:

@@ -212,5 +212,27 @@
   "lagTest.colLatency": "Latency",
 
   "ui.openMenu": "Open menu",
-  "ui.scrollTop": "Back to top of page"
+  "ui.scrollTop": "Back to top of page",
+
+  "settings.ariaLabel": "Settings",
+  "settings.theme": "Theme",
+  "settings.themeNormal": "Normal",
+  "settings.themeNormalDesc": "The site's current theme",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "Background",
+  "settings.schemeAuto": "Auto",
+  "settings.schemeLight": "Light",
+  "settings.schemeDark": "Dark",
+  "settings.schemeAmoled": "AMOLED black",
+  "settings.accent": "Accent colour",
+  "settings.accentHint": "The Material palette is generated from this colour.",
+  "settings.accentGreen": "Green",
+  "settings.accentTeal": "Teal",
+  "settings.accentBlue": "Blue",
+  "settings.accentViolet": "Violet",
+  "settings.accentPink": "Pink",
+  "settings.accentRed": "Red",
+  "settings.accentOrange": "Orange",
+  "settings.accentAmber": "Amber"
 }

@@ -212,5 +212,27 @@
   "lagTest.colLatency": "Gecikme",
 
   "ui.openMenu": "Menüyü aç",
-  "ui.scrollTop": "Sayfanın başına dön"
+  "ui.scrollTop": "Sayfanın başına dön",
+
+  "settings.ariaLabel": "Ayarlar",
+  "settings.theme": "Tema",
+  "settings.themeNormal": "Normal",
+  "settings.themeNormalDesc": "Sitenin mevcut teması",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "Arka plan",
+  "settings.schemeAuto": "Otomatik",
+  "settings.schemeLight": "Açık",
+  "settings.schemeDark": "Koyu",
+  "settings.schemeAmoled": "AMOLED siyah",
+  "settings.accent": "Vurgu rengi",
+  "settings.accentHint": "Material paleti bu renkten oluşturulur.",
+  "settings.accentGreen": "Yeşil",
+  "settings.accentTeal": "Deniz mavisi",
+  "settings.accentBlue": "Mavi",
+  "settings.accentViolet": "Menekşe",
+  "settings.accentPink": "Pembe",
+  "settings.accentRed": "Kırmızı",
+  "settings.accentOrange": "Turuncu",
+  "settings.accentAmber": "Kehribar"
 }

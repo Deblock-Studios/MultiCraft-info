@@ -1,0 +1,1186 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Thème Material Design 3 (Material You)
+   Ce fichier surcharge style.css : il n'est chargé qu'après lui et toutes les
+   règles sont préfixées par `html.theme-material`, donc le thème « Normal »
+   reste strictement inchangé.
+
+   Activation : la classe `theme-material` est posée sur <html> par le script
+   inline de index.html (avant le premier rendu, pour éviter le flash) puis par
+   js/theme.js. L'attribut `data-scheme` porte le fond choisi (light, dark,
+   amoled) ; la couleur d'accent choisie par l'utilisateur est convertie en
+   véritable palette tonale M3 par @material/material-color-utilities (la
+   librairie officielle utilisée par Material Web), puis injectée sous forme de
+   variables CSS `--md-sys-color-*`.
+
+   Les blocs ci-dessous ne sont que des REPLIS : ils s'appliquent tant que la
+   palette calculée n'a pas été injectée (premier rendu, CDN lent ou
+   injoignable). Toutes les règles de composants plus bas s'appuient sur les
+   alias `--m3-*`, qui lisent les tokens officiels.
+
+   Principes Material 3 repris ici :
+     · palettes tonales (surface-container-low → highest), pas de bordures fines
+     · formes généreuses : boutons en pastille, cartes 16–20px, dialogues 28px
+     · élévation Material (ombres diffuses à 1, 2 et 3 niveaux)
+     · typographie Roboto avec les échelles title / body / label
+     · état « state layer » : superposition de 8 % au survol
+     · navigation en pilules avec indicateur actif
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Replis : fond clair ─────────────────────────────────────────────────── */
+
+html.theme-material {
+  --md-sys-color-primary: #2e6c4f;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #b6f2ce;
+  --md-sys-color-on-primary-container: #002113;
+  --md-sys-color-secondary-container: #d1e8d5;
+  --md-sys-color-on-secondary-container: #0b1f14;
+  --md-sys-color-tertiary: #3d6373;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #c1e8fc;
+  --md-sys-color-on-tertiary-container: #001f29;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+  --md-sys-color-surface: #fbfdf8;
+  --md-sys-color-on-surface: #191c1a;
+  --md-sys-color-on-surface-variant: #404943;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f5f7f1;
+  --md-sys-color-surface-container: #eff1eb;
+  --md-sys-color-surface-container-high: #e9ebe5;
+  --md-sys-color-surface-container-highest: #e3e5df;
+  --md-sys-color-outline: #707973;
+  --md-sys-color-outline-variant: #bfc9c2;
+  --md-sys-color-scrim: #000000;
+
+  --m3-elev-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.12);
+  --m3-elev-2: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.14);
+  --m3-elev-3: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 8px 3px rgba(0, 0, 0, 0.14);
+}
+
+/* ── Replis : fond sombre ────────────────────────────────────────────────── */
+
+html.theme-material[data-scheme='dark'] {
+  --md-sys-color-primary: #9ad5b1;
+  --md-sys-color-on-primary: #00391f;
+  --md-sys-color-primary-container: #15522f;
+  --md-sys-color-on-primary-container: #b6f2ce;
+  --md-sys-color-secondary-container: #374b3e;
+  --md-sys-color-on-secondary-container: #d1e8d5;
+  --md-sys-color-tertiary: #a5ccdf;
+  --md-sys-color-on-tertiary: #063544;
+  --md-sys-color-tertiary-container: #244c5b;
+  --md-sys-color-on-tertiary-container: #c1e8fc;
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+  --md-sys-color-surface: #101410;
+  --md-sys-color-on-surface: #e1e3de;
+  --md-sys-color-on-surface-variant: #bfc9c2;
+  --md-sys-color-surface-container-lowest: #0b0f0b;
+  --md-sys-color-surface-container-low: #191c19;
+  --md-sys-color-surface-container: #1d201d;
+  --md-sys-color-surface-container-high: #272b27;
+  --md-sys-color-surface-container-highest: #323632;
+  --md-sys-color-outline: #89938c;
+  --md-sys-color-outline-variant: #404943;
+
+  --m3-elev-1: 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 3px 1px rgba(0, 0, 0, 0.35);
+  --m3-elev-2: 0 1px 2px rgba(0, 0, 0, 0.6), 0 2px 6px 2px rgba(0, 0, 0, 0.4);
+  --m3-elev-3: 0 1px 3px rgba(0, 0, 0, 0.6), 0 4px 8px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Replis : fond AMOLED (vrai noir, pixels éteints) ───────────────────── */
+
+html.theme-material[data-scheme='amoled'] {
+  --md-sys-color-primary: #9ad5b1;
+  --md-sys-color-on-primary: #00391f;
+  --md-sys-color-primary-container: #14361f;
+  --md-sys-color-on-primary-container: #b6f2ce;
+  --md-sys-color-secondary-container: #1f2c22;
+  --md-sys-color-on-secondary-container: #d1e8d5;
+  --md-sys-color-tertiary-container: #13323d;
+  --md-sys-color-on-tertiary-container: #c1e8fc;
+  --md-sys-color-error-container: #5c0a08;
+  --md-sys-color-on-error-container: #ffdad6;
+  --md-sys-color-surface: #000000;
+  --md-sys-color-on-surface: #e6e6e6;
+  --md-sys-color-on-surface-variant: #a3a3a3;
+  --md-sys-color-surface-container-lowest: #000000;
+  --md-sys-color-surface-container-low: #070707;
+  --md-sys-color-surface-container: #0d0d0d;
+  --md-sys-color-surface-container-high: #141414;
+  --md-sys-color-surface-container-highest: #1c1c1c;
+  --md-sys-color-outline: #7a7a7a;
+  --md-sys-color-outline-variant: #2c2c2c;
+}
+
+/* ── Alias Material 3 utilisés par les règles de composants ──────────────── */
+
+html.theme-material {
+  --m3-primary: var(--md-sys-color-primary);
+  --m3-on-primary: var(--md-sys-color-on-primary);
+  --m3-primary-container: var(--md-sys-color-primary-container);
+  --m3-on-primary-container: var(--md-sys-color-on-primary-container);
+  --m3-secondary-container: var(--md-sys-color-secondary-container);
+  --m3-on-secondary-container: var(--md-sys-color-on-secondary-container);
+  --m3-tertiary: var(--md-sys-color-tertiary);
+  --m3-on-tertiary: var(--md-sys-color-on-tertiary);
+  --m3-tertiary-container: var(--md-sys-color-tertiary-container);
+  --m3-on-tertiary-container: var(--md-sys-color-on-tertiary-container);
+  --m3-error: var(--md-sys-color-error);
+  --m3-on-error: var(--md-sys-color-on-error);
+  --m3-error-container: var(--md-sys-color-error-container);
+  --m3-on-error-container: var(--md-sys-color-on-error-container);
+  --m3-surface: var(--md-sys-color-surface);
+  --m3-on-surface: var(--md-sys-color-on-surface);
+  --m3-on-surface-variant: var(--md-sys-color-on-surface-variant);
+  --m3-surface-container-lowest: var(--md-sys-color-surface-container-lowest);
+  --m3-surface-container-low: var(--md-sys-color-surface-container-low);
+  --m3-surface-container: var(--md-sys-color-surface-container);
+  --m3-surface-container-high: var(--md-sys-color-surface-container-high);
+  --m3-surface-container-highest: var(--md-sys-color-surface-container-highest);
+  --m3-outline: var(--md-sys-color-outline);
+  --m3-outline-variant: var(--md-sys-color-outline-variant);
+  --m3-scrim: var(--md-sys-color-scrim);
+
+  /* Tintage de surface : Material 3 colore légèrement les surfaces élevées
+     avec la couleur d'accent (surface tint). */
+  --m3-tint: 4%;
+  --m3-card: color-mix(in srgb, var(--m3-primary) var(--m3-tint), var(--m3-surface-container-low));
+  --m3-card-hover: color-mix(in srgb, var(--m3-primary) calc(var(--m3-tint) * 1.5), var(--m3-surface-container));
+
+  /* Report sur les variables utilisées par style.css : le site bascule en
+     tonal sans avoir à réécrire chaque composant. */
+  --bg-deep: var(--m3-surface);
+  --bg-surface: var(--m3-surface-container-low);
+  --bg-card: var(--m3-card);
+  --bg-card-hover: var(--m3-card-hover);
+  --border: transparent;
+  --border-strong: var(--m3-outline-variant);
+  --green: var(--m3-primary);
+  --green-dim: var(--m3-primary);
+  --green-glow: color-mix(in srgb, var(--m3-primary) 14%, transparent);
+  --green-muted: var(--m3-primary);
+  --text: var(--m3-on-surface);
+  --text-muted: var(--m3-on-surface-variant);
+  --text-dim: var(--m3-outline);
+  --radius: 16px;
+  --radius-sm: 12px;
+}
+
+/* Sur fond sombre, la teinte de surface se remarque moins : on l'atténue. */
+html.theme-material[data-scheme='dark'],
+html.theme-material[data-scheme='amoled'] {
+  --m3-tint: 6%;
+  --bg-card: var(--m3-surface-container-low);
+  --bg-card-hover: var(--m3-surface-container);
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+html.theme-material body {
+  background: var(--m3-surface);
+  font-family: var(--font);
+  letter-spacing: 0;
+}
+
+/* Les orbes ambiants appartiennent au thème « Normal » : Material 3 joue sur
+   des aplats tonaux, pas sur des halos animés. */
+html.theme-material .ambient-bg {
+  display: none;
+}
+
+html.theme-material h1,
+html.theme-material h2,
+html.theme-material h3 {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+html.theme-material .hero h1,
+html.theme-material .page-header h1 {
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+html.theme-material .hero {
+  padding: 2.5rem 0 2rem;
+}
+
+/* Material 3 n'emploie pas de texte en dégradé : le titre garde une seule
+   couleur de marque. */
+html.theme-material .gradient-text {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--m3-primary);
+}
+
+html.theme-material ::selection {
+  background: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+}
+
+/* ── Barre d'application (top app bar) ───────────────────────────────────── */
+
+html.theme-material .site-header {
+  top: 0;
+  max-width: none;
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid var(--m3-outline-variant);
+  border-radius: 0;
+  background: var(--m3-surface-container);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html.theme-material .site-header.scrolled {
+  box-shadow: var(--m3-elev-1);
+}
+
+html.theme-material .site-header.compact {
+  max-width: none;
+}
+
+html.theme-material .header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+html.theme-material .logo {
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Navigation : indicateurs en pilule (navigation pills) */
+html.theme-material .nav-link {
+  position: relative;
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--m3-on-surface-variant);
+  overflow: hidden;
+}
+
+html.theme-material .nav-link:hover {
+  color: var(--m3-on-surface);
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+}
+
+html.theme-material .nav-link.active {
+  color: var(--m3-on-secondary-container);
+  background: var(--m3-secondary-container);
+}
+
+html.theme-material .nav-toggle {
+  border: none;
+  border-radius: 999px;
+}
+
+html.theme-material .nav-toggle:hover {
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+}
+
+/* ── Boutons (filled / tonal / outlined / text) ─────────────────────────── */
+
+html.theme-material .btn {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  box-shadow: none;
+  transition: background-color var(--transition), box-shadow var(--transition);
+}
+
+html.theme-material .btn:hover {
+  transform: none;
+}
+
+html.theme-material .btn:active {
+  transform: none;
+}
+
+html.theme-material .btn-primary,
+html.theme-material .btn-deblock {
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+}
+
+html.theme-material .btn-primary:hover,
+html.theme-material .btn-deblock:hover {
+  background: color-mix(in srgb, var(--m3-primary) 88%, var(--m3-on-primary));
+  box-shadow: var(--m3-elev-1);
+}
+
+html.theme-material .btn-secondary {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+  border: none;
+}
+
+html.theme-material .btn-secondary:hover {
+  background: color-mix(in srgb, var(--m3-secondary-container) 88%, var(--m3-on-secondary-container));
+  box-shadow: var(--m3-elev-1);
+}
+
+html.theme-material .btn-ghost {
+  background: transparent;
+  color: var(--m3-primary);
+  border: 1px solid var(--m3-outline);
+}
+
+html.theme-material .btn-ghost:hover {
+  background: color-mix(in srgb, var(--m3-primary) 8%, transparent);
+  border-color: var(--m3-outline);
+}
+
+html.theme-material .btn-danger {
+  background: var(--m3-error);
+  color: var(--m3-on-error);
+}
+
+html.theme-material .btn-danger:hover {
+  background: color-mix(in srgb, var(--m3-error) 88%, var(--m3-on-error));
+}
+
+html.theme-material .profile-danger .btn-danger {
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
+}
+
+html.theme-material .btn-players {
+  background: var(--m3-tertiary-container);
+  color: var(--m3-on-tertiary-container);
+  border: none;
+}
+
+html.theme-material .btn-players:hover {
+  background: color-mix(in srgb, var(--m3-tertiary-container) 88%, var(--m3-on-tertiary-container));
+}
+
+html.theme-material .btn-discord {
+  background: var(--m3-tertiary);
+  color: var(--m3-on-tertiary);
+}
+
+html.theme-material .btn-discord:hover {
+  background: color-mix(in srgb, var(--m3-tertiary) 88%, var(--m3-on-tertiary));
+}
+
+html.theme-material .btn-deblock-auth {
+  background: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+}
+
+html.theme-material .btn-deblock-auth:hover {
+  background: color-mix(in srgb, var(--m3-primary-container) 88%, var(--m3-on-primary-container));
+}
+
+html.theme-material .server-actions .btn {
+  padding: 0.7rem 0.85rem;
+}
+
+/* ── Cartes ──────────────────────────────────────────────────────────────── */
+
+html.theme-material .home-card,
+html.theme-material .info-card,
+html.theme-material .server-card,
+html.theme-material .update-post,
+html.theme-material .download-card,
+html.theme-material .dc-card,
+html.theme-material .profile-section,
+html.theme-material .review-card,
+html.theme-material .auth-panel {
+  position: relative;
+  overflow: hidden;
+  background: var(--m3-card);
+  border: none;
+  border-radius: 20px;
+  box-shadow: var(--m3-elev-1);
+  transition: box-shadow var(--transition), background var(--transition);
+}
+
+html.theme-material .home-card:hover,
+html.theme-material .info-card:hover,
+html.theme-material .server-card:hover,
+html.theme-material .download-card:hover,
+html.theme-material .dc-card:hover {
+  transform: none;
+  background: var(--m3-card-hover);
+  box-shadow: var(--m3-elev-2);
+}
+
+html.theme-material .home-card-title {
+  font-size: 1.375rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+html.theme-material .home-card-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 16px;
+  background: var(--m3-primary-container);
+  font-size: 1.5rem;
+}
+
+html.theme-material .home-card-arrow {
+  color: var(--m3-primary);
+}
+
+html.theme-material .hero-stats,
+html.theme-material .info-site-content {
+  background: var(--m3-surface-container);
+  border: none;
+  border-radius: 24px;
+  box-shadow: none;
+  padding: 1.5rem 2rem;
+}
+
+html.theme-material .stat-value {
+  font-family: var(--font);
+  font-weight: 500;
+  color: var(--m3-primary);
+}
+
+html.theme-material .stat-label {
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+html.theme-material .page-header-secondary {
+  border-top: 1px solid var(--m3-outline-variant);
+}
+
+html.theme-material .update-title {
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+html.theme-material .update-date {
+  color: var(--m3-primary);
+  font-family: var(--font);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+html.theme-material .update-body code {
+  background: var(--m3-surface-container-highest);
+  color: var(--m3-primary);
+}
+
+html.theme-material .update-body pre {
+  background: var(--m3-surface-container-highest);
+  border: none;
+  border-radius: 12px;
+}
+
+html.theme-material .update-body blockquote {
+  border-left: 4px solid var(--m3-primary);
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .update-images img,
+html.theme-material .update-images video {
+  border: none;
+  border-radius: 16px;
+}
+
+html.theme-material .updates-lang-notice {
+  background: var(--m3-tertiary-container);
+  color: var(--m3-on-tertiary-container);
+  border: none;
+  border-left: none;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+}
+
+/* ── Pastilles et badges (assist chips) ──────────────────────────────────── */
+
+html.theme-material .server-official {
+  background: var(--m3-tertiary-container);
+  color: var(--m3-on-tertiary-container);
+  border: none;
+  box-shadow: none;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+html.theme-material .server-official:hover {
+  background: color-mix(in srgb, var(--m3-tertiary-container) 82%, var(--m3-on-tertiary-container));
+  box-shadow: none;
+}
+
+html.theme-material .server-players,
+html.theme-material .server-admin {
+  background: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+}
+
+html.theme-material .server-players .dot {
+  background: var(--m3-primary);
+  box-shadow: none;
+}
+
+html.theme-material .server-players.offline {
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
+}
+
+html.theme-material .server-players.offline .dot {
+  background: var(--m3-error);
+}
+
+html.theme-material .server-rating {
+  background: var(--m3-surface-container-highest);
+  border: none;
+  color: var(--m3-on-surface);
+}
+
+html.theme-material .server-mode {
+  background: var(--m3-surface-container-highest);
+  border: none;
+  border-radius: 8px;
+}
+
+html.theme-material .server-adult {
+  background: var(--m3-error-container);
+  border: none;
+  color: var(--m3-on-error-container);
+}
+
+html.theme-material .server-name {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+html.theme-material .servers-count,
+html.theme-material .server-rating-count,
+html.theme-material .server-rating-none,
+html.theme-material .server-location {
+  color: var(--m3-on-surface-variant);
+}
+
+/* ── Champs de texte et sélecteurs ───────────────────────────────────────── */
+
+html.theme-material .search-bar {
+  background: var(--m3-surface-container-highest);
+  border: none;
+  border-radius: 28px;
+  padding: 0.7rem 1.1rem;
+  box-shadow: none;
+}
+
+html.theme-material .search-bar:focus-within {
+  border: 1px solid var(--m3-primary);
+  box-shadow: none;
+}
+
+html.theme-material .search-bar input {
+  font-size: 0.9rem;
+}
+
+html.theme-material .search-bar input::placeholder {
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .search-icon {
+  opacity: 1;
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .search-submit-btn {
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+}
+
+html.theme-material .search-submit-btn:hover {
+  background: color-mix(in srgb, var(--m3-primary) 88%, var(--m3-on-primary));
+  transform: none;
+}
+
+html.theme-material .btn-clear {
+  border: none;
+  background: var(--m3-surface-container-highest);
+  border-radius: 8px;
+}
+
+html.theme-material .filter-select,
+html.theme-material .reviews-sort-select,
+html.theme-material .modal-desc-lang-select {
+  /* Champ de menu Material (outlined menu) : contour 1px, coins adoucis,
+     chevron officiel à droite, hauteur 40px. */
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 40px;
+  padding: 0.5rem 2.2rem 0.5rem 0.9rem;
+  border: 1px solid var(--m3-outline);
+  border-radius: 8px;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23707973' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 18px 18px;
+  color: var(--m3-on-surface);
+  font-weight: 500;
+}
+
+html.theme-material .filter-select:hover,
+html.theme-material .reviews-sort-select:hover,
+html.theme-material .modal-desc-lang-select:hover {
+  background-color: color-mix(in srgb, var(--m3-on-surface) 6%, transparent);
+}
+
+html.theme-material .filter-select:focus,
+html.theme-material .reviews-sort-select:focus,
+html.theme-material .modal-desc-lang-select:focus {
+  border: 1px solid var(--m3-primary);
+  outline: 2px solid var(--m3-primary-container);
+  outline-offset: 0;
+  box-shadow: none;
+}
+
+html.theme-material .filter-select option,
+html.theme-material .reviews-sort-select option,
+html.theme-material .modal-desc-lang-select option {
+  background-color: var(--m3-surface-container-high);
+  color: var(--m3-on-surface);
+  padding: 0.6rem 0.9rem;
+  font-weight: 500;
+}
+
+html.theme-material .filter-select option:hover,
+html.theme-material .reviews-sort-select option:hover,
+html.theme-material .modal-desc-lang-select option:hover {
+  background-color: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+}
+
+/* Champ de texte rempli (filled text field) */
+html.theme-material .review-input,
+html.theme-material .deblock-password-toggle,
+html.theme-material .lag-test-popup-search {
+  background: var(--m3-surface-container-highest);
+  border: none;
+  border-bottom: 1px solid var(--m3-outline);
+  border-radius: 12px 12px 4px 4px;
+  padding: 0.7rem 0.85rem;
+}
+
+html.theme-material .review-input:focus,
+html.theme-material .lag-test-popup-search:focus {
+  border-bottom: 2px solid var(--m3-primary);
+  box-shadow: none;
+}
+
+html.theme-material .review-input::placeholder {
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .star-pick {
+  color: var(--m3-outline-variant);
+}
+
+html.theme-material .star-pick.active,
+html.theme-material .review-star.filled {
+  color: #f5a623;
+}
+
+html.theme-material .profile-setting-toggle {
+  background: var(--m3-surface-container);
+  border: none;
+  border-radius: 16px;
+  padding: 1rem 1.15rem;
+  align-items: center;
+}
+
+html.theme-material .profile-setting-toggle:hover {
+  background: var(--m3-surface-container-high);
+}
+
+/* Interrupteur Material Web officiel (<md-switch>) : on l'aligne avec le
+   texte du réglage, ses couleurs viennent des tokens --md-sys-color-*. */
+html.theme-material .profile-setting-toggle md-switch,
+html.theme-material .profile-setting-toggle input[type='checkbox'] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+html.theme-material .profile-avatar-large {
+  border-color: var(--m3-outline-variant);
+  background: var(--m3-surface-container-high);
+}
+
+html.theme-material .profile-danger {
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
+}
+
+html.theme-material .profile-danger h3 {
+  color: var(--m3-on-error-container);
+}
+
+/* ── Dialogues ───────────────────────────────────────────────────────────── */
+
+html.theme-material .modal-overlay {
+  background: color-mix(in srgb, var(--m3-scrim) 40%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html.theme-material .modal-box {
+  background: var(--m3-surface-container-high);
+  border: none;
+  border-radius: 28px;
+  padding: 1.75rem 1.75rem 1.5rem;
+  box-shadow: var(--m3-elev-3);
+}
+
+html.theme-material .modal-box h2 {
+  font-weight: 400;
+}
+
+html.theme-material .modal-eyebrow {
+  color: var(--m3-primary);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+html.theme-material .modal-label {
+  color: var(--m3-on-surface-variant);
+  font-weight: 500;
+}
+
+html.theme-material .modal-code {
+  background: var(--m3-surface-container-highest);
+  border: none;
+  border-radius: 12px;
+  color: var(--m3-primary);
+  font-family: var(--font);
+  font-weight: 500;
+}
+
+html.theme-material .chat-refresh-btn,
+html.theme-material .chat-close-btn,
+html.theme-material .chat-send-btn,
+html.theme-material .profile-avatar-edit-btn,
+html.theme-material .chat-action-btn,
+html.theme-material .review-mod-btn {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--m3-on-surface-variant);
+}
+
+/* La croix des pop-ups et le bouton « retour en haut » sont posés en absolute /
+   fixed : leur position d'origine est conservée, seul l'habillage change. */
+html.theme-material .modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  overflow: hidden;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .modal-close:hover,
+html.theme-material .chat-refresh-btn:hover,
+html.theme-material .chat-close-btn:hover,
+html.theme-material .profile-avatar-edit-btn:hover,
+html.theme-material .chat-action-btn:hover,
+html.theme-material .review-mod-btn:hover {
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+  color: var(--m3-on-surface);
+}
+
+html.theme-material .player-row,
+html.theme-material .lag-test-popup-item {
+  border-radius: 12px;
+}
+
+html.theme-material .player-row:hover,
+html.theme-material .lag-test-popup-item:hover {
+  background: var(--m3-surface-container-highest);
+}
+
+html.theme-material .player-badge {
+  background: var(--m3-tertiary-container);
+  color: var(--m3-on-tertiary-container);
+}
+
+html.theme-material .lightbox {
+  background: color-mix(in srgb, var(--m3-scrim) 85%, transparent);
+}
+
+html.theme-material .lightbox img {
+  border-radius: 16px;
+  box-shadow: var(--m3-elev-3);
+}
+
+html.theme-material .lag-test-table th {
+  color: var(--m3-on-surface-variant);
+  font-weight: 500;
+}
+
+html.theme-material .lag-test-table td {
+  border-top: 1px solid var(--m3-outline-variant);
+}
+
+html.theme-material .lag-test-popup-trigger {
+  background: var(--m3-surface-container-highest);
+  border: none;
+  border-bottom: 1px solid var(--m3-outline);
+  border-radius: 12px 12px 4px 4px;
+  color: var(--m3-on-surface);
+}
+
+html.theme-material .lag-test-popup-dropdown {
+  background: var(--m3-surface-container-high);
+  border: none;
+  border-radius: 16px;
+  box-shadow: var(--m3-elev-2);
+}
+
+html.theme-material .chat-tab {
+  border-radius: 999px;
+  color: var(--m3-on-surface-variant);
+  font-weight: 500;
+}
+
+html.theme-material .chat-tab.active {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+}
+
+html.theme-material .chat-tab:hover:not(.active) {
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+}
+
+/* ── Bulle de chat, fenêtre et messages ──────────────────────────────────── */
+
+html.theme-material .chat-bubble {
+  background: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+  border: none;
+  border-radius: 18px;
+  box-shadow: var(--m3-elev-3);
+}
+
+html.theme-material .chat-bubble:hover {
+  color: var(--m3-on-primary-container);
+  border: none;
+  background: var(--m3-primary-container);
+  transform: none;
+  box-shadow: var(--m3-elev-3);
+}
+
+html.theme-material .chat-window {
+  background: var(--m3-surface-container-high);
+  border: none;
+  border-radius: 28px;
+  box-shadow: var(--m3-elev-3);
+}
+
+html.theme-material .chat-header {
+  background: var(--m3-surface-container-high);
+}
+
+html.theme-material .chat-header-title {
+  font-weight: 500;
+}
+
+html.theme-material .chat-header-title-accent {
+  color: var(--m3-primary);
+}
+
+html.theme-material .chat-msg-bubble {
+  background: var(--m3-surface-container-highest);
+  border-radius: 16px 16px 16px 4px;
+}
+
+html.theme-material .chat-msg.self .chat-msg-bubble {
+  background: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+  border-radius: 16px 16px 4px 16px;
+}
+
+html.theme-material .chat-msg.self .chat-msg-user {
+  color: var(--m3-primary);
+}
+
+html.theme-material .chat-msg-time {
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .chat-footer {
+  background: var(--m3-surface-container);
+}
+
+html.theme-material .chat-input-row {
+  background: var(--m3-surface-container-highest);
+  border-radius: 999px;
+}
+
+html.theme-material .chat-notification {
+  background: var(--m3-surface-container-highest);
+  border-radius: 12px;
+}
+
+html.theme-material .chat-notification.success {
+  background: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+}
+
+html.theme-material .scroll-top-btn {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+  border: none;
+  border-radius: 16px;
+  box-shadow: var(--m3-elev-3);
+}
+
+html.theme-material .scroll-top-btn:hover {
+  background: var(--m3-secondary-container);
+  border: none;
+  transform: none;
+  box-shadow: var(--m3-elev-3);
+}
+
+/* ── Pied de page ────────────────────────────────────────────────────────── */
+
+html.theme-material .site-footer {
+  background: var(--m3-surface-container);
+  border-top: 1px solid var(--m3-outline-variant);
+  border-image: none;
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .footer-bottom {
+  border-top: 1px solid var(--m3-outline-variant);
+}
+
+html.theme-material .footer-studio-avatar {
+  border-radius: 50%;
+  box-shadow: var(--m3-elev-1);
+}
+
+html.theme-material .footer-studio a {
+  color: var(--m3-primary);
+}
+
+/* ── Bandeau d'alerte ────────────────────────────────────────────────────── */
+
+html.theme-material #alert-banner {
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
+}
+
+html.theme-material #alert-banner a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* ── Menu Paramètres (bouton de l'en-tête) ───────────────────────────────── */
+
+html.theme-material .settings-toggle {
+  background: transparent;
+  border: none;
+  color: var(--m3-on-surface-variant);
+  box-shadow: none;
+}
+
+html.theme-material .settings-toggle:hover {
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+  color: var(--m3-on-surface);
+}
+
+html.theme-material .settings-menu {
+  background: var(--m3-surface-container-high);
+  border: none;
+  border-radius: 16px;
+  box-shadow: var(--m3-elev-2);
+}
+
+html.theme-material .settings-menu-title {
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .settings-item,
+html.theme-material .lang-item,
+html.theme-material .chat-bubble {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Le bouton « retour en haut » reste en fixed (en bas à droite). */
+html.theme-material .scroll-top-btn {
+  position: fixed;
+  overflow: hidden;
+}
+
+html.theme-material .settings-item:hover {
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+}
+
+html.theme-material .settings-item[aria-checked='true'] {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+}
+
+html.theme-material .settings-item[aria-checked='true'] .settings-check {
+  color: var(--m3-primary);
+}
+
+html.theme-material .settings-item[aria-checked='true'] .settings-item-icon {
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+}
+
+html.theme-material .settings-chip {
+  position: relative;
+  overflow: hidden;
+  background: var(--m3-surface-container);
+  color: var(--m3-on-surface);
+}
+
+html.theme-material .settings-chip:hover {
+  background: var(--m3-surface-container-high);
+}
+
+html.theme-material .settings-chip[aria-checked='true'] {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+  border-color: transparent;
+}
+
+html.theme-material .settings-chip-preview {
+  border: 1px solid var(--m3-outline);
+}
+
+html.theme-material .settings-swatch {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+html.theme-material .settings-swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 2px var(--m3-surface-container-high), 0 0 0 4px var(--swatch);
+}
+
+html.theme-material .settings-hint {
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .lang-menu {
+  background: var(--m3-surface-container-high);
+  border: none;
+  border-radius: 16px;
+  box-shadow: var(--m3-elev-2);
+}
+
+html.theme-material .lang-toggle {
+  background: transparent;
+  border: none;
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .lang-toggle:hover {
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+  border: none;
+}
+
+html.theme-material .lang-item:hover {
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+}
+
+html.theme-material .lang-item.active {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+}
+
+html.theme-material .deblock-username {
+  font-weight: 500;
+}
+
+/* ── Onde Material (ripple) ──────────────────────────────────────────────── */
+
+html.theme-material .m3-ripple-host {
+  position: relative;
+  overflow: hidden;
+}
+
+html.theme-material .m3-ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.12;
+  pointer-events: none;
+  transform: scale(0);
+  animation: m3Ripple 560ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+}
+
+@keyframes m3Ripple {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ── Divers ──────────────────────────────────────────────────────────────── */
+
+html.theme-material .spinner {
+  border-color: var(--m3-surface-container-highest);
+  border-top-color: var(--m3-primary);
+}
+
+/* Indicateur de chargement Material 3 (<md-circular-progress>) */
+html.theme-material md-circular-progress {
+  width: 40px;
+  height: 40px;
+  color: var(--m3-primary);
+}
+
+html.theme-material .lag-test-progress {
+  width: 48px;
+  height: 48px;
+}
+
+html.theme-material .error-state,
+html.theme-material .chat-error {
+  color: var(--m3-error);
+}
+
+html.theme-material .loading-state,
+html.theme-material .empty-state {
+  color: var(--m3-on-surface-variant);
+}
+
+html.theme-material .auth-panel-title {
+  font-weight: 400;
+}
+
+html.theme-material .auth-hero-title {
+  font-weight: 400;
+}
+
+/* Le thème « Material » respecte la réduction des animations du système. */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-material .m3-ripple-wave {
+    display: none;
+  }
+}

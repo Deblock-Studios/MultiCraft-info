@@ -212,5 +212,27 @@
   "lagTest.colLatency": "লেটেন্সি",
 
   "ui.openMenu": "মেনু খুলুন",
-  "ui.scrollTop": "উপরে ফিরে যান"
+  "ui.scrollTop": "উপরে ফিরে যান",
+
+  "settings.ariaLabel": "সেটিংস",
+  "settings.theme": "থিম",
+  "settings.themeNormal": "সাধারণ",
+  "settings.themeNormalDesc": "সাইটের বর্তমান থিম",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "পটভূমি",
+  "settings.schemeAuto": "স্বয়ংক্রিয়",
+  "settings.schemeLight": "হালকা",
+  "settings.schemeDark": "গাঢ়",
+  "settings.schemeAmoled": "AMOLED কালো",
+  "settings.accent": "অ্যাকসেন্ট রং",
+  "settings.accentHint": "Material প্যালেট এই রঙ থেকে তৈরি হয়।",
+  "settings.accentGreen": "সবুজ",
+  "settings.accentTeal": "সবুজাভ নীল",
+  "settings.accentBlue": "নীল",
+  "settings.accentViolet": "বেগুনি",
+  "settings.accentPink": "গোলাপি",
+  "settings.accentRed": "লাল",
+  "settings.accentOrange": "কমলা",
+  "settings.accentAmber": "অ্যাম্বার"
 }

@@ -212,5 +212,27 @@
   "lagTest.colLatency": "遅延",
 
   "ui.openMenu": "メニューを開く",
-  "ui.scrollTop": "ページの先頭へ戻る"
+  "ui.scrollTop": "ページの先頭へ戻る",
+
+  "settings.ariaLabel": "設定",
+  "settings.theme": "テーマ",
+  "settings.themeNormal": "標準",
+  "settings.themeNormalDesc": "サイトの現在のテーマ",
+  "settings.themeMaterial": "Material",
+  "settings.themeMaterialDesc": "Material Design 3",
+  "settings.scheme": "背景",
+  "settings.schemeAuto": "自動",
+  "settings.schemeLight": "ライト",
+  "settings.schemeDark": "ダーク",
+  "settings.schemeAmoled": "AMOLED ブラック",
+  "settings.accent": "アクセントカラー",
+  "settings.accentHint": "Material の配色はこの色から生成されます。",
+  "settings.accentGreen": "グリーン",
+  "settings.accentTeal": "ティール",
+  "settings.accentBlue": "ブルー",
+  "settings.accentViolet": "バイオレット",
+  "settings.accentPink": "ピンク",
+  "settings.accentRed": "レッド",
+  "settings.accentOrange": "オレンジ",
+  "settings.accentAmber": "アンバー"
 }

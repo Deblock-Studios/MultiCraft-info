@@ -13,6 +13,6 @@ Les nouveaux items sont :
 - Une bougie squelette (~20 coins)
 - Une décoration avec un balai dans des feuilles (~15 coins)
 
-Le fond Halloween du menu à été supprimé face à de vives critiques des joueurs. Le fond était en effet généré par IA et ne ressemblait pas du out à MultiCraft.
+Le fond Halloween du menu à été supprimé face à de vives critiques des joueurs. Le fond était en effet généré par IA et ne ressemblait pas du tout à MultiCraft.
 
 -# 4 images de [MTC News](https://discord.gg/Q8XES7HRTR)

@@ -1,7 +1,7 @@
 ---
 date: 2026-10-13
 title: La mise à jour d'Halloween est là !
-images: [1.png, 2.png, 3.png, 4.png]
+images: [1.png, 2.png, 3.png, 4.png, 5.jpg]
 ---
 
 La mise à jour d'Halloween est là !
@@ -15,4 +15,4 @@ Les nouveaux items sont :
 
 Le fond Halloween du menu à été supprimé face à de vives critiques des joueurs. Le fond était en effet généré par IA et ne ressemblait pas du out à MultiCraft.
 
--# Images de [MTC News](https://discord.gg/Q8XES7HRTR)
+-# 4 images de [MTC News](https://discord.gg/Q8XES7HRTR)

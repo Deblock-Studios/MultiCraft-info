@@ -11,5 +11,5 @@ Tu peux choisir
 * solidité,
 * protection, 
 * soin 
-*ou bonus en speed, jump ou gravité.. 
+* ou bonus en speed, jump ou gravité.. 
 (tu peux aussi modifier des choses pour l'utilisé comme un item... (la catégorie effet ne changera des choses que sur l'item lui même))

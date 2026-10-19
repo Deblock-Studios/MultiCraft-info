@@ -1,7 +1,7 @@
 ---
-isDisplayed: no
+isDisplayed: yes
 color: orange
 ---
 
-**fr:** Des erreurs arrivent sur la page des mises à jours. Nous travaillons dessus.
-**en:** Some errors comes with updates page. We are working on it.
+**fr:** La page des serveurs est indisponibles dû à l'intégration d'un nouveau système de traduction. Retour estimé : 18H30
+**en:** The servers page is unavailiable for the intergation of a new translation system. Will be back at ~18H30 (paris time)

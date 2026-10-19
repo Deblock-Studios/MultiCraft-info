@@ -5,4 +5,4 @@ images: [1.png]
 ---
 
 Dans le shop, de nouveaux véhicules sont apparus : des hélicopètres & voitures thématisés Halloween.
-Ils sont dans des tons oranges et violets, ou en texture de citrouille pour la voiture. Seule la voiture en bois n'a pas de version Halloween.
+Ils sont dans des tons oranges et violets, ou en texture de citrouille pour la voiture. Seule la voiture en fer n'a pas de version Halloween.

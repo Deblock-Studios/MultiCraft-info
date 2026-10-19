@@ -61,6 +61,9 @@
   "servers.descLangOriginal": "Asli",
   "servers.descLangEnglish": "Inggris",
   "servers.descLangFrench": "Prancis",
+  "servers.descLangTurkish": "Turki",
+  "servers.descLangUkrainian": "Ukraina",
+  "servers.descLangRussian": "Rusia",
 
   "gameInfo.subtitle": "Daftar server fisik MultiCraft.",
   "gameInfo.locations": {

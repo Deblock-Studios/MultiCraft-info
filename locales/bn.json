@@ -61,6 +61,9 @@
   "servers.descLangOriginal": "মূল",
   "servers.descLangEnglish": "ইংরেজি",
   "servers.descLangFrench": "ফরাসি",
+  "servers.descLangTurkish": "তুর্কি",
+  "servers.descLangUkrainian": "ইউক্রেনীয়",
+  "servers.descLangRussian": "রুশ",
 
   "gameInfo.subtitle": "MultiCraft-এর ফিজিক্যাল সার্ভারের তালিকা।",
   "gameInfo.locations": {

@@ -2180,12 +2180,22 @@
     else sortBySelect.value = 'rating-desc';
   })();
 
+  // Langues disponibles pour les descriptions des serveurs : la valeur du
+  // sélecteur correspond au segment /db/<langue> de l'API.
+  const DESC_LANG_OPTIONS = [
+    { value: 'original', labelKey: 'servers.descLangOriginal' },
+    { value: 'english', labelKey: 'servers.descLangEnglish' },
+    { value: 'french', labelKey: 'servers.descLangFrench' },
+    { value: 'turkish', labelKey: 'servers.descLangTurkish' },
+    { value: 'ukrainian', labelKey: 'servers.descLangUkrainian' },
+    { value: 'russian', labelKey: 'servers.descLangRussian' },
+  ];
+
   // URL de base de l'API selon la langue choisie pour les descriptions des serveurs.
   function getServersApiUrl(lang) {
     const value = lang || getCurrentDescLang();
-    if (value === 'english') return SERVERS_API_URL + '/db/english';
-    if (value === 'french') return SERVERS_API_URL + '/db/french';
-    return SERVERS_API_URL + '/db/original';
+    const supported = DESC_LANG_OPTIONS.some(function (opt) { return opt.value === value; });
+    return SERVERS_API_URL + '/db/' + (supported ? value : 'original');
   }
 
   // Recherche serveur côté API : /db/<lang>/search?q=<terme>. Le filtre pays
@@ -2305,9 +2315,17 @@
       try {
         firstPage = await fetchServersPage(1);
       } catch (err) {
-        // Repli : si l'API refuse le tri demandé (500), on relance sans sort
-        // et le tri est refait localement dans computeFilteredServers().
-        if (serversApiSort && /500/.test(String((err && err.message) || err))) {
+        const currentDescLang = getCurrentDescLang();
+        // Repli : langue de descriptions pas encore exposée par l'API (404),
+        // on revient aux descriptions d'origine et le sélecteur suit.
+        if (/404/.test(String((err && err.message) || err)) && currentDescLang !== 'original') {
+          console.warn('Descriptions « ' + currentDescLang + ' » indisponibles, retour aux descriptions d\'origine :', (err && err.message) || err);
+          if (descLangSelect) descLangSelect.value = 'original';
+          refreshServersTotal(loadGen);
+          firstPage = await fetchServersPage(1);
+        } else if (serversApiSort && /500/.test(String((err && err.message) || err))) {
+          // Repli : si l'API refuse le tri demandé (500), on relance sans sort
+          // et le tri est refait localement dans computeFilteredServers().
           console.warn('Tri API "' + serversApiSort + '" refusé, retour au tri local :', (err && err.message) || err);
           serversApiSort = null;
           serversSortFromApi = false;
@@ -2679,10 +2697,14 @@
   }
 
   // Valeur par défaut du sélecteur de langue des descriptions : la langue du site (i18n).
-  // La base ne propose que « original », « english » et « french » : seul le site en
-  // français tombe donc sur les descriptions françaises, les autres langues sur l'anglais.
+  // Les langues sans descriptions dédiées dans l'API retombent sur l'anglais.
   function getDefaultDescLangValue() {
-    return (window.i18n && window.i18n.lang === 'fr') ? 'french' : 'english';
+    const siteLang = window.i18n && window.i18n.lang;
+    if (siteLang === 'fr') return 'french';
+    if (siteLang === 'tr') return 'turkish';
+    if (siteLang === 'uk') return 'ukrainian';
+    if (siteLang === 'ru') return 'russian';
+    return 'english';
   }
 
   // Serveur partagé (?server=ID) pas encore chargé : on rouvre la modale dès
@@ -2711,12 +2733,10 @@
     if (modalCode) modalCode.textContent = code;
     const modalBody = document.querySelector('.modal-body');
     if (modalBody) {
-      const descLangValue = getDefaultDescLangValue();
-      const descOptions = [
-        { value: 'original', label: window.i18n.t('servers.descLangOriginal'), selected: descLangValue === 'original' },
-        { value: 'english', label: window.i18n.t('servers.descLangEnglish'), selected: descLangValue === 'english' },
-        { value: 'french', label: window.i18n.t('servers.descLangFrench'), selected: descLangValue === 'french' }
-      ].map(function (opt) { return '<option value="' + opt.value + '"' + (opt.selected ? ' selected' : '') + '>' + escapeHtml(opt.label) + '</option>'; }).join('');
+      const descLangValue = getCurrentDescLang();
+      const descOptions = DESC_LANG_OPTIONS.map(function (opt) {
+        return { value: opt.value, label: window.i18n.t(opt.labelKey), selected: descLangValue === opt.value };
+      }).map(function (opt) { return '<option value="' + opt.value + '"' + (opt.selected ? ' selected' : '') + '>' + escapeHtml(opt.label) + '</option>'; }).join('');
       modalBody.innerHTML = '<div class="modal-details"><div class="modal-description"><h3>' + escapeHtml(window.i18n.t('modal.descriptionTitle')) + '</h3><p id="modal-description-text">' + escapeHtml(description) + '</p><div class="modal-desc-lang"><span class="modal-desc-lang-label">' + escapeHtml(window.i18n.t('servers.descLangLabel')) + '</span><select id="modal-desc-lang" class="modal-desc-lang-select" aria-label="' + escapeHtml(window.i18n.t('servers.descLangLabel')) + '">' + descOptions + '</select></div></div><div class="modal-info-grid"><!-- <div class="modal-info-item"><span class="modal-info-label">👥 Joueurs</span><span class="modal-info-value">' + players + ' / ' + maxPlayers + '</span></div> --><div class="modal-info-item"><span class="modal-info-label">👑 Administrateur</span><span class="modal-info-value">' + escapeHtml(adminName) + '</span></div><div class="modal-info-item"><span class="modal-info-label">📍 Localisation</span><span class="modal-info-value">' + escapeHtml(location) + '</span></div></div>' + (url ? '<div class="modal-deblock-link"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-deblock">Rejoindre Discord</a></div>' : '') + '</div>';
       const descLangSelect = document.getElementById('modal-desc-lang');
       if (descLangSelect) {

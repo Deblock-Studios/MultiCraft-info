@@ -61,6 +61,9 @@
   "servers.descLangOriginal": "원본",
   "servers.descLangEnglish": "영어",
   "servers.descLangFrench": "프랑스어",
+  "servers.descLangTurkish": "터키어",
+  "servers.descLangUkrainian": "우크라이나어",
+  "servers.descLangRussian": "러시아어",
 
   "gameInfo.subtitle": "MultiCraft 물리 서버 목록.",
   "gameInfo.locations": {

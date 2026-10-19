@@ -61,6 +61,9 @@
   "servers.descLangOriginal": "Original",
   "servers.descLangEnglish": "Englisch",
   "servers.descLangFrench": "Französisch",
+  "servers.descLangTurkish": "Türkisch",
+  "servers.descLangUkrainian": "Ukrainisch",
+  "servers.descLangRussian": "Russisch",
 
   "gameInfo.subtitle": "Liste der physischen MultiCraft-Server.",
   "gameInfo.locations": {

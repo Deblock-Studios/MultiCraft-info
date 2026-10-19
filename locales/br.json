@@ -61,6 +61,9 @@
   "servers.descLangOriginal": "Orin",
   "servers.descLangEnglish": "Saozneg",
   "servers.descLangFrench": "Galleg",
+  "servers.descLangTurkish": "Turkeg",
+  "servers.descLangUkrainian": "Ukrainat",
+  "servers.descLangRussian": "Rusianeg",
 
   "gameInfo.subtitle": "Roll servijerioù fizikel MultiCraft.",
   "gameInfo.locations": {

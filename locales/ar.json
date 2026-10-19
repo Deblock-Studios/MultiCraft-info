@@ -61,6 +61,9 @@
   "servers.descLangOriginal": "الأصل",
   "servers.descLangEnglish": "الإنجليزية",
   "servers.descLangFrench": "الفرنسية",
+  "servers.descLangTurkish": "التركية",
+  "servers.descLangUkrainian": "الأوكرانية",
+  "servers.descLangRussian": "الروسية",
 
   "gameInfo.subtitle": "قائمة خوادم MultiCraft الفعلية.",
   "gameInfo.locations": {

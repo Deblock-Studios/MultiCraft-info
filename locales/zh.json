@@ -61,6 +61,9 @@
   "servers.descLangOriginal": "原始",
   "servers.descLangEnglish": "英语",
   "servers.descLangFrench": "法语",
+  "servers.descLangTurkish": "土耳其语",
+  "servers.descLangUkrainian": "乌克兰语",
+  "servers.descLangRussian": "俄语",
 
   "gameInfo.subtitle": "MultiCraft 物理服务器列表。",
   "gameInfo.locations": {

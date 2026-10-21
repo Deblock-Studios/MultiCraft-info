@@ -23,9 +23,15 @@
 //   SITE_ORIGIN           (optionnel) origine envoyée au Worker, par défaut
 //                         https://multicraft-info.netlify.app
 
-const WORKER_ORIGIN = (Deno.env.get('WORKER_ORIGIN') || 'https://multicraft-servers.creatif-france.workers.dev').replace(/\/+$/, '');
-const SHARED_SECRET = Deno.env.get('WORKER_SHARED_SECRET') || '';
-const SITE_ORIGIN = Deno.env.get('SITE_ORIGIN') || 'https://multicraft-info.netlify.app';
+const WORKER_ORIGIN = (Deno.env.get('WORKER_ORIGIN') || 'https://multicraft-servers.creatif-france.workers.dev')
+  .trim()
+  .replace(/\/+$/, '');
+// `.trim()` : les champs de valeur d'un dashboard acceptent les retours à la
+// ligne. Un "\n" invisible en fin de valeur suffit à invalider TOUTES les
+// signatures (403 « signature-invalide ») alors que les deux secrets semblent
+// identiques. Le Worker applique le même nettoyage.
+const SHARED_SECRET = (Deno.env.get('WORKER_SHARED_SECRET') || '').trim();
+const SITE_ORIGIN = (Deno.env.get('SITE_ORIGIN') || 'https://multicraft-info.netlify.app').trim();
 
 /** En-têtes envoyés au navigateur (JSON, jamais mis en cache). */
 function jsonHeaders(extra = {}) {

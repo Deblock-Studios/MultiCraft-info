@@ -1,7 +1,7 @@
 ---
 isDisplayed: oui
-color: vert
+color: red
 ---
 
-**fr:** La page serveur propose désormais le turc, russe et ukrainien !
-**en:** The server page now offers Turkish, Russian, and Ukrainian !
+**fr:** A celui qui récupère la base de donnée, vien nous contacté avant de la volé
+**en:** To whoever acquires the database: get in touch with us before stealing it.

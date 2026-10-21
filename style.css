@@ -1455,6 +1455,52 @@ body.modal-open {
   overflow: hidden;
 }
 
+/* ── Pop-up alerte de sécurité ── */
+.security-alert-overlay {
+  /* Au-dessus de la bannière d'alerte et de l'en-tête. */
+  z-index: 1300;
+}
+
+.security-alert-box {
+  max-width: 540px;
+  border-color: rgba(220, 38, 38, 0.45);
+}
+
+.security-alert-eyebrow {
+  color: #f87171;
+}
+
+.security-alert-body p {
+  margin-bottom: 0.85rem;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.security-alert-body p:last-child {
+  margin-bottom: 0;
+}
+
+.security-alert-signature {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.security-alert-discord {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  padding: 0.05rem 0.35rem;
+  white-space: nowrap;
+}
+
+.security-alert-box .modal-actions {
+  margin-top: 1.25rem;
+}
+
 /* ── Footer ── */
 .site-footer {
   position: relative;

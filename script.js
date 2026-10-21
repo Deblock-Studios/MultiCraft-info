@@ -114,6 +114,41 @@
       });
   }
 
+  /* ── Helper: appels à l'API serveurs ──
+     Les requêtes passent par /api (même origine) : la fonction Edge Netlify
+     `api-proxy` les signe et les relaie au Worker Cloudflare. Le navigateur
+     ne connaît donc ni l'URL du Worker ni aucun secret.
+
+     Deux garde-fous côté client (confort, pas sécurité) :
+       - espacement minimal entre deux appels → évite les rafales
+         accidentelles (scroll rapide, changement de filtre) qui
+         déclencheraient le rate limiting (429) ;
+       - une seule reprise automatique sur 429, après le délai Retry-After. */
+  const API_MIN_INTERVAL_MS = 150;
+  let apiLastCallAt = 0;
+  let apiQueue = Promise.resolve();
+
+  function apiFetch(url, options, timeoutMs) {
+    const run = apiQueue.then(function () {
+      const wait = Math.max(0, apiLastCallAt + API_MIN_INTERVAL_MS - Date.now());
+      return new Promise(function (resolve) { setTimeout(resolve, wait); })
+        .then(function () {
+          apiLastCallAt = Date.now();
+          return fetchWithTimeout(url, options, timeoutMs);
+        })
+        .then(function (res) {
+          if (res.status !== 429) return res;
+          const retryAfter = parseInt(res.headers.get('Retry-After'), 10);
+          const delay = Math.min(5000, Math.max(500, (retryAfter || 2) * 1000));
+          return new Promise(function (resolve) { setTimeout(resolve, delay); })
+            .then(function () { return fetchWithTimeout(url, options, timeoutMs); });
+        });
+    });
+    // La file ne doit jamais rester bloquée par une requête en échec.
+    apiQueue = run.then(function () {}, function () {});
+    return run;
+  }
+
   /* ── Dictionnaire des mots interdits ──
      Stocké encodé en base64 pour que les mots eux-mêmes n'apparaissent
      jamais en clair dans le code source. Format décodé, une entrée par ligne :
@@ -1396,7 +1431,9 @@
   }
 
   /* ── Serveurs ── */
-  const SERVERS_API_URL = 'https://multicraft-servers.creatif-france.workers.dev';
+  // Même origine : la fonction Edge Netlify `/api/*` signe et relaie au Worker.
+  // Ne JAMAIS remettre ici l'URL *.workers.dev (elle serait scrapable en direct).
+  const SERVERS_API_URL = '/api';
   const SERVERS_PER_PAGE = 50;        // cartes rendues par lot (aligné sur la taille de page de l'API)
   const SERVERS_API_PAGE_SIZE = 50;   // l'API exige ?p=<taille>,<page> : 50 serveurs par page, à partir de 1
   const SERVERS_MAX_PAGES = 500;      // garde-fou contre les boucles infinies
@@ -2233,7 +2270,7 @@
       const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
       if (cached && cached.total > 0 && (Date.now() - cached.at) < CACHE_TTL) return Promise.resolve(cached.total);
     } catch (e) { /* ignore */ }
-    return fetchWithTimeout(getServersStatsUrl(value, country), {}, 12000)
+    return apiFetch(getServersStatsUrl(value, country), {}, 12000)
       .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
       .then(function (data) {
         const total = parseInt(data && data.count, 10) || 0;
@@ -2272,7 +2309,7 @@
   // ainsi que le nombre de lignes brut, seul signal fiable de fin de liste
   // (le dédoublonnage peut réduire le compte même sur une page pleine).
   async function fetchServersPage(page, lang) {
-    const res = await fetchWithTimeout(buildServersPageUrl(lang, page), {}, 12000);
+    const res = await apiFetch(buildServersPageUrl(lang, page), {}, 12000);
     if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
     const servers = extractServers(await res.json());
     const fresh = [];
@@ -2388,7 +2425,7 @@
     removeServersSentinel();
     if (serversContainer) serversContainer.innerHTML = '<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress><p>' + window.i18n.t('servers.loading') + '</p></div>';
     if (serversCountEl) serversCountEl.textContent = '';
-    fetchWithTimeout(getServersSearchUrl(null, query), {}, 12000)
+    apiFetch(getServersSearchUrl(null, query), {}, 12000)
       .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
       .then(function (data) {
         if (requestId !== serversSearchRequestId) return;
@@ -2747,7 +2784,7 @@
           textEl.textContent = '…';
           // Description dans la langue choisie : infos du serveur via son code
           // d'invitation (/db/<langue>/<code>), sans recharger toute la base.
-          fetchWithTimeout(getServerInfoUrl(lang, code), {}, 12000)
+          apiFetch(getServerInfoUrl(lang, code), {}, 12000)
             .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
             .then(function (data) {
               // L'endpoint renvoie l'objet du serveur (liste d'un seul élément
@@ -4337,7 +4374,7 @@
       if (cached && cached.total > 0 && (Date.now() - cached.at) < CACHE_TTL) { animateValue(serversEl, cached.total); return; }
     } catch (e) { /* ignore */ }
 
-    fetchWithTimeout(getServersStatsUrl(lang), {}, 12000)
+    apiFetch(getServersStatsUrl(lang), {}, 12000)
       .then(function (res) { if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')'); return res.json(); })
       .then(function (data) {
         var total = parseInt(data && data.count, 10);

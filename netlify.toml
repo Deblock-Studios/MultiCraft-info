@@ -1,3 +1,15 @@
+# Fonctions Edge Netlify.
+#
+# L'ordre compte : la plus spécifique d'abord. `/api/*` est traité par
+# api-proxy (proxy signé vers le Worker), tout le reste par meta (injection des
+# balises Open Graph). meta.js appelle context.next() et laisse donc passer les
+# chemins qu'il ne connaît pas, mais on évite ainsi tout traitement inutile des
+# réponses JSON de l'API.
+
+[[edge_functions]]
+  function = "api-proxy"
+  path = "/api/*"
+
 [[edge_functions]]
   function = "meta"
   path = "/*"

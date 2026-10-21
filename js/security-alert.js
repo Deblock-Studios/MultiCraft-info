@@ -19,9 +19,14 @@
       title: 'Attaque visant MultiCraft Info',
       close: 'Fermer',
       dismiss: "J'ai compris",
+      // Bouton de langue : affiche la langue VERS laquelle basculer.
+      switchLabel: 'English',
+      switchFlag: '🇬🇧',
+      switchAria: 'Voir cette alerte en anglais',
       paragraphs: [
         'Chers utilisateurs,',
         "MultiCraft Info a été victime d'une attaque dans le but de voler notre base de données de serveurs. Nous avons réussi à bloquer l'attaquant au bout d'environ 1 minute 30. Néanmoins, l'attaquant a dû réussir à voler notre liste.",
+        'Notre liste de serveurs est donc inaccessible pour le moment.',
         "Si l'attaquant voit ceci : merci de nous contacter sur Discord (nom d'utilisateur {discord}) afin d'avoir accès à notre base sans la voler.",
         "Cependant, vos mots de passe et emails n'ont pas été volés.",
         "Cordialement, l'équipe MultiCraft Info."
@@ -32,9 +37,13 @@
       title: 'MultiCraft Info was attacked',
       close: 'Close',
       dismiss: 'I understand',
+      switchLabel: 'Français',
+      switchFlag: '🇫🇷',
+      switchAria: 'View this alert in French',
       paragraphs: [
         'Dear users,',
         "MultiCraft Info was the target of an attack aimed at stealing our server database. We managed to stop the attacker after about 1 minute 30. However, the attacker likely managed to steal our list.",
+        'Our server list is therefore unavailable for the moment.',
         'If the attacker is reading this: please contact us on Discord (username {discord}) so you can get access to our database without stealing it.',
         'Your passwords and emails were not stolen.',
         'Sincerely, the MultiCraft Info team.'
@@ -42,10 +51,29 @@
     },
   };
 
-  // Langue du message : français uniquement si le site est en français,
-  // anglais pour toutes les autres langues.
+  // Langue affichée dans la pop-up. Elle suit la langue du site au premier
+  // affichage, puis le bouton « English / Français » permet de la changer sans
+  // toucher au reste de la page.
+  var popupLang = null;
+  var userChoseLang = false;
+
+  function siteLang() {
+    return (window.i18n && window.i18n.lang) === 'fr' ? 'fr' : 'en';
+  }
+
+  function currentLang() {
+    if (!popupLang) popupLang = siteLang();
+    return popupLang;
+  }
+
   function currentTexts() {
-    return (window.i18n && window.i18n.lang) === 'fr' ? TEXTS.fr : TEXTS.en;
+    return TEXTS[currentLang()];
+  }
+
+  function toggleLang() {
+    popupLang = currentLang() === 'fr' ? 'en' : 'fr';
+    userChoseLang = true;
+    render();
   }
 
   function getModal() {
@@ -80,11 +108,17 @@
     var title = document.getElementById('security-alert-title');
     var closeBtn = document.getElementById('security-alert-close');
     var dismissBtn = document.getElementById('security-alert-dismiss');
+    var langBtn = document.getElementById('security-alert-lang-toggle');
+    var langFlag = document.getElementById('security-alert-lang-flag');
+    var langLabel = document.getElementById('security-alert-lang-label');
 
     if (eyebrow) eyebrow.textContent = texts.eyebrow;
     if (title) title.textContent = texts.title;
     if (closeBtn) closeBtn.setAttribute('aria-label', texts.close);
     if (dismissBtn) dismissBtn.textContent = texts.dismiss;
+    if (langBtn) langBtn.setAttribute('aria-label', texts.switchAria);
+    if (langFlag) langFlag.textContent = texts.switchFlag;
+    if (langLabel) langLabel.textContent = texts.switchLabel;
 
     if (body) {
       body.innerHTML = '';
@@ -130,6 +164,10 @@
       if (btn) btn.addEventListener('click', close);
     });
 
+    // Bascule fr ↔ en du seul contenu de la pop-up.
+    var langBtn = document.getElementById('security-alert-lang-toggle');
+    if (langBtn) langBtn.addEventListener('click', toggleLang);
+
     // Clic sur le fond assombri (pas sur la boîte) : fermeture.
     modal.addEventListener('click', function (event) {
       if (event.target === modal) close();
@@ -139,9 +177,11 @@
       if (event.key === 'Escape' && isOpen()) close();
     });
 
-    // Le message est bilingue : si la langue change pendant l'affichage, on
-    // remplace immédiatement le contenu par la bonne version.
+    // Le message est bilingue : si la langue du site change, on repart de la
+    // nouvelle langue (sauf si l'utilisateur a choisi la sienne entre-temps).
     document.addEventListener('langchange', function () {
+      if (userChoseLang) return;
+      popupLang = null;
       if (isOpen()) render();
     });
   }

@@ -4346,22 +4346,23 @@
   })();
 
   /* ── Statistiques (page Stats) ── */
-  // Mêmes données que la liste des serveurs, avec /stats comme endpoint :
-  //   /db/original/stats?days=N          → les N derniers jours (1 à 3650, 30 par défaut)
-  //   /db/original/stats?date=YYYY-MM-DD → un seul jour (prioritaire sur days)
+  // Endpoint dédié à l'historique, indépendant de la langue des descriptions :
+  //   /stats?days=N          → les N derniers jours (1 à 3650, 30 par défaut)
+  //   /stats?date=YYYY-MM-DD → un seul jour (prioritaire sur days)
   // Réponse : { count, stats: [ { date, servers_discovered, servers_updated,
   //   total_servers, online, suspended, pvp, survival, creative, hardcore, adult,
-  //   premium, total_connected_players, total_max_players, countries, games } ] }.
+  //   premium, international, global_server, total_connected_players,
+  //   total_max_players, distinct_countries, countries, games } ] }.
   // Les relevés sont effectués chaque jour à 4h UTC côté API. `countries` n'est
   // volontairement pas affiché.
-  const STATS_API_BASE = SERVERS_API_URL + '/db/original'; // chiffres indépendants de la langue
+  const STATS_API_BASE = SERVERS_API_URL + '/stats'; // chiffres indépendants de la langue
   const STATS_DEFAULT_DAYS = 30;
   const STATS_MAX_DAYS = 3650;
   const STATS_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const STATS_MODE_KEYS = ['pvp', 'survival', 'creative', 'hardcore', 'adult'];
   const STATS_NON_MODE_KEYS = ['date', '__date', 'servers_discovered', 'servers_updated',
     'total_servers', 'online', 'suspended', 'premium', 'total_connected_players',
-    'total_max_players', 'countries', 'games'];
+    'total_max_players', 'distinct_countries', 'countries', 'games'];
   const STATS_MODE_COLORS = ['#a855f7', '#14b8a6', '#ec4899', '#eab308', '#f97316', '#64748b'];
   const STATS_MODE_LABELS = {
     pvp: 'servers.modePvp',
@@ -4369,6 +4370,8 @@
     creative: 'servers.modeCreative',
     hardcore: 'stats.hardcore',
     adult: 'servers.filterAdult',
+    international: 'stats.international',
+    global_server: 'stats.globalServer',
   };
 
   const statsDaysInput = document.getElementById('stats-days');
@@ -4470,7 +4473,7 @@
 
   // Même base que la liste des serveurs, /stats en plus. ?date= est prioritaire.
   function buildStatsUrl(days, date) {
-    return STATS_API_BASE + '/stats?' + (date ? 'date=' + encodeURIComponent(date) : 'days=' + days);
+    return STATS_API_BASE + '?' + (date ? 'date=' + encodeURIComponent(date) : 'days=' + days);
   }
 
   function extractStatsRows(data) {

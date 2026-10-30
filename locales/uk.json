@@ -264,5 +264,8 @@
   "stats.modes": "Режими",
   "stats.games": "Ігри",
   "stats.hardcore": "Хардкор",
-  "stats.snapshots": "замірів"
+  "stats.snapshots": "замірів",
+
+  "stats.international": "Міжнародні",
+  "stats.globalServer": "Глобальний сервер"
 }

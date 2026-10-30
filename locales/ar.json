@@ -264,5 +264,8 @@
   "stats.modes": "الأنماط",
   "stats.games": "الألعاب",
   "stats.hardcore": "هاردكور",
-  "stats.snapshots": "قياس"
+  "stats.snapshots": "قياس",
+
+  "stats.international": "دولي",
+  "stats.globalServer": "سيرفر عالمي"
 }

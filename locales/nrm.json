@@ -264,5 +264,8 @@
   "stats.modes": "Modes",
   "stats.games": "Jeux",
   "stats.hardcore": "Hardcore",
-  "stats.snapshots": "relevés"
+  "stats.snapshots": "relevés",
+
+  "stats.international": "International",
+  "stats.globalServer": "Serveur global"
 }

@@ -264,5 +264,8 @@
   "stats.modes": "Mode",
   "stats.games": "Permainan",
   "stats.hardcore": "Hardcore",
-  "stats.snapshots": "catatan"
+  "stats.snapshots": "catatan",
+
+  "stats.international": "Internasional",
+  "stats.globalServer": "Server global"
 }

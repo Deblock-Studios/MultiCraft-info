@@ -264,5 +264,8 @@
   "stats.modes": "模式",
   "stats.games": "游戏",
   "stats.hardcore": "硬核",
-  "stats.snapshots": "次统计"
+  "stats.snapshots": "次统计",
+
+  "stats.international": "国际",
+  "stats.globalServer": "全球服务器"
 }

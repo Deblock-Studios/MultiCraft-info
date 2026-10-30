@@ -264,5 +264,8 @@
   "stats.modes": "Режимы",
   "stats.games": "Игры",
   "stats.hardcore": "Хардкор",
-  "stats.snapshots": "замеров"
+  "stats.snapshots": "замеров",
+
+  "stats.international": "Международные",
+  "stats.globalServer": "Глобальный сервер"
 }

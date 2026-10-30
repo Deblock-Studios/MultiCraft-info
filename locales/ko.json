@@ -264,5 +264,8 @@
   "stats.modes": "모드",
   "stats.games": "게임",
   "stats.hardcore": "하드코어",
-  "stats.snapshots": "회 측정"
+  "stats.snapshots": "회 측정",
+
+  "stats.international": "인터내셔널",
+  "stats.globalServer": "글로벌 서버"
 }

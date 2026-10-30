@@ -264,5 +264,8 @@
   "stats.modes": "मोड",
   "stats.games": "गेम",
   "stats.hardcore": "हार्डकोर",
-  "stats.snapshots": "रिकॉर्ड"
+  "stats.snapshots": "रिकॉर्ड",
+
+  "stats.international": "अंतरराष्ट्रीय",
+  "stats.globalServer": "ग्लोबल सर्वर"
 }

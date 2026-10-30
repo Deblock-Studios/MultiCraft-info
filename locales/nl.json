@@ -264,5 +264,8 @@
   "stats.modes": "Modi",
   "stats.games": "Spellen",
   "stats.hardcore": "Hardcore",
-  "stats.snapshots": "metingen"
+  "stats.snapshots": "metingen",
+
+  "stats.international": "Internationaal",
+  "stats.globalServer": "Globale server"
 }

@@ -264,5 +264,8 @@
   "stats.modes": "Modoù",
   "stats.games": "C'hoarioù",
   "stats.hardcore": "Hardcore",
-  "stats.snapshots": "advezh"
+  "stats.snapshots": "advezh",
+
+  "stats.international": "Etrebroadel",
+  "stats.globalServer": "Servijer hollek"
 }

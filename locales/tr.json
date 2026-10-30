@@ -264,5 +264,8 @@
   "stats.modes": "Modlar",
   "stats.games": "Oyunlar",
   "stats.hardcore": "Hardcore",
-  "stats.snapshots": "ölçüm"
+  "stats.snapshots": "ölçüm",
+
+  "stats.international": "Uluslararası",
+  "stats.globalServer": "Küresel sunucu"
 }

@@ -264,5 +264,8 @@
   "stats.modes": "モード",
   "stats.games": "ゲーム",
   "stats.hardcore": "ハードコア",
-  "stats.snapshots": "件の計測"
+  "stats.snapshots": "件の計測",
+
+  "stats.international": "インターナショナル",
+  "stats.globalServer": "グローバルサーバー"
 }

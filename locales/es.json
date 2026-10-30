@@ -241,7 +241,7 @@
 
   "nav.stats": "Estadísticas",
   "stats.subtitle": "Evolución de la base de datos de servidores, registro a registro.",
-  "stats.snapshotNote": "Los registros se realizan cada día a las 4:00 UTC.",
+  "stats.snapshotNote": "Los registros se realizan cada día a las 4:00 UTC: las fechas mostradas son días UTC.",
   "stats.loading": "Cargando estadísticas…",
   "stats.empty": "No hay datos para este período.",
   "stats.error": "No se pudieron cargar las estadísticas.",

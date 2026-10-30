@@ -241,7 +241,7 @@
 
   "nav.stats": "Statistik",
   "stats.subtitle": "Perkembangan basis data server, catatan demi catatan.",
-  "stats.snapshotNote": "Pencatatan dilakukan setiap hari pukul 4:00 UTC.",
+  "stats.snapshotNote": "Pencatatan dilakukan setiap hari pukul 4:00 UTC: tanggal yang ditampilkan adalah hari UTC.",
   "stats.loading": "Memuat statistik…",
   "stats.empty": "Tidak ada data untuk periode ini.",
   "stats.error": "Statistik tidak dapat dimuat.",

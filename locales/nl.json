@@ -241,7 +241,7 @@
 
   "nav.stats": "Statistieken",
   "stats.subtitle": "Evolutie van de serverdatabase, meting per meting.",
-  "stats.snapshotNote": "De metingen worden elke dag om 4 uur UTC uitgevoerd.",
+  "stats.snapshotNote": "De metingen worden elke dag om 4 uur UTC uitgevoerd: de getoonde datums zijn UTC-dagen.",
   "stats.loading": "Statistieken laden…",
   "stats.empty": "Geen gegevens voor deze periode.",
   "stats.error": "Statistieken konden niet worden geladen.",

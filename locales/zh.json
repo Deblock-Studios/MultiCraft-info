@@ -241,7 +241,7 @@
 
   "nav.stats": "统计",
   "stats.subtitle": "服务器数据库的演变，逐次统计。",
-  "stats.snapshotNote": "统计每天在 UTC 4 点进行。",
+  "stats.snapshotNote": "统计每天在 UTC 4 点进行：显示的日期为 UTC 日期。",
   "stats.loading": "正在加载统计数据…",
   "stats.empty": "该时间段没有数据。",
   "stats.error": "无法加载统计数据。",

@@ -241,7 +241,7 @@
 
   "nav.stats": "İstatistikler",
   "stats.subtitle": "Sunucu veritabanının gelişimi, ölçüm ölçüm.",
-  "stats.snapshotNote": "Ölçümler her gün 04:00 UTC’de alınır.",
+  "stats.snapshotNote": "Ölçümler her gün 04:00 UTC'de alınır: gösterilen tarihler UTC günleridir.",
   "stats.loading": "İstatistikler yükleniyor…",
   "stats.empty": "Bu dönem için veri yok.",
   "stats.error": "İstatistikler yüklenemedi.",

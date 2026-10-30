@@ -241,7 +241,7 @@
 
   "nav.stats": "Stats",
   "stats.subtitle": "Évolution de la base de données des serveurs, relevé par relevé.",
-  "stats.snapshotNote": "Les relevés sont effectués chaque jour à 4h UTC.",
+  "stats.snapshotNote": "Les relevés sont effectués chaque jour à 4h UTC : les dates affichées sont des jours UTC.",
   "stats.loading": "Chargement des statistiques…",
   "stats.empty": "Aucune donnée pour cette période.",
   "stats.error": "Impossible de charger les statistiques.",

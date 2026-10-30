@@ -241,7 +241,7 @@
 
   "nav.stats": "Estatísticas",
   "stats.subtitle": "Evolução da base de dados de servidores, registo a registo.",
-  "stats.snapshotNote": "Os registos são efetuados todos os dias às 4h UTC.",
+  "stats.snapshotNote": "Os registos são efetuados todos os dias às 4h UTC: as datas apresentadas são dias UTC.",
   "stats.loading": "A carregar estatísticas…",
   "stats.empty": "Sem dados para este período.",
   "stats.error": "Não foi possível carregar as estatísticas.",

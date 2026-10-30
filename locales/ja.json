@@ -241,7 +241,7 @@
 
   "nav.stats": "統計",
   "stats.subtitle": "サーバーデータベースの推移を計測ごとに表示します。",
-  "stats.snapshotNote": "計測は毎日 4:00 UTC に行われます。",
+  "stats.snapshotNote": "計測は毎日 4:00 UTC に行われます。表示される日付は UTC の日付です。",
   "stats.loading": "統計を読み込み中…",
   "stats.empty": "この期間のデータはありません。",
   "stats.error": "統計を読み込めませんでした。",

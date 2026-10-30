@@ -241,7 +241,7 @@
 
   "nav.stats": "Statistiken",
   "stats.subtitle": "Entwicklung der Serverdatenbank, Momentaufnahme für Momentaufnahme.",
-  "stats.snapshotNote": "Die Momentaufnahmen werden täglich um 4 Uhr UTC erstellt.",
+  "stats.snapshotNote": "Die Momentaufnahmen werden täglich um 4 Uhr UTC erstellt: die angezeigten Daten sind UTC-Tage.",
   "stats.loading": "Statistiken werden geladen…",
   "stats.empty": "Keine Daten für diesen Zeitraum.",
   "stats.error": "Statistiken konnten nicht geladen werden.",

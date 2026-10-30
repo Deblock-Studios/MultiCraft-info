@@ -4473,7 +4473,8 @@
 
   // Même base que la liste des serveurs, /stats en plus. ?date= est prioritaire.
   function buildStatsUrl(days, date) {
-    return STATS_API_BASE + '?' + (date ? 'date=' + encodeURIComponent(date) : 'days=' + days);
+    return STATS_API_BASE + '?' + (date ? 'date=' + encodeURIComponent(date) : 'days=' + days) +
+      '&_=' + Date.now(); // évite qu'un cache navigateur/CDN serve un relevé de la veille
   }
 
   function extractStatsRows(data) {
@@ -4593,7 +4594,7 @@
       discovered += Number(row.servers_discovered) || 0;
       updated += Number(row.servers_updated) || 0;
     });
-    const snapshotDate = statsLongDate(last.__date);
+    const snapshotDate = statsLongDate(last.__date) + ' (UTC)';
     const period = statsRows.length > 1 ? statsLongDate(first.__date) + ' → ' + snapshotDate : snapshotDate;
     const cards = [
       { label: statsT('stats.totalServers'), value: last.total_servers, sub: snapshotDate },
@@ -4619,7 +4620,7 @@
     if (!statsRows.length) { statsRangeEl.textContent = ''; return; }
     const first = statsLongDate(statsRows[0].__date);
     const last = statsLongDate(statsRows[statsRows.length - 1].__date);
-    statsRangeEl.textContent = (first === last ? first : first + ' → ' + last) +
+    statsRangeEl.textContent = (first === last ? first : first + ' → ' + last) + ' (UTC)' +
       ' · ' + statsRows.length + ' ' + statsT('stats.snapshots');
   }
 
@@ -4759,7 +4760,7 @@
       return;
     }
     const columns = [
-      { key: '__date', label: statsT('stats.date') },
+      { key: '__date', label: statsT('stats.date') + ' (UTC)' },
       { key: 'total_servers', label: statsT('stats.totalServers') },
       { key: 'online', label: statsT('stats.online') },
       { key: 'suspended', label: statsT('stats.suspended') },
@@ -4809,7 +4810,7 @@
     statsLoading = true;
     const requestId = ++statsRequestId;
     renderStatsLoading();
-    apiFetch(buildStatsUrl(statsDays, statsDate), {}, 20000)
+    apiFetch(buildStatsUrl(statsDays, statsDate), { cache: 'no-store' }, 20000)
       .then(function (res) {
         if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
         return res.json();

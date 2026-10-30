@@ -241,7 +241,7 @@
 
   "nav.stats": "Stadegoù",
   "stats.subtitle": "Emdroadur diaz roadennoù ar servijerien, advezh goude advezh.",
-  "stats.snapshotNote": "Graet e vez an advezhioù bemdez da 4e e UTC.",
+  "stats.snapshotNote": "Graet e vez an advezhioù bemdez da 4e e UTC: an deiziadoù diskouezet zo deizioù UTC.",
   "stats.loading": "O kargañ ar stadegoù…",
   "stats.empty": "N'eus roadenn ebet evit ar prantad-mañ.",
   "stats.error": "N'haller ket kargañ ar stadegoù.",

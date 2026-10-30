@@ -241,7 +241,7 @@
 
   "nav.stats": "Stats",
   "stats.subtitle": "Evolution of the server database, snapshot by snapshot.",
-  "stats.snapshotNote": "Snapshots are taken every day at 4am UTC.",
+  "stats.snapshotNote": "Snapshots are taken every day at 4am UTC: the dates shown are UTC days.",
   "stats.loading": "Loading statistics…",
   "stats.empty": "No data for this period.",
   "stats.error": "Unable to load the statistics.",

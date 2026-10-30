@@ -241,7 +241,7 @@
 
   "nav.stats": "통계",
   "stats.subtitle": "서버 데이터베이스의 변화를 측정별로 보여줍니다.",
-  "stats.snapshotNote": "측정은 매일 4시 UTC에 수행됩니다.",
+  "stats.snapshotNote": "측정은 매일 4시 UTC에 수행됩니다. 표시되는 날짜는 UTC 날짜입니다.",
   "stats.loading": "통계를 불러오는 중…",
   "stats.empty": "이 기간에 대한 데이터가 없습니다.",
   "stats.error": "통계를 불러올 수 없습니다.",

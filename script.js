@@ -1169,7 +1169,7 @@
     if (entry && entry.file) return entry.file;
     return lang.split('-')[0].toLowerCase();
   }
-
+  
   /* Un article manquant ne renvoie pas 404 : _redirects contient un rewrite
      « catch-all » vers index.html, donc /updates/.../post-de.md inexistant
      répond 200 avec le HTML de la page d'accueil. Sans ce contrôle, c'est
@@ -1201,7 +1201,7 @@
       const langFile = updatesLangFile();
       // fr = source (post.md), en = post-en.md, autres langues = post-<lang>.md
       const wantsTranslation = langFile !== 'fr';
-      const preferredFile = 'post-' + langFile + '.md';
+      const preferredFile = 'post.' + langFile + '.md';
       let missingTranslation = false;
       const posts = await Promise.all(folders.map(async function (folder) {
         // Ordre de recherche : langue courante, puis anglais, puis français

@@ -4586,15 +4586,7 @@
     if (!statsKpisEl) return;
     if (!statsRows.length) { statsKpisEl.innerHTML = ''; return; }
     const last = statsRows[statsRows.length - 1];
-    const first = statsRows[0];
-    let discovered = 0;
-    let updated = 0;
-    statsRows.forEach(function (row) {
-      discovered += Number(row.servers_discovered) || 0;
-      updated += Number(row.servers_updated) || 0;
-    });
     const snapshotDate = statsLongDate(last.__date) + ' (UTC)';
-    const period = statsRows.length > 1 ? statsLongDate(first.__date) + ' → ' + snapshotDate : snapshotDate;
     const cards = [
       { label: statsT('stats.totalServers'), value: last.total_servers, sub: snapshotDate },
       { label: statsT('stats.suspended'), value: last.suspended, sub: snapshotDate },
@@ -4602,8 +4594,6 @@
     if (statsHasPremium) cards.push({ label: statsT('stats.premium'), value: last.premium, sub: snapshotDate });
     cards.push({ label: statsT('stats.connectedPlayers'), value: last.total_connected_players, sub: snapshotDate });
     cards.push({ label: statsT('stats.maxPlayers'), value: last.total_max_players, sub: snapshotDate });
-    cards.push({ label: statsT('stats.discovered'), value: discovered, sub: period });
-    cards.push({ label: statsT('stats.updated'), value: updated, sub: period });
     statsKpisEl.innerHTML = cards.map(function (card) {
       return '<div class="stats-kpi">' +
         '<span class="stats-kpi-label">' + escapeHtml(card.label) + '</span>' +
@@ -4765,8 +4755,6 @@
     if (statsHasPremium) columns.push({ key: 'premium', label: statsT('stats.premium') });
     columns.push({ key: 'total_connected_players', label: statsT('stats.connectedPlayers') });
     columns.push({ key: 'total_max_players', label: statsT('stats.maxPlayers') });
-    columns.push({ key: 'servers_discovered', label: statsT('stats.discovered') });
-    columns.push({ key: 'servers_updated', label: statsT('stats.updated') });
 
     const head = columns.map(function (column) {
       return '<th scope="col">' + escapeHtml(column.label) + '</th>';

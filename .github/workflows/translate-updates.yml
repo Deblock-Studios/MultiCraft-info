@@ -1,0 +1,50 @@
+name: Translate update posts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'updates/**/post.md'
+      - 'updates/**/post-en.md'
+      - 'scripts/translate-updates.mjs'
+      - '.github/workflows/translate-updates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: translate-updates
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Translate update posts
+        env:
+          TRANSLATE_API_KEY: ${{ secrets.TRANSLATE_API_KEY }}
+          TRANSLATE_ENDPOINT: ${{ vars.TRANSLATE_ENDPOINT }}
+          TRANSLATE_MODEL: ${{ vars.TRANSLATE_MODEL }}
+        run: node scripts/translate-updates.mjs
+
+      - name: Commit generated translations and index
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "chore(updates): auto-translate posts and rebuild index [skip ci]"
+            git push
+          fi

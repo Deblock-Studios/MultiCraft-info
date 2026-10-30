@@ -927,6 +927,7 @@
     accueil: document.getElementById('page-accueil'),
     'mises-a-jour': document.getElementById('page-mises-a-jour'),
     serveurs: document.getElementById('page-serveurs'),
+    stats: document.getElementById('page-stats'),
     'le-jeu': document.getElementById('page-le-jeu'),
     profil: document.getElementById('page-profil'),
     compte: document.getElementById('page-compte'),
@@ -939,6 +940,7 @@
     accueil: null,
     'mises-a-jour': 'nav.updates',
     serveurs: 'nav.servers',
+    stats: 'nav.stats',
     'le-jeu': 'nav.theGame',
     profil: 'nav.profile',
     compte: 'deblock.loginTitle',
@@ -974,6 +976,7 @@
     if (pageId === 'mises-a-jour' && !updatesLoaded) loadUpdates();
     if (pageId === 'le-jeu' && !datacentersLoaded) renderDatacenters();
     if (pageId === 'serveurs' && !serversLoaded) loadServers();
+    if (pageId === 'stats' && !statsLoaded) loadStats();
     if (pageId === 'le-jeu' && !downloadsLoaded) loadDownloads();
     if (pageId === 'le-jeu') loadUserLocation();
     if (pageId === 'profil') {
@@ -4340,6 +4343,541 @@
         ticking = true;
       }
     }, { passive: true });
+  })();
+
+  /* ── Statistiques (page Stats) ── */
+  // Mêmes données que la liste des serveurs, avec /stats comme endpoint :
+  //   /db/original/stats?days=N          → les N derniers jours (1 à 3650, 30 par défaut)
+  //   /db/original/stats?date=YYYY-MM-DD → un seul jour (prioritaire sur days)
+  // Réponse : { count, stats: [ { date, servers_discovered, servers_updated,
+  //   total_servers, online, suspended, pvp, survival, creative, hardcore, adult,
+  //   premium, total_connected_players, total_max_players, countries, games } ] }.
+  // Les relevés sont effectués chaque jour à 4h UTC côté API. `countries` n'est
+  // volontairement pas affiché.
+  const STATS_API_BASE = SERVERS_API_URL + '/db/original'; // chiffres indépendants de la langue
+  const STATS_DEFAULT_DAYS = 30;
+  const STATS_MAX_DAYS = 3650;
+  const STATS_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const STATS_MODE_KEYS = ['pvp', 'survival', 'creative', 'hardcore', 'adult'];
+  const STATS_NON_MODE_KEYS = ['date', '__date', 'servers_discovered', 'servers_updated',
+    'total_servers', 'online', 'suspended', 'premium', 'total_connected_players',
+    'total_max_players', 'countries', 'games'];
+  const STATS_MODE_COLORS = ['#a855f7', '#14b8a6', '#ec4899', '#eab308', '#f97316', '#64748b'];
+  const STATS_MODE_LABELS = {
+    pvp: 'servers.modePvp',
+    survival: 'servers.modeSurvival',
+    creative: 'servers.modeCreative',
+    hardcore: 'stats.hardcore',
+    adult: 'servers.filterAdult',
+  };
+
+  const statsDaysInput = document.getElementById('stats-days');
+  const statsDateInput = document.getElementById('stats-date');
+  const statsClearDayBtn = document.getElementById('stats-clear-day');
+  const statsRangeEl = document.getElementById('stats-range');
+  const statsStatusEl = document.getElementById('stats-status');
+  const statsKpisEl = document.getElementById('stats-kpis');
+  const statsTableEl = document.getElementById('stats-table');
+  const statsCountEl = document.getElementById('stats-count');
+  const statsChartEls = {
+    servers: document.getElementById('stats-chart-servers'),
+    players: document.getElementById('stats-chart-players'),
+  };
+  const statsLegendEls = {
+    servers: document.getElementById('stats-legend-servers'),
+    players: document.getElementById('stats-legend-players'),
+  };
+
+  let statsLoaded = false;
+  let statsLoading = false;
+  let statsRequestId = 0;
+  let statsRows = [];
+  let statsModes = [];
+  let statsHasPremium = false;
+  let statsDays = STATS_DEFAULT_DAYS;
+  let statsDate = '';
+  const statsSeriesVisible = {}; // clé de métrique → false quand masquée par la légende
+
+  function statsT(key) {
+    return window.i18n ? window.i18n.t(key) : key;
+  }
+
+  function statsLocale() {
+    return (window.i18n && window.i18n.lang) || 'fr';
+  }
+
+  function statsNumberFormatter(compact) {
+    try {
+      return new Intl.NumberFormat(statsLocale(), compact
+        ? { notation: 'compact', maximumFractionDigits: 1 }
+        : { maximumFractionDigits: 0 });
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Nombre lisible, ou « — » quand la valeur manque.
+  function statsNumber(value, compact) {
+    if (value === null || value === undefined || value === '') return '—';
+    const n = Number(value);
+    if (!isFinite(n)) return '—';
+    const formatter = statsNumberFormatter(compact);
+    return formatter ? formatter.format(n) : String(n);
+  }
+
+  // « 2026-10-30 » ou « 2026-10-30T04:00:00Z » → « 2026-10-30 ».
+  function statsDateValue(raw) {
+    if (!raw) return '';
+    return String(raw).slice(0, 10);
+  }
+
+  function statsDateObject(iso) {
+    return new Date(iso + 'T00:00:00Z');
+  }
+
+  function statsLongDate(iso) {
+    if (!iso) return '—';
+    try {
+      return statsDateObject(iso).toLocaleDateString(statsLocale(), {
+        day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC',
+      });
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function statsShortDate(iso) {
+    if (!iso) return '';
+    try {
+      return statsDateObject(iso).toLocaleDateString(statsLocale(), {
+        day: '2-digit', month: 'short', timeZone: 'UTC',
+      });
+    } catch (e) {
+      return iso.slice(5);
+    }
+  }
+
+  // Libellé lisible pour un mode / jeu non prévu par le site (« bedwars » → « Bedwars »).
+  function statsHumanize(key) {
+    return String(key).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  function clampStatsDays(value) {
+    const days = parseInt(value, 10);
+    if (!isFinite(days)) return STATS_DEFAULT_DAYS;
+    return Math.min(STATS_MAX_DAYS, Math.max(1, days));
+  }
+
+  // Même base que la liste des serveurs, /stats en plus. ?date= est prioritaire.
+  function buildStatsUrl(days, date) {
+    return STATS_API_BASE + '/stats?' + (date ? 'date=' + encodeURIComponent(date) : 'days=' + days);
+  }
+
+  function extractStatsRows(data) {
+    const list = data && Array.isArray(data.stats) ? data.stats : (Array.isArray(data) ? data : []);
+    return list.filter(function (row) { return row && typeof row === 'object'; })
+      .map(function (row) {
+        const copy = {};
+        Object.keys(row).forEach(function (key) { copy[key] = row[key]; });
+        copy.__date = statsDateValue(row.date);
+        return copy;
+      })
+      .sort(function (a, b) { return a.__date < b.__date ? -1 : a.__date > b.__date ? 1 : 0; });
+  }
+
+  function detectStatsModes(rows) {
+    const keys = [];
+    STATS_MODE_KEYS.forEach(function (key) {
+      if (rows.some(function (row) { return typeof row[key] === 'number'; })) keys.push(key);
+    });
+    // Modes supplémentaires renvoyés un jour par l'API : tout champ numérique
+    // qui n'est ni une grandeur connue ni countries/games.
+    rows.forEach(function (row) {
+      Object.keys(row).forEach(function (key) {
+        if (keys.indexOf(key) !== -1 || STATS_NON_MODE_KEYS.indexOf(key) !== -1) return;
+        if (typeof row[key] !== 'number') return;
+        keys.push(key);
+      });
+    });
+    return keys;
+  }
+
+  function statsModeLabel(key) {
+    return STATS_MODE_LABELS[key] ? statsT(STATS_MODE_LABELS[key]) : statsHumanize(key);
+  }
+
+  // Séries d'un graphique. Les modes sont tracés mais masqués par défaut : le
+  // graphique reste lisible, la légende permet de les activer.
+  function statsSeriesDefs(kind) {
+    let defs;
+    if (kind === 'players') {
+      defs = [
+        { key: 'total_connected_players', color: '#38bdf8', label: function () { return statsT('stats.connectedPlayers'); }, shown: true },
+        { key: 'total_max_players', color: '#a855f7', label: function () { return statsT('stats.maxPlayers'); }, shown: true },
+      ];
+    } else {
+      defs = [
+        { key: 'total_servers', color: '#22c55e', label: function () { return statsT('stats.totalServers'); }, shown: true },
+        { key: 'online', color: '#38bdf8', label: function () { return statsT('stats.online'); }, shown: true },
+        { key: 'suspended', color: '#ef4444', label: function () { return statsT('stats.suspended'); }, shown: true },
+      ];
+      if (statsHasPremium) {
+        defs.push({ key: 'premium', color: '#f59e0b', label: function () { return statsT('stats.premium'); }, shown: true });
+      }
+      statsModes.forEach(function (key, index) {
+        defs.push({
+          key: key,
+          color: STATS_MODE_COLORS[index % STATS_MODE_COLORS.length],
+          label: function () { return statsModeLabel(key); },
+          shown: false,
+        });
+      });
+    }
+    return defs.filter(function (def) {
+      return statsRows.some(function (row) { return typeof row[def.key] === 'number'; });
+    });
+  }
+
+  function statsSeriesIsVisible(def) {
+    if (Object.prototype.hasOwnProperty.call(statsSeriesVisible, def.key)) return statsSeriesVisible[def.key];
+    return def.shown !== false;
+  }
+
+  function statsNiceMax(value) {
+    if (!(value > 0)) return 1;
+    const exponent = Math.pow(10, Math.floor(Math.log10(value)));
+    const fraction = value / exponent;
+    const nice = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 2.5 ? 2.5 : fraction <= 5 ? 5 : 10;
+    return nice * exponent;
+  }
+
+  function clearStatsContent() {
+    if (statsKpisEl) statsKpisEl.innerHTML = '';
+    if (statsRangeEl) statsRangeEl.textContent = '';
+    if (statsCountEl) statsCountEl.textContent = '';
+    Object.keys(statsChartEls).forEach(function (kind) {
+      if (statsChartEls[kind]) statsChartEls[kind].innerHTML = '';
+      if (statsLegendEls[kind]) statsLegendEls[kind].innerHTML = '';
+    });
+    if (statsTableEl) statsTableEl.innerHTML = '';
+  }
+
+  function showStatsStatus(html, className) {
+    if (!statsStatusEl) return;
+    statsStatusEl.hidden = false;
+    statsStatusEl.className = 'stats-status' + (className ? ' ' + className : '');
+    statsStatusEl.innerHTML = html;
+  }
+
+  function renderStatsLoading() {
+    clearStatsContent();
+    showStatsStatus('<div class="loading-state"><md-circular-progress indeterminate aria-hidden="true"></md-circular-progress><p>' + escapeHtml(statsT('stats.loading')) + '</p></div>');
+  }
+
+  function renderStatsError() {
+    clearStatsContent();
+    showStatsStatus('<div class="error-state"><p>' + escapeHtml(statsT('stats.error')) + '</p><p style="margin-top:0.75rem"><button type="button" class="btn btn-primary" data-stats-retry>' + escapeHtml(statsT('stats.retry')) + '</button></p></div>');
+  }
+
+  function renderStatsKpis() {
+    if (!statsKpisEl) return;
+    if (!statsRows.length) { statsKpisEl.innerHTML = ''; return; }
+    const last = statsRows[statsRows.length - 1];
+    const first = statsRows[0];
+    let discovered = 0;
+    let updated = 0;
+    statsRows.forEach(function (row) {
+      discovered += Number(row.servers_discovered) || 0;
+      updated += Number(row.servers_updated) || 0;
+    });
+    const snapshotDate = statsLongDate(last.__date);
+    const period = statsRows.length > 1 ? statsLongDate(first.__date) + ' → ' + snapshotDate : snapshotDate;
+    const cards = [
+      { label: statsT('stats.totalServers'), value: last.total_servers, sub: snapshotDate },
+      { label: statsT('stats.online'), value: last.online, sub: snapshotDate },
+      { label: statsT('stats.suspended'), value: last.suspended, sub: snapshotDate },
+    ];
+    if (statsHasPremium) cards.push({ label: statsT('stats.premium'), value: last.premium, sub: snapshotDate });
+    cards.push({ label: statsT('stats.connectedPlayers'), value: last.total_connected_players, sub: snapshotDate });
+    cards.push({ label: statsT('stats.maxPlayers'), value: last.total_max_players, sub: snapshotDate });
+    cards.push({ label: statsT('stats.discovered'), value: discovered, sub: period });
+    cards.push({ label: statsT('stats.updated'), value: updated, sub: period });
+    statsKpisEl.innerHTML = cards.map(function (card) {
+      return '<div class="stats-kpi">' +
+        '<span class="stats-kpi-label">' + escapeHtml(card.label) + '</span>' +
+        '<span class="stats-kpi-value">' + escapeHtml(statsNumber(card.value)) + '</span>' +
+        '<span class="stats-kpi-sub">' + escapeHtml(card.sub) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderStatsRange() {
+    if (!statsRangeEl) return;
+    if (!statsRows.length) { statsRangeEl.textContent = ''; return; }
+    const first = statsLongDate(statsRows[0].__date);
+    const last = statsLongDate(statsRows[statsRows.length - 1].__date);
+    statsRangeEl.textContent = (first === last ? first : first + ' → ' + last) +
+      ' · ' + statsRows.length + ' ' + statsT('stats.snapshots');
+  }
+
+  function renderStatsLegend(kind, defs) {
+    const el = statsLegendEls[kind];
+    if (!el) return;
+    el.innerHTML = defs.map(function (def) {
+      return '<button type="button" class="stats-legend-btn" data-stats-series="' + escapeHtml(def.key) + '" aria-pressed="' + (statsSeriesIsVisible(def) ? 'true' : 'false') + '">' +
+        '<span class="stats-legend-dot" style="background:' + def.color + '"></span>' +
+        escapeHtml(def.label()) + '</button>';
+    }).join('');
+  }
+
+  function renderStatsChart(kind) {
+    const container = statsChartEls[kind];
+    const defs = statsSeriesDefs(kind);
+    renderStatsLegend(kind, defs);
+    if (!container) return;
+    if (!statsRows.length) {
+      container.innerHTML = '<p class="empty-state">' + escapeHtml(statsT('stats.empty')) + '</p>';
+      return;
+    }
+    const visible = defs.filter(statsSeriesIsVisible);
+    if (!visible.length) {
+      container.innerHTML = '<p class="empty-state">' + escapeHtml(statsT('stats.empty')) + '</p>';
+      return;
+    }
+
+    const W = 780;
+    const H = 280;
+    const pad = { top: 16, right: 20, bottom: 32, left: 58 };
+    const innerW = W - pad.left - pad.right;
+    const innerH = H - pad.top - pad.bottom;
+    const n = statsRows.length;
+    let max = 0;
+    visible.forEach(function (def) {
+      statsRows.forEach(function (row) {
+        const value = Number(row[def.key]);
+        if (isFinite(value) && value > max) max = value;
+      });
+    });
+    max = statsNiceMax(max || 1);
+    const xAt = function (index) { return pad.left + (n === 1 ? innerW / 2 : (index / (n - 1)) * innerW); };
+    const yAt = function (value) { return pad.top + innerH - (Math.max(0, Math.min(value, max)) / max) * innerH; };
+
+    const parts = [];
+    parts.push('<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
+      escapeHtml(statsT(kind === 'players' ? 'stats.chartPlayers' : 'stats.chartServers')) + '">');
+    for (let tick = 0; tick <= 4; tick++) {
+      const value = (max / 4) * tick;
+      const y = yAt(value);
+      parts.push('<line class="stats-grid-line" x1="' + pad.left + '" y1="' + y.toFixed(1) + '" x2="' + (W - pad.right) + '" y2="' + y.toFixed(1) + '"/>');
+      parts.push('<text x="' + (pad.left - 8) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end">' + escapeHtml(statsNumber(value, true)) + '</text>');
+    }
+    const labelStep = Math.max(1, Math.ceil((n - 1) / 6));
+    for (let index = 0; index < n; index += labelStep) {
+      parts.push('<text x="' + xAt(index).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle">' +
+        escapeHtml(statsShortDate(statsRows[index].__date)) + '</text>');
+    }
+    if (n > 1 && (n - 1) % labelStep !== 0) {
+      parts.push('<text x="' + xAt(n - 1).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="end">' +
+        escapeHtml(statsShortDate(statsRows[n - 1].__date)) + '</text>');
+    }
+    visible.forEach(function (def) {
+      let path = '';
+      let open = false;
+      statsRows.forEach(function (row, index) {
+        const value = Number(row[def.key]);
+        if (!isFinite(value)) { open = false; return; }
+        path += (open ? 'L' : 'M') + xAt(index).toFixed(1) + ' ' + yAt(value).toFixed(1) + ' ';
+        open = true;
+      });
+      if (path) {
+        parts.push('<path d="' + path.trim() + '" fill="none" stroke="' + def.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>');
+      }
+      if (n === 1) {
+        const value = Number(statsRows[0][def.key]);
+        if (isFinite(value)) parts.push('<circle cx="' + xAt(0).toFixed(1) + '" cy="' + yAt(value).toFixed(1) + '" r="4" fill="' + def.color + '"/>');
+      } else if (n <= 120) {
+        statsRows.forEach(function (row, index) {
+          const value = Number(row[def.key]);
+          if (!isFinite(value)) return;
+          parts.push('<circle cx="' + xAt(index).toFixed(1) + '" cy="' + yAt(value).toFixed(1) + '" r="2.4" fill="' + def.color + '"/>');
+        });
+      }
+    });
+    parts.push('<rect class="stats-hover-rect" x="' + pad.left + '" y="' + pad.top + '" width="' + innerW + '" height="' + innerH + '" fill="transparent"/>');
+    parts.push('</svg>');
+    container.innerHTML = parts.join('') + '<div class="stats-tooltip" hidden></div>';
+
+    const svgEl = container.querySelector('svg');
+    const tooltip = container.querySelector('.stats-tooltip');
+    if (!svgEl || !tooltip) return;
+
+    function hideTooltip() { tooltip.hidden = true; }
+
+    function showTooltip(event) {
+      const rect = svgEl.getBoundingClientRect();
+      if (!rect.width) return;
+      const scale = rect.width / W;
+      const cursorX = (event.clientX - rect.left) / scale;
+      let index = n === 1 ? 0 : Math.round(((cursorX - pad.left) / innerW) * (n - 1));
+      index = Math.max(0, Math.min(n - 1, index));
+      const row = statsRows[index];
+      tooltip.innerHTML = '<div class="stats-tooltip-date">' + escapeHtml(statsLongDate(row.__date)) + '</div>' +
+        visible.map(function (def) {
+          return '<div class="stats-tooltip-row"><span class="stats-legend-dot" style="background:' + def.color + '"></span><span>' +
+            escapeHtml(def.label()) + '</span><b>' + escapeHtml(statsNumber(row[def.key])) + '</b></div>';
+        }).join('');
+      tooltip.hidden = false;
+      const left = Math.min(Math.max(xAt(index) * scale, 80), Math.max(80, rect.width - 80));
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = '4px';
+    }
+
+    svgEl.addEventListener('mousemove', showTooltip);
+    svgEl.addEventListener('mouseleave', hideTooltip);
+    svgEl.addEventListener('touchstart', function (event) { if (event.touches && event.touches[0]) showTooltip(event.touches[0]); }, { passive: true });
+    svgEl.addEventListener('touchmove', function (event) { if (event.touches && event.touches[0]) showTooltip(event.touches[0]); }, { passive: true });
+    svgEl.addEventListener('touchend', hideTooltip);
+  }
+
+  function renderStatsObject(obj) {
+    if (!obj || typeof obj !== 'object') return '—';
+    const entries = Object.keys(obj).filter(function (key) { return key !== 'countries'; });
+    if (!entries.length) return '—';
+    return '<div class="stats-mini-list">' + entries.map(function (key) {
+      return '<span class="stats-mini-chip">' + escapeHtml(statsHumanize(key)) + ' <b>' + escapeHtml(statsNumber(obj[key])) + '</b></span>';
+    }).join('') + '</div>';
+  }
+
+  function renderStatsTable() {
+    if (!statsTableEl) return;
+    if (!statsRows.length) {
+      statsTableEl.innerHTML = '<p class="empty-state">' + escapeHtml(statsT('stats.empty')) + '</p>';
+      if (statsCountEl) statsCountEl.textContent = '';
+      return;
+    }
+    const columns = [
+      { key: '__date', label: statsT('stats.date') },
+      { key: 'total_servers', label: statsT('stats.totalServers') },
+      { key: 'online', label: statsT('stats.online') },
+      { key: 'suspended', label: statsT('stats.suspended') },
+    ];
+    if (statsHasPremium) columns.push({ key: 'premium', label: statsT('stats.premium') });
+    columns.push({ key: 'total_connected_players', label: statsT('stats.connectedPlayers') });
+    columns.push({ key: 'total_max_players', label: statsT('stats.maxPlayers') });
+    columns.push({ key: 'servers_discovered', label: statsT('stats.discovered') });
+    columns.push({ key: 'servers_updated', label: statsT('stats.updated') });
+
+    const head = columns.map(function (column) {
+      return '<th scope="col">' + escapeHtml(column.label) + '</th>';
+    }).join('') +
+      '<th scope="col">' + escapeHtml(statsT('stats.modes')) + '</th>' +
+      '<th scope="col">' + escapeHtml(statsT('stats.games')) + '</th>';
+
+    const body = statsRows.slice().reverse().map(function (row) {
+      const cells = columns.map(function (column) {
+        if (column.key === '__date') return '<td>' + escapeHtml(statsLongDate(row.__date)) + '</td>';
+        return '<td>' + escapeHtml(statsNumber(row[column.key])) + '</td>';
+      }).join('');
+      const modes = statsModes.map(function (key) {
+        return '<span class="stats-mini-chip">' + escapeHtml(statsModeLabel(key)) + ' <b>' + escapeHtml(statsNumber(row[key])) + '</b></span>';
+      }).join('');
+      return '<tr>' + cells +
+        '<td class="stats-table-modes">' + (modes ? '<div class="stats-mini-list">' + modes + '</div>' : '—') + '</td>' +
+        '<td class="stats-table-games">' + renderStatsObject(row.games) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    statsTableEl.innerHTML = '<table class="stats-table"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+    if (statsCountEl) statsCountEl.textContent = statsRows.length + ' ' + statsT('stats.snapshots');
+  }
+
+  function renderStats() {
+    if (statsStatusEl) { statsStatusEl.hidden = true; statsStatusEl.innerHTML = ''; }
+    renderStatsKpis();
+    renderStatsRange();
+    renderStatsChart('servers');
+    renderStatsChart('players');
+    renderStatsTable();
+  }
+
+  function loadStats(force) {
+    if (statsLoading) return;
+    if (statsLoaded && !force) return;
+    statsLoading = true;
+    const requestId = ++statsRequestId;
+    renderStatsLoading();
+    apiFetch(buildStatsUrl(statsDays, statsDate), {}, 20000)
+      .then(function (res) {
+        if (!res.ok) throw new Error('Réponse API invalide (' + res.status + ')');
+        return res.json();
+      })
+      .then(function (data) {
+        if (requestId !== statsRequestId) return;
+        statsRows = extractStatsRows(data);
+        statsModes = detectStatsModes(statsRows);
+        statsHasPremium = statsRows.some(function (row) { return typeof row.premium === 'number'; });
+        statsLoaded = true;
+        statsLoading = false;
+        renderStats();
+      })
+      .catch(function (err) {
+        if (requestId !== statsRequestId) return;
+        statsLoading = false;
+        console.error('Erreur de chargement des statistiques', err);
+        renderStatsError();
+      });
+  }
+
+  (function initStatsControls() {
+    if (statsDaysInput) {
+      statsDaysInput.value = String(statsDays);
+      statsDaysInput.addEventListener('change', function () {
+        statsDays = clampStatsDays(statsDaysInput.value);
+        statsDaysInput.value = String(statsDays);
+        statsDate = '';
+        if (statsDateInput) statsDateInput.value = '';
+        if (statsClearDayBtn) statsClearDayBtn.hidden = true;
+        loadStats(true);
+      });
+    }
+    if (statsDateInput) {
+      statsDateInput.addEventListener('change', function () {
+        const value = (statsDateInput.value || '').trim();
+        statsDate = STATS_DATE_RE.test(value) ? value : '';
+        if (statsClearDayBtn) statsClearDayBtn.hidden = !statsDate;
+        loadStats(true);
+      });
+    }
+    if (statsClearDayBtn) {
+      statsClearDayBtn.addEventListener('click', function () {
+        statsDate = '';
+        if (statsDateInput) statsDateInput.value = '';
+        statsClearDayBtn.hidden = true;
+        loadStats(true);
+      });
+    }
+    Object.keys(statsLegendEls).forEach(function (kind) {
+      const el = statsLegendEls[kind];
+      if (!el) return;
+      el.addEventListener('click', function (event) {
+        if (!event.target || !event.target.closest) return;
+        const button = event.target.closest('[data-stats-series]');
+        if (!button) return;
+        const key = button.getAttribute('data-stats-series');
+        const def = statsSeriesDefs(kind).filter(function (item) { return item.key === key; })[0];
+        if (!def) return;
+        statsSeriesVisible[key] = !statsSeriesIsVisible(def);
+        renderStatsChart(kind);
+      });
+    });
+    if (statsStatusEl) {
+      statsStatusEl.addEventListener('click', function (event) {
+        if (event.target && event.target.closest && event.target.closest('[data-stats-retry]')) loadStats(true);
+      });
+    }
+    document.addEventListener('langchange', function () {
+      if (statsLoaded) renderStats();
+    });
   })();
 
   /* ── Hero Stats ── */

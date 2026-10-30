@@ -518,6 +518,7 @@
         <a href="/" class="nav-link active" data-nav="accueil" data-i18n="nav.home">Accueil</a>
         <a href="/mises-a-jour" class="nav-link" data-nav="mises-a-jour" data-i18n="nav.updates">Mises à jour</a>
         <a href="/serveurs" class="nav-link" data-nav="serveurs" data-i18n="nav.servers">Serveurs</a>
+        <a href="/stats" class="nav-link" data-nav="stats" data-i18n="nav.stats">Stats</a>
         <a href="/le-jeu" class="nav-link" data-nav="le-jeu" data-i18n="nav.theGame">Le jeu</a>
         <a href="https://multicraft-hub.netlify.app/" class="nav-link">Multicraft Hub</a>
       </nav>
@@ -718,6 +719,49 @@
           <md-circular-progress indeterminate aria-hidden="true"></md-circular-progress>
           <p data-i18n="servers.loading">Chargement des serveurs…</p>
         </div>
+      </div>
+    </section>
+    <!-- Statistiques / Stats -->
+    <section id="page-stats" class="page">
+      <div class="page-header">
+        <h1 class="porthole-title" data-i18n="nav.stats">Stats</h1>
+        <p data-i18n="stats.subtitle">Évolution de la base de données des serveurs, relevé par relevé.</p>
+        <p class="stats-snapshot-note" data-i18n="stats.snapshotNote">Les relevés sont effectués chaque jour à 4h UTC.</p>
+      </div>
+      <div class="stats-toolbar">
+        <label class="stats-field" for="stats-days">
+          <span data-i18n="stats.days">Nombre de jours</span>
+          <input type="number" id="stats-days" min="1" max="3650" step="1" value="30" inputmode="numeric">
+        </label>
+        <label class="stats-field" for="stats-date">
+          <span data-i18n="stats.singleDay">Un seul jour</span>
+          <input type="date" id="stats-date">
+        </label>
+        <button type="button" id="stats-clear-day" class="stats-chip" hidden data-i18n="stats.clearDay">Toute la période</button>
+        <span id="stats-range" class="stats-range-label"></span>
+      </div>
+      <div id="stats-status" class="stats-status" hidden></div>
+      <div id="stats-kpis" class="stats-kpis"></div>
+      <div class="stats-card">
+        <div class="stats-card-head">
+          <h2 data-i18n="stats.chartServers">Serveurs</h2>
+          <div id="stats-legend-servers" class="stats-legend"></div>
+        </div>
+        <div id="stats-chart-servers" class="stats-chart"></div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-card-head">
+          <h2 data-i18n="stats.chartPlayers">Joueurs</h2>
+          <div id="stats-legend-players" class="stats-legend"></div>
+        </div>
+        <div id="stats-chart-players" class="stats-chart"></div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-card-head">
+          <h2 data-i18n="stats.detailTitle">Détail des relevés</h2>
+          <span id="stats-count" class="stats-count"></span>
+        </div>
+        <div id="stats-table" class="stats-table-wrap"></div>
       </div>
     </section>
     <!-- Le jeu / The Game (Télécharger + Info du jeu) -->

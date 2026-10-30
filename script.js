@@ -4522,7 +4522,6 @@
     } else {
       defs = [
         { key: 'total_servers', color: '#22c55e', label: function () { return statsT('stats.totalServers'); }, shown: true },
-        { key: 'online', color: '#38bdf8', label: function () { return statsT('stats.online'); }, shown: true },
         { key: 'suspended', color: '#ef4444', label: function () { return statsT('stats.suspended'); }, shown: true },
       ];
       if (statsHasPremium) {
@@ -4598,7 +4597,6 @@
     const period = statsRows.length > 1 ? statsLongDate(first.__date) + ' → ' + snapshotDate : snapshotDate;
     const cards = [
       { label: statsT('stats.totalServers'), value: last.total_servers, sub: snapshotDate },
-      { label: statsT('stats.online'), value: last.online, sub: snapshotDate },
       { label: statsT('stats.suspended'), value: last.suspended, sub: snapshotDate },
     ];
     if (statsHasPremium) cards.push({ label: statsT('stats.premium'), value: last.premium, sub: snapshotDate });
@@ -4762,7 +4760,6 @@
     const columns = [
       { key: '__date', label: statsT('stats.date') + ' (UTC)' },
       { key: 'total_servers', label: statsT('stats.totalServers') },
-      { key: 'online', label: statsT('stats.online') },
       { key: 'suspended', label: statsT('stats.suspended') },
     ];
     if (statsHasPremium) columns.push({ key: 'premium', label: statsT('stats.premium') });

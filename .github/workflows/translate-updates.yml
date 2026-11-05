@@ -30,7 +30,13 @@ jobs:
         with:
           node-version: 20
 
+      # continue-on-error : une langue en échec ne doit pas jeter à la poubelle
+      # les traductions déjà produites (le job durait des heures et rien n'était
+      # jamais commité). Les fichiers réussis sont marqués par .i18n.<lang>.hash,
+      # donc un nouvel essai ne refait que ce qui manque.
       - name: Translate update posts
+        id: translate
+        continue-on-error: true
         env:
           TRANSLATE_API_KEY: ${{ secrets.TRANSLATE_API_KEY }}
           TRANSLATE_ENDPOINT: ${{ vars.TRANSLATE_ENDPOINT }}
@@ -38,13 +44,32 @@ jobs:
         run: node scripts/translate-updates.mjs
 
       - name: Commit generated translations and index
+        if: always()
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add updates
+          git add -A updates
           if git diff --cached --quiet; then
             echo "Nothing to commit."
-          else
-            git commit -m "chore(updates): auto-translate posts and rebuild index [skip ci]"
-            git push
+            exit 0
           fi
+          git commit -m "chore(updates): auto-translate posts and rebuild index [skip ci]"
+          # main a pu bouger pendant la traduction : on rebase et on retente.
+          for attempt in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push refusé (tentative $attempt), mise à jour depuis origin/main…"
+            git pull --rebase --autostash origin main || exit 1
+            sleep $((attempt * 5))
+          done
+          echo "Impossible de pousser les traductions." >&2
+          exit 1
+
+      # Le job reste rouge si des traductions ont échoué, même si les autres
+      # ont bien été commitées.
+      - name: Fail if some translations could not be generated
+        if: steps.translate.outcome == 'failure'
+        run: |
+          echo "Certaines traductions ont échoué ; voir le log de l'étape précédente." >&2
+          exit 1

@@ -53,7 +53,12 @@ jobs:
             echo "Nothing to commit."
             exit 0
           fi
-          git commit -m "chore(updates): auto-translate posts and rebuild index [skip ci]"
+          # Pas de « [skip ci] » ici : Netlify annule le déploiement de tout commit
+          # qui contient ce marqueur, donc les traductions n'arrivaient jamais en
+          # ligne. Ce commit ne relance pas ce workflow de toute façon : il ne
+          # touche que des post.<lang>.md, des .i18n.*.hash et index.json, alors
+          # que les déclencheurs ne visent que post.md / post-en.md / le script.
+          git commit -m "chore(updates): auto-translate posts and rebuild index"
           # main a pu bouger pendant la traduction : on rebase et on retente.
           for attempt in 1 2 3; do
             if git push; then

@@ -1,7 +1,7 @@
 ---
-isDisplayed: non
-color: red
+isDisplayed: yes
+color: green
 ---
 
-**fr:** A celui qui récupère la base de donnée, vien nous contacté avant de la volé
-**en:** To whoever acquires the database: get in touch with us before stealing it.
+**fr:** Les mises a jours sont officiellement disponible sur toute les langues ! 
+**en:** The updates are now officially available in all languages!

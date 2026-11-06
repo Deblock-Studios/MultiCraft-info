@@ -26,6 +26,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Les marqueurs .i18n.<lang>.hash sont l'état du travail déjà fait. Un run
+      # relancé (« Re-run jobs ») repart du commit qui l'avait déclenché : à cet
+      # endroit les marqueurs n'existent pas encore, et le script retraduisait
+      # les ~800 fichiers au lieu des seules traductions manquantes. On se place
+      # donc toujours sur la dernière version de main, où cet état est présent.
+      - name: Travailler depuis la dernière version de main
+        run: |
+          git fetch --no-tags origin main
+          git reset --hard origin/main
+          echo "État des traductions lu depuis $(git rev-parse --short HEAD)"
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20

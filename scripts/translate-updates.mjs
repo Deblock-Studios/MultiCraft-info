@@ -98,7 +98,14 @@ async function callModel(system, user, retries = 3) {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
 
-      if (res.status === 429 || res.status >= 500) {
+      // 429/5xx : temporaire. 400/408/409/422 : le fournisseur renvoie parfois
+      // un « invalid_request » passager — observé sur des couples source/langue
+      // tirés au hasard, alors que les mêmes fichiers passaient dans les autres
+      // langues. Réessayer coûte quelques secondes ; abandonner laisse une
+      // cellule définitivement en anglais.
+      const retryable = res.status === 400 || res.status === 408 ||
+        res.status === 409 || res.status === 422 || res.status === 429 || res.status >= 500;
+      if (retryable) {
         const retryAfter = Number(res.headers.get('retry-after'));
         const err = await httpError(res, 'temporaire — retry');
         if (Number.isFinite(retryAfter) && retryAfter > 0) err.retryAfter = retryAfter;

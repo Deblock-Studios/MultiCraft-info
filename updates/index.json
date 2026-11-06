@@ -717,7 +717,8 @@
       "pt",
       "ru",
       "tr",
-      "uk"
+      "uk",
+      "zh"
     ],
     "images": "[1.jpg]"
   },
@@ -786,6 +787,7 @@
       "en",
       "es",
       "fr",
+      "hi",
       "id",
       "ja",
       "ko",
@@ -963,6 +965,7 @@
     "availableLangs": [
       "ar",
       "bn",
+      "de",
       "en",
       "es",
       "fr",

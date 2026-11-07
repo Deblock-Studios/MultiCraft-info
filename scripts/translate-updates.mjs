@@ -26,6 +26,10 @@ const REQUEST_TIMEOUT_MS = Number(process.env.TRANSLATE_TIMEOUT_MS || 120_000);
 // cela prend plus de deux heures, ce qui laisse peu de marge avant le timeout
 // du job (et le moindre aléa fait tout perdre).
 const CONCURRENCY = Math.max(1, Number(process.env.TRANSLATE_CONCURRENCY || 4));
+// Pause avant la seconde chance accordée quand le fournisseur a refusé toutes
+// les requêtes : une indisponibilité de quelques dizaines de secondes ne doit
+// pas faire perdre le run entier.
+const OUTAGE_WAIT_MS = Math.max(0, Number(process.env.TRANSLATE_OUTAGE_WAIT_MS ?? 60_000));
 
 if (!API_KEY) {
   console.error('TRANSLATE_API_KEY manquant');
@@ -77,6 +81,39 @@ async function preflight() {
   } catch {}
 }
 
+// Un « invalid_request » peut venir du contenu d'un article… ou d'une clé
+// épuisée, d'un modèle retiré, d'une panne du fournisseur. Dans ce second cas
+// les 15 langues d'un même article rejettent en quelques secondes, soit 45
+// requêtes inutiles. Une requête témoin de quelques caractères tranche : si
+// elle est refusée elle aussi, le problème n'est pas dans les articles.
+let probePromise = null;
+let bulkRejection = null;
+
+function probeProvider() {
+  probePromise ??= (async () => {
+    try {
+      const res = await fetch(`${ENDPOINT}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          temperature: 0.2,
+          messages: [{ role: 'user', content: 'Bonjour.' }],
+        }),
+        signal: AbortSignal.timeout(60_000),
+      });
+      if (res.ok) return null;
+      return (await httpError(res, 'requête témoin refusée')).message;
+    } catch (err) {
+      return `requête témoin impossible : ${err.message}`;
+    }
+  })();
+  return probePromise;
+}
+
 async function callModel(system, user, retries = 3) {
   const url = `${ENDPOINT}/chat/completions`;
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -109,6 +146,9 @@ async function callModel(system, user, retries = 3) {
         const retryAfter = Number(res.headers.get('retry-after'));
         const err = await httpError(res, 'temporaire — retry');
         if (Number.isFinite(retryAfter) && retryAfter > 0) err.retryAfter = retryAfter;
+        // Refus « invalid_request » : seul cas où le contenu de l'article
+        // pourrait être en cause, donc seul cas où la requête témoin sert.
+        if (res.status === 400 || res.status === 422) err.invalidRequest = true;
         throw err;
       }
       if (!res.ok) {
@@ -124,6 +164,18 @@ async function callModel(system, user, retries = 3) {
       return text;
     } catch (err) {
       console.warn(`  ⚠ tentative ${attempt}/${retries} : ${err.message}`);
+      if (!err.fatal && err.invalidRequest && !bulkRejection) {
+        const refusal = await probeProvider();
+        if (refusal) {
+          bulkRejection = `fournisseur en échec (${refusal})`;
+          const fatal = new Error(
+            `${err.message}\n     requête témoin « Bonjour. » refusée elle aussi : ${refusal}\n` +
+            `     → le fournisseur rejette tout, le contenu des articles n'est pas en cause.`
+          );
+          fatal.fatal = true;
+          throw fatal;
+        }
+      }
       if (err.fatal || attempt === retries) throw err;
       // Respecte Retry-After quand le fournisseur en fournit un, sinon
       // backoff exponentiel plafonné.
@@ -221,10 +273,18 @@ async function runJob(job) {
 async function runPool(jobs) {
   const failures = [];
   let index = 0;
+  let skipped = 0;
 
   async function worker() {
     while (index < jobs.length) {
       const job = jobs[index++];
+      // Fournisseur manifestement hors service : inutile d'envoyer les 40
+      // requêtes restantes pour récolter le même refus.
+      if (bulkRejection) {
+        skipped++;
+        failures.push({ ...job, error: bulkRejection, skipped: true });
+        continue;
+      }
       try {
         await runJob(job);
       } catch (err) {
@@ -235,6 +295,7 @@ async function runPool(jobs) {
   }
 
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
+  if (skipped) console.error(`  ✗ ${skipped} traduction(s) non tentée(s) : ${bulkRejection}`);
   return failures;
 }
 
@@ -315,14 +376,31 @@ for (const slug of dirs) {
 }
 
 console.log(`${jobs.length} traduction(s) à produire (concurrence ${CONCURRENCY})`);
-const failures = await runPool(jobs);
+let failures = await runPool(jobs);
+
+// Fournisseur momentanément hors service : le premier passage s'est arrêté dès
+// la requête témoin refusée. Une seconde chance après une pause évite de
+// perdre un run entier pour quelques secondes d'indisponibilité.
+if (bulkRejection && jobs.length) {
+  const wait = OUTAGE_WAIT_MS / 1000;
+  console.error(`\n↻ nouvelle tentative dans ${wait < 10 ? wait.toFixed(1) : Math.round(wait)} s : ${bulkRejection}`);
+  await sleep(OUTAGE_WAIT_MS);
+  bulkRejection = null;
+  probePromise = null;
+  failures = await runPool(failures);
+}
 
 // Génère/actualise l'index après toutes les traductions
 await rebuildIndex();
 
 if (failures.length) {
   console.error(`\n✗ ${failures.length} traduction(s) en échec :`);
-  for (const f of failures) console.error(`  - ${f.slug}/${f.lang} : ${f.error}`);
+  for (const f of failures.filter(f => !f.skipped)) console.error(`  - ${f.slug}/${f.lang} : ${f.error}`);
+  if (bulkRejection) {
+    console.error(`\n${bulkRejection} : toutes les langues restantes ont été laissées de côté.`);
+    console.error("Le contenu des articles n'est pas en cause : vérifier le secret TRANSLATE_API_KEY");
+    console.error('(clé expirée, crédits épuisés) et la variable TRANSLATE_MODEL (modèle retiré).');
+  }
   console.error('Les traductions réussies sont conservées ; relancer le workflow reprendra les manquantes.');
   process.exitCode = 1;
 } else {

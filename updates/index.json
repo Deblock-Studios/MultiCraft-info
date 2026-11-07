@@ -1246,7 +1246,22 @@
     "author": "",
     "sourceLang": "fr",
     "availableLangs": [
-      "fr"
+      "ar",
+      "bn",
+      "de",
+      "en",
+      "es",
+      "fr",
+      "hi",
+      "id",
+      "ja",
+      "ko",
+      "nl",
+      "pt",
+      "ru",
+      "tr",
+      "uk",
+      "zh"
     ],
     "images": "[1.webp]"
   },

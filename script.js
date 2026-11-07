@@ -341,7 +341,9 @@
         userInfo.style.display = 'flex';
       }
       if (avatarEl) {
-        avatarEl.src = Deblock.getAvatarUrl();
+        const avatarUrl = Deblock.getAvatarUrl();
+        if (avatarUrl) avatarEl.src = avatarUrl;
+        else avatarEl.removeAttribute('src');
         avatarEl.alt = Deblock.getDisplayName();
       }
       if (usernameEl) usernameEl.textContent = Deblock.getDisplayName();
@@ -610,7 +612,11 @@
     if (emailInput) emailInput.value = user.email || '';
     // Refresh avatar preview
     const avatarPreviewEl = document.getElementById('profile-avatar-preview');
-    if (avatarPreviewEl) avatarPreviewEl.src = Deblock.getAvatarUrl() || '';
+    if (avatarPreviewEl) {
+      const avatarUrl = Deblock.getAvatarUrl();
+      if (avatarUrl) avatarPreviewEl.src = avatarUrl;
+      else avatarPreviewEl.removeAttribute('src');
+    }
     // Clear password fields
     const newPwdInput = document.getElementById('profile-new-password');
     const confirmPwdInput = document.getElementById('profile-confirm-password');
@@ -682,8 +688,19 @@
       function loadCurrentAvatar() {
         if (!previewEl) return;
         const url = Deblock.getAvatarUrl();
-        previewEl.src = url || '';
-        previewEl.onerror = function () { previewEl.src = ''; };
+        if (url) {
+          // Ne jamais réaffecter `src = ''` dans onerror : l'URL vide se résout
+          // vers la page elle-même, qui échoue à nouveau et relance onerror en
+          // boucle. Cela maintenait le `load` de la page en attente à l'infini.
+          previewEl.onerror = function () {
+            previewEl.onerror = null;
+            previewEl.removeAttribute('src');
+          };
+          previewEl.src = url;
+        } else {
+          previewEl.onerror = null;
+          previewEl.removeAttribute('src');
+        }
       }
       loadCurrentAvatar();
 
@@ -738,7 +755,7 @@
         removeBtn.addEventListener('click', async function () {
           try {
             await Deblock.updateProfile({ avatar_url: '' });
-            if (previewEl) previewEl.src = '';
+            if (previewEl) previewEl.removeAttribute('src');
             pendingFile = null;
             if (inputEl) inputEl.value = '';
             if (saveBtn) saveBtn.disabled = true;

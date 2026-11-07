@@ -41,8 +41,6 @@
   ──────────────────────────────────────────────────────────────────────────── */
   const LANGUAGES = [
     { code: 'fr', flag: '🇫🇷', name: 'Français' },
-    { code: 'br', flag: '🏴', name: 'Brezhoneg' },
-    { code: 'nrm', flag: '🏴', name: 'Cauchois' },
     { code: 'en', flag: '🇬🇧', name: 'English' },
     { code: 'es', flag: '🇪🇸', name: 'Español' },
     { code: 'es-MX', flag: '🇲🇽', name: 'Español (México)', file: 'es' },
@@ -59,6 +57,9 @@
     { code: 'bn', flag: '🇧🇩', name: 'বাংলা' },
     { code: 'ar', flag: '🇸🇦', name: 'العربية' },
     { code: 'id', flag: '🇮🇩', name: 'Bahasa Indonesia' },
+    // Langues régionales sans traduction des mises à jour : affichées en fin de menu.
+    { code: 'br', flag: '🏴', name: 'Brezhoneg' },
+    { code: 'nrm', flag: '🏴', name: 'Cauchois' },
   ];
 
   // Index par code en minuscules (la comparaison d'URL ignore la casse).

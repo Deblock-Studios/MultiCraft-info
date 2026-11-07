@@ -126,10 +126,11 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-/* Compact variant — shrinks on scroll down (height, width + typography) */
+/* Compact variant — shrinks on scroll down (height + typography). La largeur
+   reste celle du header normal : la réduire coupait les extrémités de la
+   navigation quand son contenu était plus large que la barre. */
 .site-header.compact {
   --header-h: 40px;
-  max-width: 950px;
 }
 
 .site-header.compact .logo {
@@ -540,14 +541,16 @@ body.show-portholes .porthole-title::before {
   font-size: 0.98rem;
 }
 
-/* Avis de la page « Mises à jour » : les articles ne sont rédigés qu'en français
-   et en anglais. La langue courante est écrite sur <html lang> par i18n.js, donc
-   le simple attribut suffit pour l'afficher ou le masquer — aucun JS à modifier. */
+/* Avis de la page « Mises à jour » : le breton et le normand n'ont pas de
+   traduction des articles, qui restent affichés en français. La langue courante
+   est écrite sur <html lang> par i18n.js, donc le simple attribut suffit pour
+   l'afficher ou le masquer — aucun JS à modifier. */
 .updates-lang-notice {
   display: none;
 }
 
-html:not([lang='fr']):not([lang='en']) .updates-lang-notice {
+html[lang='br'] .updates-lang-notice,
+html[lang='nrm'] .updates-lang-notice {
   display: block;
   margin-top: 1rem;
   padding: 0.7rem 0.95rem;
@@ -3524,29 +3527,9 @@ body.modal-open {
    MEDIA QUERIES
    ══════════════════════════════════════════════════════ */
 
-@media (max-width: 1024px) {
-  .header-inner {
-    padding: 0 1rem;
-  }
-
-  #app {
-    padding: 2rem 1rem 3rem;
-  }
-
-  .hero {
-    padding: 2rem 0 3rem;
-  }
-
-  .servers-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  }
-
-  .datacenters-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
+/* La navigation passe en menu déroulant dès que la barre n'a plus la place
+   d'afficher tous ses liens à côté du logo et des contrôles. */
+@media (max-width: 1100px) {
   .site-header,
   .header-inner {
     overflow: visible;
@@ -3602,7 +3585,31 @@ body.modal-open {
   .nav-toggle.open span:nth-child(3) {
     transform: rotate(-45deg) translate(5px, -5px);
   }
+}
 
+@media (max-width: 1024px) {
+  .header-inner {
+    padding: 0 1rem;
+  }
+
+  #app {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .hero {
+    padding: 2rem 0 3rem;
+  }
+
+  .servers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .datacenters-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
   .hero {
     padding: 1.25rem 0 2.25rem;
   }

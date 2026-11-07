@@ -25,7 +25,6 @@
   "meta.description": "MultiCraft Info — Notícias, atualizações e informações sobre os servidores de MultiCraft.",
 
   "updates.subtitle": "As últimas novidades do jogo, da mais recente para a mais antiga.",
-  "updates.langNotice": "As atualizações estão disponíveis apenas em inglês e francês.",
   "updates.loading": "Carregando atualizações…",
   "updates.empty": "Ainda não há atualizações.",
   "updates.error": "Ops. Parece que não está funcionando :/ Um dos desenvolvedores quebrou tudo de novo... Desculpe! Envie um e-mail para relatar o problema: deblock-studios@proton.me",

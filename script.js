@@ -1160,14 +1160,16 @@
 
   /* Code du fichier de traduction à charger pour la langue courante :
      pt-BR → pt, es-MX → es, ja → ja. fr et en n'ont pas de fichier traduit
-     (post.md et post-en.md sont les sources). */
+     (post.md et post-en.md sont les sources). Le breton et le normand n'ont pas
+     de traduction : leurs articles restent en français. */
   function updatesLangFile() {
-    var lang = String(window.i18n.lang || 'fr');
+    var lang = String(window.i18n.lang || 'fr').toLowerCase();
+    if (lang === 'br' || lang === 'nrm') return 'fr';
     var entry = (window.i18n.languages || []).find(function (l) {
-      return String(l.code).toLowerCase() === lang.toLowerCase();
+      return String(l.code).toLowerCase() === lang;
     });
     if (entry && entry.file) return entry.file;
-    return lang.split('-')[0].toLowerCase();
+    return lang.split('-')[0];
   }
   
   /* Un article manquant ne renvoie pas 404 : _redirects contient un rewrite
@@ -1202,7 +1204,6 @@
       // fr = source (post.md), en = post-en.md, autres langues = post-<lang>.md
       const wantsTranslation = langFile !== 'fr';
       const preferredFile = 'post.' + langFile + '.md';
-      let missingTranslation = false;
       const posts = await Promise.all(folders.map(async function (folder) {
         // Ordre de recherche : langue courante, puis anglais, puis français
         const candidates = wantsTranslation
@@ -1215,7 +1216,6 @@
           if (text) { raw = text; usedFile = candidate; break; }
         }
         if (raw === null) return null;
-        if (wantsTranslation && usedFile !== preferredFile) missingTranslation = true;
         const parsed = parseFrontmatter(raw);
         return {
           folder: folder,
@@ -1236,9 +1236,6 @@
         renderUpdatesBatch();
       }
       updatesLoaded = true;
-      // L'avis « non traduit » n'a de sens que si un article est réellement resté en français.
-      var langNotice = document.querySelector('.updates-lang-notice');
-      if (langNotice) langNotice.classList.toggle('is-shown', wantsTranslation && missingTranslation);
     } catch (err) {
       console.error(err);
       updatesContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('updates.error') + '</p></div>';
@@ -4394,6 +4391,7 @@
   let statsLoaded = false;
   let statsLoading = false;
   let statsRequestId = 0;
+  let statsReloadPending = false;
   let statsRows = [];
   let statsModes = [];
   let statsHasPremium = false;
@@ -4731,9 +4729,17 @@
     svgEl.addEventListener('touchend', hideTooltip);
   }
 
+  // « Minetest Game » n'est pas un jeu servi par MultiCraft : il n'apparaît pas
+  // dans le détail des relevés.
+  function statsIsMinetestGame(key) {
+    return String(key).toLowerCase().replace(/[^a-z0-9]/g, '') === 'minetestgame';
+  }
+
   function renderStatsObject(obj) {
     if (!obj || typeof obj !== 'object') return '—';
-    const entries = Object.keys(obj).filter(function (key) { return key !== 'countries'; });
+    const entries = Object.keys(obj).filter(function (key) {
+      return key !== 'countries' && !statsIsMinetestGame(key);
+    });
     if (!entries.length) return '—';
     return '<div class="stats-mini-list">' + entries.map(function (key) {
       return '<span class="stats-mini-chip">' + escapeHtml(statsHumanize(key)) + ' <b>' + escapeHtml(statsNumber(obj[key])) + '</b></span>';
@@ -4790,7 +4796,12 @@
   }
 
   function loadStats(force) {
-    if (statsLoading) return;
+    // Un changement de filtre pendant un chargement ne doit pas être perdu :
+    // on relance une requête dès que celle en cours est terminée.
+    if (statsLoading) {
+      if (force) statsReloadPending = true;
+      return;
+    }
     if (statsLoaded && !force) return;
     statsLoading = true;
     const requestId = ++statsRequestId;
@@ -4808,25 +4819,44 @@
         statsLoaded = true;
         statsLoading = false;
         renderStats();
+        if (statsReloadPending) { statsReloadPending = false; loadStats(true); }
       })
       .catch(function (err) {
         if (requestId !== statsRequestId) return;
         statsLoading = false;
         console.error('Erreur de chargement des statistiques', err);
         renderStatsError();
+        if (statsReloadPending) { statsReloadPending = false; loadStats(true); }
       });
   }
 
   (function initStatsControls() {
     if (statsDaysInput) {
-      statsDaysInput.value = String(statsDays);
-      statsDaysInput.addEventListener('change', function () {
-        statsDays = clampStatsDays(statsDaysInput.value);
-        statsDaysInput.value = String(statsDays);
+      let statsDaysTimer = null;
+      function applyStatsDays() {
+        clearTimeout(statsDaysTimer);
+        statsDaysTimer = null;
+        const next = clampStatsDays(statsDaysInput.value);
+        statsDaysInput.value = String(next);
+        if (next === statsDays && !statsDate) return;
+        statsDays = next;
         statsDate = '';
         if (statsDateInput) statsDateInput.value = '';
         if (statsClearDayBtn) statsClearDayBtn.hidden = true;
         loadStats(true);
+      }
+      statsDaysInput.value = String(statsDays);
+      // « change » n'est émis qu'à la perte de focus : on applique aussi la
+      // saisie au clavier (après une courte pause) pour que le tableau suive.
+      statsDaysInput.addEventListener('change', applyStatsDays);
+      statsDaysInput.addEventListener('input', function () {
+        clearTimeout(statsDaysTimer);
+        statsDaysTimer = setTimeout(applyStatsDays, 600);
+      });
+      statsDaysInput.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        applyStatsDays();
       });
     }
     if (statsDateInput) {

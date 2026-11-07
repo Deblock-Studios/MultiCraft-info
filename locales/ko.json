@@ -25,7 +25,6 @@
   "meta.description": "MultiCraft Info — MultiCraft 서버에 관한 뉴스, 업데이트 및 정보.",
 
   "updates.subtitle": "최신 게임 소식을 최신순으로 정리했습니다.",
-  "updates.langNotice": "업데이트는 영어와 프랑스어로만 제공됩니다.",
   "updates.loading": "업데이트 불러오는 중…",
   "updates.empty": "아직 업데이트가 없습니다.",
   "updates.error": "이런. 작동하지 않는 것 같아요 :/ 개발자 중 한 명이 또 전부 망가뜨렸어요... 죄송합니다! 문제를 알려주시려면 이메일을 보내주세요: deblock-studios@proton.me",

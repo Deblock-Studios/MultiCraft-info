@@ -25,7 +25,6 @@
   "meta.description": "MultiCraft Info — MultiCraft 服务器的新闻、更新与信息。",
 
   "updates.subtitle": "最新游戏动态，按从新到旧排序。",
-  "updates.langNotice": "更新仅提供英文和法文版本。",
   "updates.loading": "正在加载更新…",
   "updates.empty": "暂无更新。",
   "updates.error": "哎呀，好像出问题了 :/ 某个开发者又把一切都弄坏了……抱歉！请发邮件告诉我们问题：deblock-studios@proton.me",

@@ -1240,6 +1240,17 @@
     "images": "[1.jpg]"
   },
   {
+    "slug": "tout_pour_la_thune",
+    "date": "2026-11-07",
+    "title": "Raccourcis des items du shop",
+    "author": "",
+    "sourceLang": "fr",
+    "availableLangs": [
+      "fr"
+    ],
+    "images": "[1.webp]"
+  },
+  {
     "slug": "update-ie-potion-3",
     "date": "2026-09-11",
     "title": "crée des potions avec plusieurs effet !",

@@ -52,6 +52,16 @@ jobs:
           TRANSLATE_API_KEY: ${{ secrets.TRANSLATE_API_KEY }}
           TRANSLATE_ENDPOINT: ${{ vars.TRANSLATE_ENDPOINT }}
           TRANSLATE_MODEL: ${{ vars.TRANSLATE_MODEL }}
+          # Secours : le script vérifie chaque fournisseur dans cet ordre et
+          # garde le premier qui répond vraiment. Une clé absente retire le
+          # fournisseur de la liste, donc ces lignes sont sans effet tant que
+          # les secrets ne sont pas créés.
+          UNOROUTER_API_KEY: ${{ secrets.UNOROUTER_API_KEY }}
+          UNOROUTER_MODEL: ${{ vars.UNOROUTER_MODEL }}
+          UNOROUTER_ENDPOINT: ${{ vars.UNOROUTER_ENDPOINT }}
+          ORCAROUTER_API_KEY: ${{ secrets.ORCAROUTER_API_KEY }}
+          ORCAROUTER_MODEL: ${{ vars.ORCAROUTER_MODEL }}
+          ORCAROUTER_ENDPOINT: ${{ vars.ORCAROUTER_ENDPOINT }}
         run: node scripts/translate-updates.mjs
 
       - name: Commit generated translations and index

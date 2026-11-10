@@ -472,14 +472,18 @@
     "sourceLang": "fr",
     "availableLangs": [
       "ar",
+      "bn",
       "de",
       "en",
       "es",
       "fr",
+      "hi",
+      "ja",
       "ko",
       "nl",
       "pt",
       "ru",
+      "tr",
       "zh"
     ],
     "images": "[1.png]"

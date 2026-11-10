@@ -465,6 +465,26 @@
     ]
   },
   {
+    "slug": "futur-grosse-maj",
+    "date": "2026-11-10",
+    "title": "Futur grosse mise à jours",
+    "author": "",
+    "sourceLang": "fr",
+    "availableLangs": [
+      "ar",
+      "de",
+      "en",
+      "es",
+      "fr",
+      "ko",
+      "nl",
+      "pt",
+      "ru",
+      "zh"
+    ],
+    "images": "[1.png]"
+  },
+  {
     "slug": "grandes-fleurs",
     "date": "",
     "title": "grandes-fleurs",

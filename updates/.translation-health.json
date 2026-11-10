@@ -19,7 +19,7 @@
       "endpoint": "https://api.orcarouter.ai/v1",
       "model": "deepseek/deepseek-chat",
       "ok": false,
-      "reason": "requête témoin refusée HTTP 402 — {\"error\":{\"message\":\"You're out of credits — this request needs $0.0002. Add credits to keep going: https://www.orcarouter.ai/console/billing?ref=err_credit_gate#add-credits (request id: 202611101659404038222418268d9d6MwYkZCbR)\",\"type\":\"insufficient_quota\",\"param\":\"\",\"code\":\"insufficient_user_quota\""
+      "reason": "requête témoin refusée HTTP 402 — {\"error\":{\"message\":\"You're out of credits — this request needs $0.0002. Add credits to keep going: https://www.orcarouter.ai/console/billing?ref=err_credit_gate#add-credits (request id: 202611102259358915675738268d9d6YhN3Bo2d)\",\"type\":\"insufficient_quota\",\"param\":\"\",\"code\":\"insufficient_user_quota\""
     }
   ],
   "usableProviders": 1,

@@ -21,6 +21,22 @@ jobs:
   translate:
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    # Les fournisseurs sont décrits une seule fois ici : le diagnostic
+    # et la traduction doivent voir exactement la même configuration.
+    env:
+      TRANSLATE_API_KEY: ${{ secrets.TRANSLATE_API_KEY }}
+      TRANSLATE_ENDPOINT: ${{ vars.TRANSLATE_ENDPOINT }}
+      TRANSLATE_MODEL: ${{ vars.TRANSLATE_MODEL }}
+      # Secours : le script les essaie dans cet ordre et garde le
+      # premier qui répond vraiment. Une clé absente retire le
+      # fournisseur de la liste, ces lignes sont donc sans effet
+      # tant que les secrets ne sont pas créés.
+      UNOROUTER_API_KEY: ${{ secrets.UNOROUTER_API_KEY }}
+      UNOROUTER_MODEL: ${{ vars.UNOROUTER_MODEL }}
+      UNOROUTER_ENDPOINT: ${{ vars.UNOROUTER_ENDPOINT }}
+      ORCAROUTER_API_KEY: ${{ secrets.ORCAROUTER_API_KEY }}
+      ORCAROUTER_MODEL: ${{ vars.ORCAROUTER_MODEL }}
+      ORCAROUTER_ENDPOINT: ${{ vars.ORCAROUTER_ENDPOINT }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,23 +61,18 @@ jobs:
       # les traductions déjà produites (le job durait des heures et rien n'était
       # jamais commité). Les fichiers réussis sont marqués par .i18n.<lang>.hash,
       # donc un nouvel essai ne refait que ce qui manque.
+      # Diagnostic des fournisseurs : clés, endpoints et modèles réellement
+      # configurés, avec le verdict de la requête témoin. Le rapport est
+      # commité avec les traductions, car les logs d'étapes ne sont pas
+      # lisibles sans droits d'admin. Un diagnostic en échec n'empêche
+      # pas de traduire.
+      - name: Vérifier les fournisseurs
+        continue-on-error: true
+        run: node scripts/translate-updates.mjs --check
+
       - name: Translate update posts
         id: translate
         continue-on-error: true
-        env:
-          TRANSLATE_API_KEY: ${{ secrets.TRANSLATE_API_KEY }}
-          TRANSLATE_ENDPOINT: ${{ vars.TRANSLATE_ENDPOINT }}
-          TRANSLATE_MODEL: ${{ vars.TRANSLATE_MODEL }}
-          # Secours : le script vérifie chaque fournisseur dans cet ordre et
-          # garde le premier qui répond vraiment. Une clé absente retire le
-          # fournisseur de la liste, donc ces lignes sont sans effet tant que
-          # les secrets ne sont pas créés.
-          UNOROUTER_API_KEY: ${{ secrets.UNOROUTER_API_KEY }}
-          UNOROUTER_MODEL: ${{ vars.UNOROUTER_MODEL }}
-          UNOROUTER_ENDPOINT: ${{ vars.UNOROUTER_ENDPOINT }}
-          ORCAROUTER_API_KEY: ${{ secrets.ORCAROUTER_API_KEY }}
-          ORCAROUTER_MODEL: ${{ vars.ORCAROUTER_MODEL }}
-          ORCAROUTER_ENDPOINT: ${{ vars.ORCAROUTER_ENDPOINT }}
         run: node scripts/translate-updates.mjs
 
       - name: Commit generated translations and index

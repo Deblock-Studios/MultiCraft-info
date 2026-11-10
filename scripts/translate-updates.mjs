@@ -394,6 +394,32 @@ async function rebuildIndex() {
   console.log(`✓ updates/index.json régénéré (${index.length} entrées)`);
 }
 
+// Diagnostic (`--check` ou TRANSLATE_CHECK=1) : interroge chaque fournisseur
+// sans rien traduire et écrit le verdict dans un fichier commité par le
+// workflow, les logs d'étapes n'étant pas lisibles sans droits admin.
+if (process.argv.includes('--check') || process.env.TRANSLATE_CHECK) {
+  const report = [];
+  for (const p of PROVIDERS) {
+    console.log(`— ${p.name} : ${p.endpoint}, modèle ${p.model}`);
+    const verdict = await checkProvider(p);
+    console.log(verdict.ok ? '  ✓ opérationnel' : `  ✗ ${verdict.reason}`);
+    report.push({
+      provider: p.name,
+      endpoint: p.endpoint,
+      model: p.model,
+      ok: verdict.ok,
+      reason: verdict.ok ? null : verdict.reason,
+    });
+  }
+  const usable = report.filter(r => r.ok).length;
+  // Pas d'horodatage : le fichier ne change que si un fournisseur change
+  // d'état, ce qui évite un commit à chaque run.
+  await fs.writeFile('updates/.translation-health.json',
+    JSON.stringify({ providers: report, usableProviders: usable, totalProviders: report.length }, null, 2) + '\n');
+  console.log(`${usable} fournisseur(s) sur ${report.length} opérationnel(s) — rapport dans updates/.translation-health.json`);
+  process.exit(usable ? 0 : 1);
+}
+
 const entries = await fs.readdir(UPDATES, { withFileTypes: true });
 const dirs = entries.filter(e => e.isDirectory()).map(e => e.name).sort();
 

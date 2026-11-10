@@ -1,3 +1,16 @@
+/**
+ * Traduit les articles de updates/ dans toutes les langues de LANGS.
+ *
+ *   node scripts/translate-updates.mjs           # traduit ce qui manque
+ *   node scripts/translate-updates.mjs --check   # vérifie les fournisseurs
+ *
+ * Fournisseurs essayés dans l'ordre : vyceai (TRANSLATE_API_KEY), UnoRouter
+ * (UNOROUTER_API_KEY), OrcaRouter (ORCAROUTER_API_KEY). Le premier dont la clé
+ * est acceptée et dont la requête témoin aboutit est utilisé ; les suivants
+ * prennent le relais s'il tombe en cours de route. --check n'écrit aucune
+ * traduction et dépose le verdict de chacun dans updates/.translation-health.json.
+ */
+
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';

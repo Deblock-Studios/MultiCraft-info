@@ -7,7 +7,8 @@
  * Fournisseurs essayés dans l'ordre : vyceai (TRANSLATE_API_KEY), UnoRouter
  * (UNOROUTER_API_KEY), OrcaRouter (ORCAROUTER_API_KEY). Le premier dont la clé
  * est acceptée et dont la requête témoin aboutit est utilisé ; les suivants
- * prennent le relais s'il tombe en cours de route. --check n'écrit aucune
+ * prennent le relais s'il tombe en cours de route ou s'il échoue sur plus de
+ * TRANSLATE_MAX_FAILURES traductions (5 par défaut). --check n'écrit aucune
  * traduction et dépose le verdict de chacun dans updates/.translation-health.json.
  */
 
@@ -78,6 +79,11 @@ const CONCURRENCY = Math.max(1, Number(process.env.TRANSLATE_CONCURRENCY || 4));
 // les requêtes : une indisponibilité de quelques dizaines de secondes ne doit
 // pas faire perdre le run entier.
 const OUTAGE_WAIT_MS = Math.max(0, Number(process.env.TRANSLATE_OUTAGE_WAIT_MS ?? 60_000));
+// Échecs tolérés chez un même fournisseur avant de confier le lot restant au
+// suivant. Quelques refus isolés sont normaux ; une série signifie que le
+// fournisseur déraille (modèle retiré, quota, surcharge) et insister coûte des
+// minutes pour rien.
+const MAX_FAILURES = Math.max(0, Number(process.env.TRANSLATE_MAX_FAILURES ?? 5));
 
 if (!PROVIDERS.length) {
   console.error('Aucune clé de traduction : définir TRANSLATE_API_KEY (ou UNOROUTER_API_KEY / ORCAROUTER_API_KEY).');
@@ -156,6 +162,10 @@ async function checkProvider(p) {
 // elle est refusée elle aussi, le problème n'est pas dans les articles.
 let activeProbe = null;
 let bulkRejection = null;
+// Échecs encaissés chez le fournisseur actif, et raison de son abandon en
+// cours de lot (trop d'échecs) le cas échéant.
+let providerFailures = 0;
+let exhaustedReason = null;
 
 // Pendant le run, la requête témoin n'est faite qu'une fois par fournisseur :
 // toutes les tâches qui échouent en même temps partagent le même verdict.
@@ -330,9 +340,9 @@ async function runPool(jobs) {
       const job = jobs[index++];
       // Fournisseur manifestement hors service : inutile d'envoyer les 40
       // requêtes restantes pour récolter le même refus.
-      if (bulkRejection) {
+      if (bulkRejection || exhaustedReason) {
         skipped++;
-        failures.push({ ...job, error: bulkRejection, skipped: true });
+        failures.push({ ...job, error: bulkRejection || exhaustedReason, skipped: true });
         continue;
       }
       try {
@@ -340,12 +350,20 @@ async function runPool(jobs) {
       } catch (err) {
         console.error(`  ✗ échec ${job.slug}/${job.lang} : ${err.message}`);
         failures.push({ ...job, error: err.message });
+        providerFailures++;
+        // Trop d'échecs d'affilée chez ce fournisseur : on ne lui envoie pas le
+        // reste du lot. Sans secours configuré, on continue malgré tout — mieux
+        // vaut sauver les traductions qui passent.
+        if (!exhaustedReason && providerFailures > MAX_FAILURES && activeIndex < PROVIDERS.length - 1) {
+          exhaustedReason = `${active.name} : ${providerFailures} traductions en échec (limite ${MAX_FAILURES})`;
+          console.error(`  ↻ ${exhaustedReason} — bascule sur le fournisseur suivant`);
+        }
       }
     }
   }
 
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
-  if (skipped) console.error(`  ✗ ${skipped} traduction(s) non tentée(s) : ${bulkRejection}`);
+  if (skipped) console.error(`  ✗ ${skipped} traduction(s) non tentée(s) : ${bulkRejection || exhaustedReason}`);
   return failures;
 }
 
@@ -448,7 +466,7 @@ console.log(`${jobs.length} traduction(s) à produire (concurrence ${CONCURRENCY
 let failures = [];
 
 if (jobs.length) {
-  console.log(`fournisseurs, dans l'ordre : ${PROVIDERS.map(p => p.name).join(' → ')}`);
+  console.log(`fournisseurs, dans l'ordre : ${PROVIDERS.map(p => p.name).join(' → ')} (bascule après ${MAX_FAILURES} échecs)`);
 
   // Passe au fournisseur suivant et vérifie qu'il répond vraiment : une clé
   // acceptée ne suffit pas, la requête témoin doit aboutir aussi.
@@ -462,6 +480,8 @@ if (jobs.length) {
         active = p;
         activeProbe = null;
         bulkRejection = null;
+        providerFailures = 0;
+        exhaustedReason = null;
         console.log(`✓ fournisseur retenu : ${p.name} — ${p.endpoint}, modèle ${p.model}`);
         return true;
       }
@@ -478,16 +498,19 @@ if (jobs.length) {
   for (let pass = 1; pass <= 2 && pending.length; pass++) {
     while (pending.length && await selectProvider()) {
       const result = await runPool(pending);
-      if (!bulkRejection) {
+      const stopReason = bulkRejection || exhaustedReason;
+      if (!stopReason) {
         pending = [];
         failures = result;
         break;
       }
-      console.error(`→ ${bulkRejection} ; ${result.length} tâche(s) reprise(s) chez le fournisseur suivant.`);
+      console.error(`→ ${stopReason} ; ${result.length} tâche(s) reprise(s) chez le fournisseur suivant.`);
       pending = result;
       active = null;
       activeProbe = null;
       bulkRejection = null;
+      providerFailures = 0;
+      exhaustedReason = null;
     }
     if (!pending.length) break;
     failures = pending;
@@ -499,6 +522,8 @@ if (jobs.length) {
     active = null;
     activeProbe = null;
     bulkRejection = null;
+    providerFailures = 0;
+    exhaustedReason = null;
     rejected.clear();
   }
 }

@@ -388,6 +388,24 @@
     "images": "[1.jpg]"
   },
   {
+    "slug": "custom_mods",
+    "date": "",
+    "title": "custom_mods",
+    "author": "",
+    "sourceLang": "fr",
+    "availableLangs": [
+      "ar",
+      "bn",
+      "de",
+      "es",
+      "fr",
+      "id",
+      "nl",
+      "pt",
+      "zh"
+    ]
+  },
+  {
     "slug": "détails-server",
     "date": "2026-08-06",
     "title": "informations détaillées sur les serveurs",

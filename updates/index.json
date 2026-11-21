@@ -465,6 +465,16 @@
     "images": "[1.png, 2.png]"
   },
   {
+    "slug": "end-of-coins",
+    "date": "2026-11-21",
+    "title": "La fin des coins",
+    "author": "",
+    "sourceLang": "fr",
+    "availableLangs": [
+      "fr"
+    ]
+  },
+  {
     "slug": "fin-support-windows",
     "date": "",
     "title": "fin-support-windows",

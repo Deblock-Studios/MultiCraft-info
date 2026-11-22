@@ -21,32 +21,23 @@ jobs:
   translate:
     runs-on: ubuntu-latest
     timeout-minutes: 350
-    # Un seul fournisseur : VyceAI. Les modèles de secours sont listés
-    # dans l'ordre de préférence : le script essaie le premier, puis
-    # descend la liste tant qu'aucun ne répond vraiment. Dès qu'un
-    # modèle fonctionne, il est utilisé seul pour toutes les traductions
-    # du run (« sticky model ») et mémorisé pour les runs suivants.
+    # Un seul fournisseur : VyceAI. Le script essaie le premier modèle, puis
+    # descend la liste tant qu'aucun ne répond vraiment. Dès qu'un modèle
+    # fonctionne, il est utilisé seul pour toutes les traductions du run
+    # (« sticky model ») et mémorisé pour les runs suivants.
     env:
       TRANSLATE_PROVIDER: vyceai
       TRANSLATE_API_KEY: ${{ secrets.VYCEAI_API_KEY }}
       TRANSLATE_ENDPOINT: ${{ vars.VYCEAI_ENDPOINT }}
-      TRANSLATE_MODEL: ${{ vars.VYCEAI_MODEL }}
-      # Ordre des modèles sur VyceAI : primaire puis secours.
-      TRANSLATE_MODEL_FALLBACKS: >-
-        glm-5.3-flash,
-        nemotron-3.5-super-vl,
-        gpt-oss-120b,
-        wave
+      # Modèle primaire
+      TRANSLATE_MODEL: glm-5.3-flash
+      # Modèles de secours, dans l'ordre
+      TRANSLATE_MODEL_FALLBACKS: "nemotron-3.5-super-vl,gpt-oss-120b,wave"
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Les marqueurs .i18n.<lang>.hash sont l'état du travail déjà fait. Un run
-      # relancé (« Re-run jobs ») repart du commit qui l'avait déclenché : à cet
-      # endroit les marqueurs n'existent pas encore, et le script retraduisait
-      # les ~800 fichiers au lieu des seules traductions manquantes. On se place
-      # donc toujours sur la dernière version de main, où cet état est présent.
       - name: Travailler depuis la dernière version de main
         run: |
           git fetch --no-tags origin main
@@ -57,14 +48,6 @@ jobs:
         with:
           node-version: 20
 
-      # continue-on-error : une langue en échec ne doit pas jeter à la poubelle
-      # les traductions déjà produites. Les fichiers réussis sont marqués par
-      # .i18n.<lang>.hash, donc un nouvel essai ne refait que ce qui manque.
-      # Diagnostic de VyceAI : clé, endpoint et modèles réellement configurés,
-      # avec le verdict de la requête témoin et l'indication du modèle retenu
-      # (sticky). Le rapport est commité avec les traductions, car les logs
-      # d'étapes ne sont pas lisibles sans droits d'admin. Un diagnostic en
-      # échec n'empêche pas de traduire.
       - name: Vérifier VyceAI
         continue-on-error: true
         run: node scripts/translate-updates.mjs --check
@@ -84,13 +67,7 @@ jobs:
             echo "Nothing to commit."
             exit 0
           fi
-          # Pas de « [skip ci] » ici : Netlify annule le déploiement de tout commit
-          # qui contient ce marqueur, donc les traductions n'arrivaient jamais en
-          # ligne. Ce commit ne relance pas ce workflow de toute façon : il ne
-          # touche que des post.<lang>.md, des .i18n.*.hash et index.json, alors
-          # que les déclencheurs ne visent que post.md / post-en.md / le script.
           git commit -m "chore(updates): auto-translate posts and rebuild index"
-          # main a pu bouger pendant la traduction : on rebase et on retente.
           for attempt in 1 2 3; do
             if git push; then
               exit 0
@@ -102,8 +79,6 @@ jobs:
           echo "Impossible de pousser les traductions." >&2
           exit 1
 
-      # Le job reste rouge si des traductions ont échoué, même si les autres
-      # ont bien été commitées.
       - name: Fail if some translations could not be generated
         if: steps.translate.outcome == 'failure'
         run: |

@@ -61,25 +61,17 @@ const PROVIDERS = API_KEY
   ? MODELS.map(model => ({ name: model, endpoint: ENDPOINT, key: API_KEY, model }))
   : [];
 
-let active = null;         // modèle en cours d'utilisation
-let activeIndex = -1;      // sa position dans PROVIDERS
+let active = null;          // modèle en cours d'utilisation
+let activeIndex = -1;       // sa position dans PROVIDERS
 const rejected = new Map(); // nom → raison du rejet
 
-// Une requête bloquée ne doit pas geler le job : sans timeout, node attend
-// indéfiniment et le runner finit par tuer le job en perdant tout le travail.
+// Une requête bloquée ne doit pas geler le job.
 const REQUEST_TIMEOUT_MS = Number(process.env.TRANSLATE_TIMEOUT_MS || 120_000);
-// Appels simultanés. 50 articles x 15 langues = ~750 appels : en séquentiel
-// cela prend plus de deux heures, ce qui laisse peu de marge avant le timeout
-// du job (et le moindre aléa fait tout perdre).
+// Appels simultanés.
 const CONCURRENCY = Math.max(1, Number(process.env.TRANSLATE_CONCURRENCY || 4));
-// Pause avant la seconde chance accordée quand tous les modèles ont refusé
-// les requêtes : une indisponibilité de quelques dizaines de secondes ne doit
-// pas faire perdre le run entier.
+// Pause avant la seconde chance quand tous les modèles ont refusé.
 const OUTAGE_WAIT_MS = Math.max(0, Number(process.env.TRANSLATE_OUTAGE_WAIT_MS ?? 60_000));
-// Échecs tolérés avec un même modèle avant de confier le lot restant au
-// suivant. Quelques refus isolés sont normaux ; une série signifie que le
-// modèle déraille (retiré, quota, surcharge) et insister coûte des minutes
-// pour rien.
+// Échecs tolérés avec un même modèle avant de passer au suivant.
 const MAX_FAILURES = Math.max(0, Number(process.env.TRANSLATE_MAX_FAILURES ?? 5));
 
 if (!PROVIDERS.length) {
@@ -91,18 +83,14 @@ const hash = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 1
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Message d'erreur lisible : le corps de la réponse contient la vraie cause
-// (« modèle inconnu », « crédits épuisés », « clé invalide »…) ; sans lui le
-// log du workflow ne montre qu'un code HTTP.
+// Message d'erreur lisible : le corps de la réponse contient la vraie cause.
 async function httpError(res, label) {
   let body = '';
   try { body = (await res.text()).replace(/\s+/g, ' ').slice(0, 300); } catch {}
   return new Error(`${label} HTTP ${res.status}${body ? ` — ${body}` : ''}`);
 }
 
-// Requête témoin : quelques caractères suffisent à savoir si un modèle
-// accepte ne serait-ce qu'une conversation. Une clé valide mais à sec échoue
-// ici : c'est la seule preuve qu'une traduction peut aboutir.
+// Requête témoin : prouve qu'un modèle répond vraiment.
 async function probe(p) {
   try {
     const res = await fetch(`${p.endpoint}/chat/completions`, {
@@ -119,7 +107,7 @@ async function probe(p) {
       signal: AbortSignal.timeout(60_000),
     });
     if (res.ok) {
-      // Une réponse 200 mais vide ne compte pas : le modèle ne répond pas vraiment.
+      // Une réponse 200 mais vide ne compte pas.
       try {
         const data = await res.json();
         const text = data?.choices?.[0]?.message?.content ?? '';
@@ -135,9 +123,7 @@ async function probe(p) {
   }
 }
 
-// Un modèle est retenu si sa clé est acceptée et si la requête témoin
-// aboutit. Un modèle absent de /models n'est qu'un avertissement : seul
-// l'appel réel décide.
+// Un modèle est retenu si la clé est acceptée et si la requête témoin aboutit.
 async function checkProvider(p) {
   try {
     const res = await fetch(`${p.endpoint}/models`, {
@@ -162,20 +148,11 @@ async function checkProvider(p) {
   return probe(p);
 }
 
-// Un « invalid_request » peut venir du contenu d'un article… ou d'une clé
-// épuisée, d'un modèle retiré, d'une panne. Dans ce second cas les 15 langues
-// d'un même article rejettent en quelques secondes, soit 45 requêtes inutiles.
-// Une requête témoin de quelques caractères tranche : si elle est refusée
-// elle aussi, le problème n'est pas dans les articles.
 let activeProbe = null;
 let bulkRejection = null;
-// Échecs encaissés avec le modèle actif, et raison de son abandon en cours de
-// lot (trop d'échecs) le cas échéant.
 let providerFailures = 0;
 let exhaustedReason = null;
 
-// Pendant le run, la requête témoin n'est faite qu'une fois par modèle :
-// toutes les tâches qui échouent en même temps partagent le même verdict.
 function probeActive() {
   activeProbe ??= probe(active);
   return activeProbe;
@@ -202,24 +179,16 @@ async function callModel(system, user, retries = 3) {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
 
-      // 429/5xx : temporaire. 400/408/409/422 : le fournisseur renvoie parfois
-      // un « invalid_request » passager — observé sur des couples source/langue
-      // tirés au hasard, alors que les mêmes fichiers passaient dans les autres
-      // langues. Réessayer coûte quelques secondes ; abandonner laisse une
-      // cellule définitivement en anglais.
       const retryable = res.status === 400 || res.status === 408 ||
         res.status === 409 || res.status === 422 || res.status === 429 || res.status >= 500;
       if (retryable) {
         const retryAfter = Number(res.headers.get('retry-after'));
         const err = await httpError(res, 'temporaire — retry');
         if (Number.isFinite(retryAfter) && retryAfter > 0) err.retryAfter = retryAfter;
-        // Refus « invalid_request » : seul cas où le contenu de l'article
-        // pourrait être en cause, donc seul cas où la requête témoin sert.
         if (res.status === 400 || res.status === 422) err.invalidRequest = true;
         throw err;
       }
       if (!res.ok) {
-        // 401/404… : inutile de réessayer, et on veut le message complet.
         const err = await httpError(res, 'échec');
         err.fatal = true;
         throw err;
@@ -244,8 +213,6 @@ async function callModel(system, user, retries = 3) {
         }
       }
       if (err.fatal || attempt === retries) throw err;
-      // Respecte Retry-After quand le serveur en fournit un, sinon
-      // backoff exponentiel plafonné.
       const waitMs = err.retryAfter
         ? Math.min(err.retryAfter * 1000, 60_000)
         : Math.min(2000 * 2 ** (attempt - 1), 30_000);
@@ -280,8 +247,7 @@ async function exists(p) {
   return !!(await fs.stat(p).catch(() => null));
 }
 
-// Prépare le travail d'un article : les copies (langue source) sont faites
-// tout de suite, les traductions manquantes sont renvoyées comme tâches.
+// Prépare le travail d'un article.
 async function planPost(slug) {
   const dir = path.join(UPDATES, slug);
   const frPath = path.join(dir, SRC_FR);
@@ -292,3 +258,256 @@ async function planPost(slug) {
 
   if (await exists(frPath)) {
     source = await fs.readFile(frPath, 'utf8');
+    sourceLang = 'fr';
+  } else if (await exists(enPath)) {
+    source = await fs.readFile(enPath, 'utf8');
+    sourceLang = 'en';
+  } else {
+    return { slug, jobs: [] };
+  }
+
+  const srcHash = hash(source);
+  const jobs = [];
+  let touched = false;
+
+  for (const lang of LANGS) {
+    const out = path.join(dir, `post.${lang}.md`);
+
+    // On ne traduit jamais vers la langue source : on copie simplement.
+    if (lang === sourceLang) {
+      const prev = await fs.readFile(out, 'utf8').catch(() => null);
+      if (prev !== source) {
+        await fs.writeFile(out, source);
+        touched = true;
+      }
+      continue;
+    }
+
+    const marker = path.join(dir, `.i18n.${lang}.hash`);
+    const prev = await fs.readFile(marker, 'utf8').catch(() => null);
+
+    if (prev === srcHash && await exists(out)) continue; // déjà à jour
+
+    jobs.push({ slug, lang, source, srcHash, out, marker });
+  }
+
+  return { slug, jobs, touched };
+}
+
+async function runJob(job) {
+  console.log(`→ ${job.slug} : ${job.lang}`);
+  const translated = await translate(job.source, job.lang);
+  await fs.writeFile(job.out, translated.trimEnd() + '\n');
+  await fs.writeFile(job.marker, job.srcHash);
+}
+
+// Exécute les tâches par petits groupes.
+async function runPool(jobs) {
+  const failures = [];
+  let index = 0;
+  let skipped = 0;
+
+  async function worker() {
+    while (index < jobs.length) {
+      const job = jobs[index++];
+      if (bulkRejection || exhaustedReason) {
+        skipped++;
+        failures.push({ ...job, error: bulkRejection || exhaustedReason, skipped: true });
+        continue;
+      }
+      try {
+        await runJob(job);
+      } catch (err) {
+        console.error(`  ✗ échec ${job.slug}/${job.lang} : ${err.message}`);
+        failures.push({ ...job, error: err.message });
+        providerFailures++;
+        if (!exhaustedReason && providerFailures > MAX_FAILURES && activeIndex < PROVIDERS.length - 1) {
+          exhaustedReason = `${active.name} : ${providerFailures} traductions en échec (limite ${MAX_FAILURES})`;
+          console.error(`  ↻ ${exhaustedReason} — bascule sur le modèle suivant`);
+        }
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
+  if (skipped) console.error(`  ✗ ${skipped} traduction(s) non tentée(s) : ${bulkRejection || exhaustedReason}`);
+  return failures;
+}
+
+async function rebuildIndex() {
+  const entries = await fs.readdir(UPDATES, { withFileTypes: true });
+  const dirs = entries.filter(e => e.isDirectory()).map(e => e.name).sort();
+
+  const index = [];
+
+  for (const slug of dirs) {
+    const dir = path.join(UPDATES, slug);
+    const frPath = path.join(dir, SRC_FR);
+    const enPath = path.join(dir, SRC_EN);
+
+    // Source de référence (FR prioritaire)
+    let sourcePath = null;
+    if (await exists(frPath)) sourcePath = frPath;
+    else if (await exists(enPath)) sourcePath = enPath;
+    else continue;
+
+    // Front-matter
+    const raw = await fs.readFile(sourcePath, 'utf8');
+    const fmMatch = raw.match(/^---\n([\s\S]*?)\n---/);
+    const fm = {};
+    if (fmMatch) {
+      for (const line of fmMatch[1].split('\n')) {
+        const m = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+        if (m) fm[m[1]] = m[2].replace(/^["']|["']$/g, '');
+      }
+    }
+
+    // Langues réellement présentes sur le disque
+    const availableLangs = [];
+    for (const lang of LANGS) {
+      const p = path.join(dir, `post.${lang}.md`);
+      if (await exists(p)) availableLangs.push(lang);
+    }
+
+    index.push({
+      slug,
+      date: fm.date || '',
+      title: fm.title || slug,
+      author: fm.author || '',
+      sourceLang: (await exists(frPath)) ? 'fr' : 'en',
+      availableLangs: availableLangs.sort(),
+      ...Object.fromEntries(
+        Object.entries(fm).filter(([k]) =>
+          !['date','title','author','slug','lang'].includes(k)
+        )
+      ),
+    });
+  }
+
+  await fs.writeFile(
+    path.join(UPDATES, 'index.json'),
+    JSON.stringify(index, null, 2) + '\n'
+  );
+  console.log(`✓ updates/index.json régénéré (${index.length} entrées)`);
+}
+
+// Diagnostic (`--check` ou TRANSLATE_CHECK=1)
+if (process.argv.includes('--check') || process.env.TRANSLATE_CHECK) {
+  const report = [];
+  for (const p of PROVIDERS) {
+    console.log(`— ${p.name} : ${p.endpoint}, modèle ${p.model}`);
+    const verdict = await checkProvider(p);
+    console.log(verdict.ok ? '  ✓ opérationnel' : `  ✗ ${verdict.reason}`);
+    report.push({
+      provider: 'vyceai',
+      endpoint: p.endpoint,
+      model: p.model,
+      ok: verdict.ok,
+      reason: verdict.ok ? null : verdict.reason,
+    });
+  }
+  const usable = report.filter(r => r.ok).length;
+  await fs.writeFile('updates/.translation-health.json',
+    JSON.stringify({ providers: report, usableProviders: usable, totalProviders: report.length }, null, 2) + '\n');
+  console.log(`${usable} modèle(s) sur ${report.length} opérationnel(s) — rapport dans updates/.translation-health.json`);
+  process.exit(usable ? 0 : 1);
+}
+
+const entries = await fs.readdir(UPDATES, { withFileTypes: true });
+const dirs = entries.filter(e => e.isDirectory()).map(e => e.name).sort();
+
+const jobs = [];
+for (const slug of dirs) {
+  const { jobs: postJobs, touched } = await planPost(slug);
+  jobs.push(...postJobs);
+  if (!postJobs.length && !touched) console.log(`= ${slug} : à jour`);
+}
+
+console.log(`${jobs.length} traduction(s) à produire (concurrence ${CONCURRENCY})`);
+
+let failures = [];
+
+if (jobs.length) {
+  console.log(`modèles VyceAI, dans l'ordre : ${PROVIDERS.map(p => p.name).join(' → ')} (bascule après ${MAX_FAILURES} échecs)`);
+
+  // Passe au modèle suivant et vérifie qu'il répond vraiment. Dès qu'un
+  // modèle répond, il devient « sticky » : il sert pour toutes les
+  // traductions et il est mémorisé pour les runs suivants.
+  async function selectProvider() {
+    while (activeIndex + 1 < PROVIDERS.length) {
+      activeIndex++;
+      const p = PROVIDERS[activeIndex];
+      if (activeIndex > 0) console.log(`↻ bascule sur ${p.name}`);
+      const verdict = await checkProvider(p);
+      if (verdict.ok) {
+        active = p;
+        activeProbe = null;
+        bulkRejection = null;
+        providerFailures = 0;
+        exhaustedReason = null;
+        console.log(`✓ modèle retenu : ${p.model} — ${p.endpoint}`);
+        await fs.writeFile(STICKY_FILE, p.model + '\n').catch(() => {});
+        return true;
+      }
+      console.error(`✗ ${p.name} indisponible : ${verdict.reason}`);
+      rejected.set(p.name, verdict.reason);
+    }
+    active = null;
+    return false;
+  }
+
+  let pending = jobs;
+  for (let pass = 1; pass <= 2 && pending.length; pass++) {
+    while (pending.length && await selectProvider()) {
+      const result = await runPool(pending);
+      const stopReason = bulkRejection || exhaustedReason;
+      if (!stopReason) {
+        pending = [];
+        failures = result;
+        break;
+      }
+      console.error(`→ ${stopReason} ; ${result.length} tâche(s) reprise(s) avec le modèle suivant.`);
+      pending = result;
+      active = null;
+      activeProbe = null;
+      bulkRejection = null;
+      providerFailures = 0;
+      exhaustedReason = null;
+    }
+    if (!pending.length) break;
+    failures = pending;
+    if (pass === 2 || !OUTAGE_WAIT_MS) break;
+    const wait = OUTAGE_WAIT_MS / 1000;
+    console.error(`↻ aucun modèle disponible ; nouvelle tentative dans ${wait < 10 ? wait.toFixed(1) : Math.round(wait)} s`);
+    await sleep(OUTAGE_WAIT_MS);
+    activeIndex = -1;
+    active = null;
+    activeProbe = null;
+    bulkRejection = null;
+    providerFailures = 0;
+    exhaustedReason = null;
+    rejected.clear();
+  }
+}
+
+// Génère/actualise l'index après toutes les traductions
+await rebuildIndex();
+
+if (failures.length) {
+  console.error('');
+  console.error(`✗ ${failures.length} traduction(s) en échec :`);
+  for (const f of failures.filter(f => !f.skipped)) console.error(`  - ${f.slug}/${f.lang} : ${f.error}`);
+  if (rejected.size) {
+    console.error('');
+    console.error('Modèles injoignables :');
+    for (const [name, reason] of rejected) console.error(`  - ${name} : ${reason}`);
+    console.error('');
+    console.error("Quand la requête témoin « Bonjour. » est refusée elle aussi, le contenu des articles");
+    console.error("n'est pas en cause : vérifier la clé (crédits épuisés, clé expirée) et les modèles.");
+    console.error('  TRANSLATE_API_KEY / TRANSLATE_ENDPOINT / TRANSLATE_MODEL / TRANSLATE_MODEL_FALLBACKS');
+  }
+  console.error('Les traductions réussies sont conservées ; relancer le workflow reprendra les manquantes.');
+  process.exitCode = 1;
+} else {
+  console.log(`✓ ${jobs.length} traduction(s) terminée(s)`);
+}

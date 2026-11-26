@@ -1328,19 +1328,32 @@
 
   let updatesFocusToken = 0;
 
-  /* Positionne la fiche en haut de la fenêtre. Le saut est immédiat, puis on
-     réaligne tant que la page bouge : les images des fiches précédentes se
-     chargent après le rendu et décalent la fiche vers le bas. On s'arrête au
-     bout de 3 s, ou dès que l'utilisateur fait défiler la page lui-même. */
+  /* Positionne la fiche en haut de la fenêtre. Le saut doit être instantané :
+     style.css met « scroll-behavior: smooth » sur html, donc un scrollTo
+     ordinaire s'animerait et n'arriverait jamais (chaque frame relance
+     l'animation). On réaligne ensuite pendant 8 s, le temps que les images
+     des fiches précédentes se chargent et décalent la fiche vers le bas. Le
+     suivi s'arrête dès que l'utilisateur fait défiler la page lui-même. */
   function alignUpdatePost(post, token) {
-    const deadline = Date.now() + 3000;
+    const deadline = Date.now() + 8000;
     const step = function () {
       if (token !== updatesFocusToken || !post.isConnected) return;
       const top = Math.max(Math.round(post.getBoundingClientRect().top + window.scrollY - 80), 0);
-      if (Math.abs(window.scrollY - top) > 1) window.scrollTo(0, top);
+      if (Math.abs(window.scrollY - top) > 1) scrollInstantly(top);
       if (Date.now() < deadline) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
+  }
+
+  /* Défilement sans animation : l'attribut inline « scroll-behavior: auto »
+     neutralise le « scroll-behavior: smooth » global pendant l'appel. */
+  function scrollInstantly(top) {
+    const root = document.documentElement;
+    const previous = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    window.scrollTo(0, top);
+    if (previous) root.style.scrollBehavior = previous;
+    else root.style.removeProperty('scroll-behavior');
   }
 
   function focusUpdatePost(folder) {
@@ -1369,12 +1382,13 @@
     window.addEventListener('touchstart', stop, { passive: true });
     window.addEventListener('keydown', stop);
     alignUpdatePost(post, token);
+    setTimeout(function () { post.classList.remove('update-post--target'); }, 4000);
     setTimeout(function () {
       post.classList.remove('update-post--target');
       window.removeEventListener('wheel', stop);
       window.removeEventListener('touchstart', stop);
       window.removeEventListener('keydown', stop);
-    }, 3200);
+    }, 8200);
   }
 
   function shareUpdate(folder, btn) {
@@ -3064,7 +3078,7 @@
   document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (officialModal && !officialModal.hidden) { closeOfficialServerModal(); return; } if (playersModal && !playersModal.hidden) { closePlayersModal(); return; } if (serverModal && !serverModal.hidden) closeServerModal(); });
 
   /* ── Language change ── */
-  document.addEventListener('langchange', function () { syncDescLangSelect(); if (serversLoaded) renderServers(serversActiveList || filteredServers, serversDisplayedCount); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath())); });
+  document.addEventListener('langchange', function () { syncDescLangSelect(); if (serversLoaded) renderServers(serversActiveList || filteredServers, serversDisplayedCount); if (updatesLoaded && updatesContainer) { updatesLoaded = false; serversLoaded = false; loadUpdates(); loadServers(); } var dcPage = document.getElementById('page-le-jeu'); if (dcPage && dcPage.classList.contains('active')) renderDatacenters(); if (downloadsLoaded && downloadsData) { populateVersionSelect(androidSelect, androidBtn, downloadsData.android || []); populateVersionSelect(windowsSelect, windowsBtn, downloadsData.windows || []); } var modalCopyBtn = document.getElementById('modal-copy-btn'); if (modalCopyBtn && !modalCopyBtn._copied) modalCopyBtn.textContent = window.i18n.t('modal.copy'); document.title = getPageTitle(currentPageFromPath()); history.replaceState(null, '', pagePath(currentPageFromPath()) + (location.search || '')); });
 
   /* ── Son ── */
   document.addEventListener('click', function (e) { const target = e.target.closest('a, button, [role="button"]'); if (target) { const audio = new Audio('/btn_press.ogg'); audio.play().catch(function (err) { console.warn('Impossible de jouer le son :', err); }); } });

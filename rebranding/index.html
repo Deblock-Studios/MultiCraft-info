@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebranding — MultiCraft Info · 22 propositions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Baloo+2:wght@600;700&family=Bungee&family=Inter:ital,wght@0,400;0,600;0,700;0,800;0,900;1,900&family=JetBrains+Mono:wght@500;700&family=Lora:wght@600&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@500;700&family=Unbounded:wght@300;500;600&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0f14; --panel:#12161d; --card:#151a22; --line:#232a35;
+    --txt:#e8ebf0; --muted:#98a2b3; --accent:#57c46b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;line-height:1.55}
+  a{color:var(--accent)}
+  .wrap{max-width:1180px;margin:0 auto;padding:48px 24px 80px}
+  header.hero h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,4vw,42px);letter-spacing:-.5px}
+  header.hero h1 em{color:var(--accent);font-style:normal}
+  header.hero p.lead{color:var(--muted);max-width:760px;margin-top:14px;font-size:16px}
+  .hero-grid{display:flex;gap:12px;align-items:center;margin-top:18px;flex-wrap:wrap}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+  .legend span{font-size:12.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--panel)}
+  .criteria{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:34px}
+  .criteria div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13.5px;color:var(--muted)}
+  .criteria b{display:block;color:var(--txt);font-size:13.5px;margin-bottom:4px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:46px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .card-head{padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+  .card-head .num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent)}
+  .card-head h2{font-family:'Space Grotesk',sans-serif;font-size:19px;margin-top:2px}
+  .card-head p{color:var(--muted);font-size:13.5px;margin-top:6px}
+  .shots{padding:16px 20px;display:flex;flex-direction:column;gap:14px;flex:1}
+  .shot{border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:center;min-height:56px;transition:background .25s}
+  .shot.banner{padding:0;min-height:0;border-radius:12px;overflow:hidden}
+  .shot svg{max-width:100%;height:auto}
+  .shot.banner svg{display:block;width:100%}
+  .tabrow{display:flex;align-items:center;gap:14px;width:100%;flex-wrap:wrap}
+  .tab{display:flex;align-items:center;gap:8px;background:rgba(127,127,127,.14);border-radius:8px 8px 0 0;padding:7px 14px 7px 10px;font-size:12.5px;color:inherit;white-space:nowrap}
+  .iconsizes{display:flex;align-items:center;gap:10px;margin-left:auto}
+  .iconsizes .ic{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted)}
+  .card-foot{display:flex;align-items:center;gap:8px;padding:12px 20px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .sw{width:16px;height:16px;border-radius:5px;border:1px solid rgba(255,255,255,.15)}
+  .card-foot .use{font-size:12px;color:var(--muted);margin-left:auto}
+  .footbtns{display:flex;gap:6px}
+  button.cp, button.scheme{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 9px;font-size:11.5px;cursor:pointer;font-family:inherit}
+  button.cp:hover,button.scheme:hover{color:var(--txt);border-color:var(--accent)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent);color:#08110b;font-weight:700;font-size:13px;padding:9px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s}
+  .toast.on{opacity:1}
+  footer{margin-top:60px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>Rebranding <em>MultiCraft&nbsp;Info</em> — 22 pistes</h1>
+    <p class="lead">Le site garde son design : on ne touche qu'au logo. Chaque piste propose une <b>icône</b> (favicon), un <b>logo étendu</b> (icône + nom, la « manière d'écrire » le logo) et une <b>bannière</b> façon og-image. Tout est généré en SVG vectoriel : cliquez sur « SVG » pour copier le code d'un visuel, et sur 🌓 pour tester chaque logo sur fond clair et sombre.</p>
+    <div class="legend">
+      <span>Identité actuelle : bloc d'herbe pixel + « MI », typo pixel blanche</span>
+      <span>Ancre : le jeu MultiCraft (blocs, serveurs, updates, chat, 18 langues)</span>
+      <span>20+ idées = 22 concepts</span>
+    </div>
+    <div class="criteria">
+      <div><b>Lisible à 16 px</b>Une icône doit rester recognizable dans un onglet ou un favicon Discord.</div>
+      <div><b>Noir &amp; blanc d'abord</b>Chaque icône fonctionne en une seule couleur avant d'être colorée.</div>
+      <div><b>Pas de copyright</b>Aucune piste ne copie l'herbe Mojang telle quelle : on suggère, on ne clone pas.</div>
+      <div><b>Le nom reste</b>« MultiCraft Info » ne change pas ; seule son écriture et son symbole évoluent.</div>
+    </div>
+  </header>
+  <main class="grid" id="grid"></main>
+  <footer>
+    <p>Fichier autonome mono-HTML/CSS/JS — polices chargées via Google Fonts, logos en SVG inline (aucune image). Proposé pour le repo <a href="https://github.com/Deblock-Studios/MultiCraft-Info">Deblock-Studios/MultiCraft-Info</a>.</p>
+  </footer>
+</div>
+<div class="toast" id="toast">SVG copié !</div>
+
+<script>
+const R=(x,y,w,h,f,rx)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"${rx?` rx="${rx}"`:''}/>`;
+const P=(pts,f,extra='')=>`<polygon points="${pts}" fill="${f}"${extra}/>`;
+const C=(cx,cy,r,f,extra='')=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${f}"${extra}/>`;
+const T=(x,y,s,fam,f,size,extra='')=>`<text x="${x}" y="${y}" font-family="${fam}" font-size="${size}" fill="${f}"${extra}>${s}</text>`;
+function isoCube(cx,cy,s,h,ct,cl,cr){
+  return P(`${cx},${cy-s} ${cx+s},${cy-s/2} ${cx},${cy} ${cx-s},${cy-s/2}`,ct)
+    +P(`${cx-s},${cy-s/2} ${cx},${cy} ${cx},${cy+h} ${cx-s},${cy+h-s/2}`,cl)
+    +P(`${cx+s},${cy-s/2} ${cx},${cy} ${cx},${cy+h} ${cx+s},${cy+h-s/2}`,cr);
+}
+function grassSide(cx,cy,s,h,dirt,g,top){
+  return P(`${cx-s},${cy-s/2} ${cx},${cy} ${cx},${cy+h} ${cx-s},${cy+h-s/2}`,dirt)
+    +P(`${cx+s},${cy-s/2} ${cx},${cy} ${cx},${cy+h} ${cx+s},${cy+h-s/2}`,dirt)
+    +P(`${cx-s},${cy-s/2} ${cx},${cy} ${cx},${cy+h*0.28} ${cx-s},${cy+h*0.28-s/2}`,g)
+    +P(`${cx+s},${cy-s/2} ${cx},${cy} ${cx},${cy+h*0.28} ${cx+s},${cy+h*0.28-s/2}`,g);
+}
+
+const F={
+  pixel:{fam:`'Press Start 2P',monospace`,lock:11.5,ban:23},
+  silk:{fam:`'Silkscreen',monospace`,lock:19,ban:32},
+  mono:{fam:`'JetBrains Mono',monospace`,lock:19,ban:34},
+  vt:{fam:`'VT323',monospace`,lock:24,ban:44},
+  sg:{fam:`'Space Grotesk',sans-serif`,lock:23,ban:42},
+  inter:{fam:`'Inter',sans-serif`,lock:23,ban:42},
+  ab:{fam:`'Archivo Black',sans-serif`,lock:19,ban:36},
+  bungee:{fam:`'Bungee',sans-serif`,lock:16,ban:30},
+  baloo:{fam:`'Baloo 2',sans-serif`,lock:25,ban:46},
+  unb:{fam:`'Unbounded',sans-serif`,lock:17,ban:31},
+  lora:{fam:`'Lora',serif`,lock:24,ban:44},
+};
+
+const IDEAS=[
+{id:'bloc-info',name:'Bloc Info 2.0',accent:'#57c46b',
+ desc:'Version affinée de l\'identité actuelle : le bloc d\'herbe devient une vignette nette avec un « i » gravé, plus lisible à 16 px que le « MI ».',
+ use:'Continuité maximale : les joueurs reconnaissent le site au premier coup d\'œil.',
+ palette:['#57c46b','#3f8f4f','#8b5a2b','#5a3d1e'],font:F.pixel,
+ icon(){return R(6,6,36,36,'#5a3d1e',4)+R(6,6,36,9,'#4caf50',4)+R(6,11,36,4,'#4caf50')+R(9,8,5,3,'#66c96a')+R(28,7,6,3,'#3f9a44')+R(12,18,5,4,'#7a4a21')+R(30,24,5,4,'#6e411c')+R(20,32,6,4,'#7a4a21')+R(21,16,6,6,'#fff')+R(21,25,6,12,'#fff');}},
+{id:'beacon',name:'La Balise',accent:'#ffc94a',
+ desc:'Une balise (beacon) qui tire un rayon de lumière vers le ciel : le site qui « éclaire » la communauté. Fonctionne très bien en un seul aplat doré.',
+ use:'Parfait pour un site « source de vérité » : la balise est un repère visible de loin.',
+ palette:['#ffc94a','#f5a623','#2b2f3a'],font:F.sg,weight:700,ls:2,upper:true,bgD:'#0a0c12',
+ icon(){return `<defs><linearGradient id="x-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#f5a623"/></linearGradient></defs>`
+  +P('17,4 31,4 27,33 21,33','rgba(255,201,74,.22)')+P('19,4 29,4 26,33 22,33','url(#x-b)',` style="filter:drop-shadow(0 0 4px rgba(255,201,74,.8))"`)
+  +R(13,33,22,4,'#3a4152',2)+R(9,37,30,7,'#232833',2)+R(30,8,3,3,'#fff')+R(36,14,2,2,'#ffd97a');}},
+{id:'mci-cube',name:'Monogramme Cube',accent:'#2dd4bf',
+ desc:'Un cube isométrique « MCI » : les initiales du site fondues dans un volume. Monochrome teal, esprit produit tech minimaliste.',
+ use:'Se décline facilement en app icon, badge Discord, avatar — le cube seul suffit.',
+ palette:['#2dd4bf','#14b8a6','#0f766e'],font:F.unb,weight:600,
+ icon(){return isoCube(24,15,13,17,'#4fd8c8','#0f766e','#1aa393')+`<g fill="#04302b">${R(21,14,6,5,'#04302b')}${R(21,22,6,10,'#04302b')}</g>`;}},
+{id:'terminal',name:'Terminal',accent:'#4ade80',
+ desc:'Le site comme la ligne de commande des joueurs : fenêtre de terminal avec curseur. Écriture en minuscules snake_case : multicraft_info.',
+ use:'Cible les joueurs avancés : stats, serveurs, données. Très bon en noir et blanc.',
+ palette:['#4ade80','#0f172a','#94a3b8'],font:F.mono,lower:true,sep:'_',
+ icon(){return R(5,8,38,32,'#0d1420',6)+R(5,8,38,9,'#1c2736',6)+R(5,13,38,4,'#1c2736')+C(10,12.5,1.7,'#f87171')+C(15.5,12.5,1.7,'#fbbf24')+C(21,12.5,1.7,'#4ade80')+T(11,33,`&gt;_`,'JetBrains Mono,monospace','#4ade80',13);}},
+{id:'boussole',name:'La Boussole',accent:'#e4573d',
+ desc:'Une aiguille de boussole pixelisée : s\'orienter parmi les serveurs, les mises à jour et les langues. Ton crème + encre, esprit « carnet d\'explorateur ».',
+ use:'Donne un ton chaleureux et éditorial, loin du tout-pixel.',
+ palette:['#e4573d','#22252b','#f6efe3'],font:F.baloo,weight:700,light:true,
+ icon(){return R(4,4,5,5,'#c9c2b4')+R(39,4,5,5,'#c9c2b4')+R(4,39,5,5,'#c9c2b4')+R(39,39,5,5,'#c9c2b4')+C(24,26,15,'#f6efe3',` stroke="#22252b" stroke-width="2.5"`)+P('24,13 28.5,26 19.5,26','#e4573d')+P('24,39 28.5,26 19.5,26','#22252b')+C(24,26,2.4,'#f6efe3',` stroke="#22252b" stroke-width="1.5"`);}},
+{id:'onde',name:'Le Signal',accent:'#4ade80',
+ desc:'Un bloc qui émet des ondes radio : les statuts de serveurs et les news diffusés en direct. L\'accent vert rappelle « serveur en ligne ».',
+ use:'Icône vivante : les ondes peuvent s\'animer (ping) sur le site.',
+ palette:['#4ade80','#2e7d46','#a7f3d0'],font:F.inter,weight:800,
+ icon(){return R(6,26,17,15,'#2e7d46',2)+R(6,26,17,5,'#4ade80',2)+C(24,34,3,'#4ade80')+`<path d="M31 27 a10 10 0 0 1 0 14" stroke="#4ade80" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M36 22 a17 17 0 0 1 0 24" stroke="#4ade80" stroke-width="3.2" fill="none" stroke-linecap="round" opacity=".55"/><path d="M41 17 a24 24 0 0 1 0 34" stroke="#4ade80" stroke-width="3.2" fill="none" stroke-linecap="round" opacity=".28"/>`;}},
+{id:'coeur',name:'Pouls Serveur',accent:'#ef4444',
+ desc:'Un cœur traversé par une ligne de battement : la santé des serveurs surveillée en continu (cf. la page Stats du site).',
+ use:'Fort potentiel animé : le battement suit les joueurs en ligne.',
+ palette:['#ef4444','#fca5a5','#ffffff'],font:F.silk,weight:700,
+ icon(){return `<path d="M24 41 C 10 31 5 23 5 16 C5 9.5 9.5 6 15 6 C19 6 22 8.5 24 12.5 C26 8.5 29 6 33 6 C38.5 6 43 9.5 43 16 C43 23 38 31 24 41 Z" fill="#ef4444"/><polyline points="6,22 15,22 19,14 25,30 29,22 42,22" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;}},
+{id:'torche',name:'La Torche',accent:'#f59e0b',
+ desc:'La torche qui éclaire : la lumière de la connaissance dans le monde du jeu, avec un trait artisanal et chaud.',
+ use:'Ton friendly et artisanal, lisible même tout en aplat orange.',
+ palette:['#f59e0b','#fb923c','#92400e','#7a4a21'],font:F.bungee,upper:true,ls:1,
+ icon(){return R(19,26,10,16,'#7a4a21',2)+R(19,26,4,16,'#5c3517')+R(17,21,14,5,'#92400e',2)+R(20,12,8,4,'#fbbf24')+R(17,16,14,5,'#f59e0b')+R(22,7,4,4,'#fde68a')+R(15,18,3,3,'#fb923c')+R(30,18,3,3,'#fb923c');}},
+{id:'crt',name:'Écran Rétro',accent:'#4ade80',
+ desc:'Un écran CRT au phosphore vert, scanlines comprises : hommage aux racines rétro du jeu, avec la typo terminal VT323.',
+ use:'Directive artistique « vieux PC » complète : idéal pour un site à l\'ambiance nostalgique.',
+ palette:['#4ade80','#14532d','#04140a'],font:F.vt,bgD:'#050807',
+ icon(){return R(4,8,40,30,'#0b0f0c',5)+`<rect x="4" y="8" width="40" height="30" rx="5" fill="none" stroke="#1f3b26" stroke-width="2.5"/>`+R(8,12,32,22,'#04140a',3)+R(8,16,32,2,'rgba(74,222,128,.12)')+R(8,22,32,2,'rgba(74,222,128,.10)')+R(8,28,32,2,'rgba(74,222,128,.08)')+R(18,17,12,8,'#4ade80')+R(18,25,12,2,'#2fa75c')+T(24,34,'MCI','VT323,monospace','#4ade80',9,` text-anchor="middle" opacity=".8"`);}},
+{id:'neon',name:'Néon Cube',accent:'#22d3ee',
+ desc:'Le cube dessiné au néon violet et cyan sur fond nuit : gaming, esport, absence totale de pixel.',
+ use:'Pour une image plus « gaming moderne » ; superbe en bannière sombre et en anim.',
+ palette:['#8b5cf6','#22d3ee','#0b0e16'],font:F.unb,weight:500,bgD:'#0b0e16',
+ icon(){const geo=[['24,7 39,15 24,23 9,15','#a78bfa'],['9,15 24,23 24,41 9,33','#8b5cf6'],['39,15 24,23 24,41 39,33','#22d3ee']];
+  return geo.map(([pts,c])=>`<polygon points="${pts}" fill="none" stroke="${c}" stroke-width="6" stroke-linejoin="round" opacity=".25"/><polygon points="${pts}" fill="none" stroke="${c}" stroke-width="2.4" stroke-linejoin="round"/>`).join('');}},
+{id:'carte',name:'Cartographie',accent:'#d9483b',
+ desc:'Une carte pliée avec une épingle : le site comme la carte au trésor des serveurs MultiCraft. Fond crème, encre sépia, un point rouge.',
+ use:'Sépare visuellement le site du jeu tout en restant dans son univers.',
+ palette:['#d9483b','#8a6d3b','#f1e3c8'],font:F.lora,weight:600,light:true,
+ icon(){return P('6,14 18,10 30,14 42,10 42,37 30,41 18,37 6,41','#f1e3c8',` stroke="#8a6d3b" stroke-width="2" stroke-linejoin="round"`)+`<path d="M18 10 V37 M30 14 V41" stroke="#8a6d3b" stroke-width="1.6" opacity=".55" fill="none"/><path d="M8 26 H16 M32 22 H40" stroke="#b49a6a" stroke-width="1.6" stroke-dasharray="3 3" fill="none"/>`+P('24,33 20,23 28,23','#d9483b')+C(24,20,4.6,'#d9483b')+C(24,20,1.8,'#fff');}},
+{id:'eclair',name:'Éclair Info',accent:'#ffd23f',
+ desc:'Un éclair dans une vignette sombre : l\'info qui arrive instantanément. Écriture penchée pour la vitesse.',
+ use:'Énergie maximale, très bon contraste en petit comme en bannière.',
+ palette:['#ffd23f','#16181d','#ffffff'],font:F.inter,weight:900,italic:true,
+ icon(){return R(5,5,38,38,'#16181d',10)+P('27,9 14,27 22,27 19,39 34,20 25,20','#ffd23f');}},
+{id:'livre',name:'Le Codex',accent:'#4f46a8',
+ desc:'Un livre ouvert pixel : le site comme l\'encyclopédie officieuse de MultiCraft (serveurs, mises à jour, tutoriels).',
+ use:'Positionne le site comme référence/documentaire ; très bon pour une future section wiki.',
+ palette:['#4f46a8','#fdf8ee','#c7bfe8'],font:F.lora,weight:600,
+ icon(){return P('24,13 5,8 5,36 24,41','#4f46a8')+P('24,13 43,8 43,36 24,41','#43389a')+P('22,12 8,9 8,33 22,37','#fdf8ee')+P('26,12 40,9 40,33 26,37','#fdf8ee')+R(23.2,12,1.6,29,'#4f46a8')+`<path d="M12 15 L18 16.5 M12 20 L18 21.5 M12 25 L18 26.5 M30 16.5 L36 15 M30 21.5 L36 20 M30 26.5 L36 25" stroke="#c7bfe8" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;}},
+{id:'badge',name:'Blason Certifié',accent:'#d9b65a',
+ desc:'Un blason avec coche : la garantie d\'une info fiable par la communauté, esprit « badge officiel » des pages vérifiées.',
+ use:'Valorise la mention « serveur officiel » et les avis modérés du site.',
+ palette:['#d9b65a','#1f3a5f','#7fd1ae'],font:F.inter,weight:700,upper:true,ls:3,
+ icon(){return `<path d="M24 5 L39 10.5 V24 C39 34 32 40 24 43.5 C16 40 9 34 9 24 V10.5 Z" fill="#1f3a5f" stroke="#d9b65a" stroke-width="2.4"/><path d="M24 9 L35.5 13.3 V23.8 C35.5 31.8 30 36.8 24 39.8 C18 36.8 12.5 31.8 12.5 23.8 V13.3 Z" fill="#26456e"/><polyline points="17,24 22,29.5 31.5,18.5" stroke="#7fd1ae" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;}},
+{id:'saas',name:'Dégradé Cube',accent:'#8b5cf6',
+ desc:'Trois cubes empilés en dégradé violet → cyan : l\'info empilée, propre, style app SaaS 2026. Zéro pixel, tout en volumes doux.',
+ use:'Le plus « produit » : parfait si le site évolue vers une plateforme avec comptes et apps.',
+ palette:['#8b5cf6','#22d3ee','#c4b5fd'],font:F.inter,weight:800,ls:-0.5,gradAll:true,
+ defs:(p)=>`<linearGradient id="${p}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>`,
+ icon(gid){const g=`url(#${gid})`;return isoCube(24,11,9,9,g,'#6d3fd4','#31b3d9')+isoCube(15,20,9,9,g,'#6d3fd4','#31b3d9')+isoCube(33,20,9,9,g,'#6d3fd4','#31b3d9')+isoCube(24,29,9,9,g,'#6d3fd4','#31b3d9');}},
+{id:'pioche',name:'Pioche & Éclats',accent:'#e8a33d',
+ desc:'La pioche frappe et fait jaillir des éclats : « l\'info extraite à la source ». Trait acier + bois, esprit robuste.',
+ use:'Fait le lien direct avec l\'acte de jouer tout en parlant de recherche/découverte.',
+ palette:['#e8a33d','#9aa3ad','#8a5a2b'],font:F.ab,upper:true,
+ icon(){return `<path d="M9 13 Q24 4 39 13" stroke="#9aa3ad" stroke-width="5.5" fill="none" stroke-linecap="round"/><line x1="15" y1="15" x2="33" y2="36" stroke="#8a5a2b" stroke-width="4.5" stroke-linecap="round"/><path d="M36 6 l1.8 3.6 3.6 1.8 -3.6 1.8 -1.8 3.6 -1.8 -3.6 -3.6 -1.8 3.6 -1.8 Z" fill="#e8a33d"/><path d="M8 34 l1.4 2.8 2.8 1.4 -2.8 1.4 -1.4 2.8 -1.4 -2.8 -2.8 -1.4 2.8 -1.4 Z" fill="#e8a33d" opacity=".8"/>`;}},
+{id:'chat',name:'Bulle de Tchat',accent:'#3b82f6',
+ desc:'Une bulle pixel avec trois points : le chat et les avis du site, la communauté qui parle. Ton bleu amical et rond.',
+ use:'Met en avant la fonctionnalité la plus sociale du site ; se prête à l\'animation « typing… ».',
+ palette:['#3b82f6','#93c5fd','#ffffff'],font:F.baloo,weight:700,
+ icon(){return R(6,9,36,25,'#3b82f6',8)+P('13,33 23,33 13,42','#3b82f6')+C(16,21.5,3,'#fff')+C(24,21.5,3,'#fff')+C(32,21.5,3,'#fff');}},
+{id:'globe',name:'Globe Multi',accent:'#57c46b',
+ desc:'Un globe filaire avec un continent pixel : 18 langues, des serveurs partout. L\'« Multi » de MultiCraft rendu littéral.',
+ use:'Le seul concept qui raconte l\'internationalisation, l\'argument n°1 du site.',
+ palette:['#57c46b','#7fd1ff','#123b57'],font:F.sg,weight:700,upper:true,ls:1,
+ icon(){return C(24,24,16,'#123b57',` stroke="#7fd1ff" stroke-width="2.2"`)+`<ellipse cx="24" cy="24" rx="7" ry="16" fill="none" stroke="#7fd1ff" stroke-width="1.8" opacity=".8"/><line x1="8" y1="24" x2="40" y2="24" stroke="#7fd1ff" stroke-width="1.8" opacity=".8"/><line x1="11" y1="16" x2="37" y2="16" stroke="#7fd1ff" stroke-width="1.5" opacity=".5"/><line x1="11" y1="32" x2="37" y2="32" stroke="#7fd1ff" stroke-width="1.5" opacity=".5"/>`+R(15,18,5,4,'#57c46b')+R(27,12,6,4,'#57c46b')+R(30,27,5,4,'#57c46b')+R(17,29,4,4,'#57c46b');}},
+{id:'vigie',name:'L\'Œil Vigie',accent:'#a78bfa',
+ desc:'Un œil dans une vignette nuit : le site qui veille 24/7 sur les mises à jour et les serveurs. Mystérieux et mémorable.',
+ use:'Colle parfaitement à la page Stats et au suivi quotidien de la base de données.',
+ palette:['#a78bfa','#f2ecff','#1b1430'],font:F.unb,weight:300,upper:true,ls:2,bgD:'#120e1e',
+ icon(){return R(6,6,36,36,'#1b1430',11)+`<ellipse cx="24" cy="24" rx="13" ry="8.2" fill="#f2ecff"/><circle cx="24" cy="24" r="5" fill="#7c5cff"/><circle cx="25.8" cy="22.2" r="1.6" fill="#fff"/>`;}},
+{id:'refresh',name:'Toujours à Jour',accent:'#4ade80',
+ desc:'Deux flèches de synchronisation autour d\'un bloc : la promesse n°1 du site — des infos qui suivent le jeu au jour le jour.',
+ use:'Idéal si le logo doit raconter « fraîcheur des données » plutôt que « jeu ».',
+ palette:['#4ade80','#4caf50','#94a3b8'],font:F.inter,weight:700,
+ icon(){return `<path d="M39 24 a15 15 0 1 1 -5.2 -11.3" stroke="#4ade80" stroke-width="3.6" fill="none" stroke-linecap="round"/>`+P('36,5 37.5,14.5 28.5,10.5','#4ade80')+isoCube(24,17,7,10,'#66bb6a','#3f8f4f','#57a85f')+R(21,17,6,2,'#4caf50');}},
+{id:'brut',name:'Brutaliste',accent:'#ffd23f',
+ desc:'Trait noir épais, aplats, ombre franche, accent jaune : le brutalisme assume le côté « utilitaire » d\'un site d\'info.',
+ use:'Le plus distinctif de tous : impossible à confondre avec un autre site Minecraft.',
+ palette:['#000000','#ffd23f','#ffffff'],font:F.ab,upper:true,light:true,
+ icon(){return R(6,6,36,36,'#000',3)+R(11,11,26,26,'#fff')+R(16,16,16,16,'#000')+R(30,2,10,10,'#ffd23f');}},
+{id:'aurore',name:'Aurore Pixel',accent:'#f472b6',
+ desc:'Un ciel d\'aube en dégradé sur des blocs en silhouette : chaque mise à jour est une nouvelle journée de jeu qui commence.',
+ use:'Le plus poétique ; se décline en série d\'illustrations pour chaque saison du jeu.',
+ palette:['#f472b6','#a78bfa','#fbbf24'],font:F.unb,weight:500,grad2:true,bgD:'#1a1030',
+ defs(p){return `<linearGradient id="${p}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".45" stop-color="#a78bfa"/><stop offset="1" stop-color="#f472b6"/></linearGradient>`;},
+ icon(gid){return R(5,5,38,38,`url(#${gid})`,10)+R(7,31,11,12,'#181022')+R(20,35,13,8,'#181022')+R(35,28,6,15,'#181022')+C(13,14,1.6,'#fff')+C(31,10,1.3,'#fff')+C(36,17,1.1,'#fff')+R(21,24,6,6,'#fde68a',1);}},
+];
+
+function caseApply(idea,s){ if(idea.upper) return s.toUpperCase(); if(idea.lower) return s.toLowerCase(); return s; }
+function mark(idea,scheme){
+  const m1=caseApply(idea,'MultiCraft'), m2=caseApply(idea,'Info');
+  const sep=idea.sep===undefined?' ':idea.sep;
+  return {m1,m2,full:sep===' '?`${m1} ${m2}`:sep==='none'?`${m1}${m2}`:`${m1}${sep}${m2}`};
+}
+function textColor(scheme){ return scheme==='dark'?'#f2f3f5':'#171a20'; }
+function accentOf(idea){ return idea.accent; }
+
+function iconSvg(idea,scheme,size){
+  const p=`${idea.id}-ic`;
+  const defs=idea.defs?idea.defs(p):'';
+  return `<svg viewBox="0 0 48 48" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-label="Icône ${idea.name.replace(/&/g,'&amp;')}">${defs}${idea.icon(p)}</svg>`;
+}
+function lockupSvg(idea,scheme){
+  const f=idea.font, dark=scheme==='dark', c1=textColor(scheme), acc=accentOf(idea);
+  const {m1,m2}=mark(idea,scheme);
+  const gp=`${idea.id}-lg`;
+  let defs=idea.defs?idea.defs(`${idea.id}-ic`):'';
+  let fill1=c1, fill2=acc;
+  if(idea.gradAll){ defs+=`<linearGradient id="${gp}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>`; fill1=fill2=`url(#${gp})`; }
+  if(idea.grad2){ defs+=idea.defs(gp); fill2=`url(#${gp})`; }
+  const glow=idea.id==='neon'?` style="filter:drop-shadow(0 0 5px rgba(139,92,246,.85))"`:'';
+  const italic=idea.italic?` font-style="italic"`:'';
+  return `<svg viewBox="0 0 440 80" xmlns="http://www.w3.org/2000/svg" style="overflow:visible" aria-label="Logo étendu ${idea.name.replace(/&/g,'&amp;')}"><defs>${defs}</defs><g transform="translate(10,16)">${idea.icon(`${idea.id}-ic`)}</g><text x="72" y="41" dy=".33em" font-family="${f.fam}" font-size="${f.lock}"${idea.weight?` font-weight="${idea.weight}"`:''} letter-spacing="${idea.ls||0}"${italic}${glow}><tspan fill="${fill1}">${m1}</tspan><tspan fill="${fill2}">${idea.sep===' '?` ${m2}`:idea.sep===undefined?` ${m2}`:`${idea.sep}${m2}`}</tspan></text></svg>`;
+}
+function bannerSvg(idea,scheme){
+  const f=idea.font, dark=scheme==='dark', acc=accentOf(idea);
+  const {m1,m2}=mark(idea,scheme);
+  const gp=`${idea.id}-bg`, lp=`${idea.id}-bl`;
+  const bg=dark?(idea.bgD||'#0e1116'):'#f4f2ec';
+  const t1c=dark?'#f2f3f5':'#171a20', t2c=dark?'rgba(235,240,246,.62)':'rgba(25,28,34,.58)';
+  let defs=idea.defs?idea.defs(`${idea.id}-ic`):'';
+  let fill1=t1c, fill2=acc;
+  if(idea.gradAll){ defs+=`<linearGradient id="${lp}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>`; fill1=fill2=`url(#${lp})`; }
+  if(idea.grad2){ defs+=idea.defs(lp); fill2=`url(#${lp})`; }
+  const glow=idea.id==='neon'?` style="filter:drop-shadow(0 0 8px rgba(139,92,246,.9))"`:'';
+  const italic=idea.italic?` font-style="italic"`:'';
+  const tag=idea.tag||TAGS[idea.id]||'Le site des MultiCrafters.';
+  return `<svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bannière ${idea.name.replace(/&/g,'&amp;')}"><defs>${defs}</defs><rect width="760" height="210" fill="${bg}"/><g transform="translate(46,52) scale(2.2)">${idea.icon(`${idea.id}-ic`)}</g><text x="182" y="97" dy=".33em" font-family="${f.fam}" font-size="${f.ban}"${idea.weight?` font-weight="${idea.weight}"`:''} letter-spacing="${idea.ls?idea.ls*1.5:0}"${italic}${glow}><tspan fill="${fill1}">${m1}</tspan><tspan fill="${fill2}">${idea.sep===' '?` ${m2}`:idea.sep===undefined?` ${m2}`:`${idea.sep}${m2}`}</tspan></text><text x="183" y="141" font-family="'Inter',sans-serif" font-size="16.5" fill="${t2c}">${tag}</text><rect x="183" y="160" width="66" height="3" rx="1.5" fill="${acc}"/></svg>`;
+}
+
+const TAGS={
+ 'bloc-info':'Toutes les infos, un seul bloc.',
+ 'beacon':'Le phare des MultiCrafters.',
+ 'mci-cube':'L\'info, en volume.',
+ 'terminal':'L\'info en ligne de commande.',
+ 'boussole':'Toujours orienté vers l\'info.',
+ 'onde':'Le signal de ta communauté.',
+ 'coeur':'Le pouls des serveurs, en direct.',
+ 'torche':'La lumière sur chaque mise à jour.',
+ 'crt':'Rétro, mais à jour.',
+ 'neon':'L\'info qui brille la nuit.',
+ 'carte':'Explore. Trouve. Joue.',
+ 'eclair':'L\'info à la vitesse de l\'éclair.',
+ 'livre':'L\'encyclopédie des MultiCrafters.',
+ 'badge':'L\'info certifiée communauté.',
+ 'saas':'Simple. Net. À jour.',
+ 'pioche':'Creusé pour les joueurs.',
+ 'chat':'Ta communauté, ton tchat.',
+ 'globe':'18 langues, une seule boussole.',
+ 'vigie':'On veille, tu joues.',
+ 'refresh':'Mis à jour, encore et toujours.',
+ 'brut':'Pas de blabla. Que l\'info.',
+ 'aurore':'Chaque jour, une nouvelle aurore.',
+};
+
+const grid=document.getElementById('grid');
+IDEAS.forEach((idea,i)=>{
+  const scheme=idea.light?'light':'dark';
+  const card=document.createElement('article');
+  card.className='card'; card.dataset.i=i; card.dataset.scheme=scheme;
+  card.innerHTML=`
+    <div class="card-head">
+      <span class="num">${String(i+1).padStart(2,'0')} / ${IDEAS.length}</span>
+      <h2>${idea.name}</h2>
+      <p>${idea.desc}</p>
+    </div>
+    <div class="shots"></div>
+    <div class="card-foot">
+      ${idea.palette.map(c=>`<span class="sw" style="background:${c}" title="${c}"></span>`).join('')}
+      <span class="use">${idea.use}</span>
+      <div class="footbtns">
+        <button class="scheme" title="Basculer l'aperçu clair/sombre">🌓</button>
+        <button class="cp" data-part="icon">SVG icône</button>
+        <button class="cp" data-part="lockup">SVG logo</button>
+        <button class="cp" data-part="banner">SVG bannière</button>
+      </div>
+    </div>`;
+  grid.appendChild(card);
+  const render=()=>{
+    const s=card.dataset.scheme;
+    const shots=card.querySelector('.shots');
+    const bg=s==='dark'?'#0f1319':'#eeeae0';
+    shots.innerHTML=`
+      <div class="shot" style="background:${bg}">
+        <div class="tabrow">
+          <span class="tab">${iconSvg(idea,s,16)} MultiCraft-Info — serveurs &amp; updates</span>
+          <span class="iconsizes">
+            <span class="ic">${iconSvg(idea,s,32)}32 px</span>
+            <span class="ic">${iconSvg(idea,s,16)}16 px</span>
+          </span>
+        </div>
+      </div>
+      <div class="shot" style="background:${bg}">${lockupSvg(idea,s)}</div>
+      <div class="shot banner">${bannerSvg(idea,s)}</div>`;
+  };
+  render();
+  card.querySelector('.scheme').addEventListener('click',()=>{card.dataset.scheme=card.dataset.scheme==='dark'?'light':'dark';render();});
+  card.querySelectorAll('.cp').forEach(btn=>btn.addEventListener('click',()=>{
+    const s=card.dataset.scheme, part=btn.dataset.part;
+    const svg=part==='icon'?iconSvg(idea,s,48):part==='lockup'?lockupSvg(idea,s):bannerSvg(idea,s);
+    navigator.clipboard.writeText(svg).then(()=>{
+      const t=document.getElementById('toast');t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1400);
+    }).catch(()=>{});
+  }));
+});
+</script>
+</body>
+</html>

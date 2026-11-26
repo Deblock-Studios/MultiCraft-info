@@ -27,6 +27,8 @@
   "updates.subtitle": "Latest game news, sorted from most recent to oldest.",
   "updates.loading": "Loading updates…",
   "updates.empty": "No updates yet.",
+  "updates.share": "🔗 Share",
+  "updates.shareCopied": "✅ Link copied!",
   "updates.error": "Oops. Looks like it does not work :/ One of the developers broke everything again... Sorry! Feel free to email us to report the issue: deblock-studios@proton.me",
 
   "servers.subtitle": "Live server list. Find a server and join in one click.",

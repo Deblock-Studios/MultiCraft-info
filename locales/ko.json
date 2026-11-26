@@ -27,6 +27,8 @@
   "updates.subtitle": "최신 게임 소식을 최신순으로 정리했습니다.",
   "updates.loading": "업데이트 불러오는 중…",
   "updates.empty": "아직 업데이트가 없습니다.",
+  "updates.share": "🔗 공유",
+  "updates.shareCopied": "✅ 링크가 복사되었습니다!",
   "updates.error": "이런. 작동하지 않는 것 같아요 :/ 개발자 중 한 명이 또 전부 망가뜨렸어요... 죄송합니다! 문제를 알려주시려면 이메일을 보내주세요: deblock-studios@proton.me",
 
   "servers.subtitle": "실시간 서버 목록. 서버를 찾아 클릭 한 번으로 참여하세요.",

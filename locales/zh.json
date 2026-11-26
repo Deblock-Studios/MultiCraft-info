@@ -27,6 +27,8 @@
   "updates.subtitle": "最新游戏动态，按从新到旧排序。",
   "updates.loading": "正在加载更新…",
   "updates.empty": "暂无更新。",
+  "updates.share": "🔗 分享",
+  "updates.shareCopied": "✅ 链接已复制！",
   "updates.error": "哎呀，好像出问题了 :/ 某个开发者又把一切都弄坏了……抱歉！请发邮件告诉我们问题：deblock-studios@proton.me",
 
   "servers.subtitle": "实时服务器列表。找到服务器并一键加入。",

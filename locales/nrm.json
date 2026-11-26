@@ -27,6 +27,8 @@
   "updates.subtitle": "Les dernié infos du jeu, classées d'la pus récente à la pus ancienne.",
   "updates.loading": "Chargement des mises à jou…",
   "updates.empty": "Aucune mise à jou pour l'instant.",
+  "updates.share": "🔗 Partagi",
+  "updates.shareCopied": "✅ Lien copié !",
   "updates.error": "Oups. on dirait ben qu'ça marche pô :/ Un des développeurs a 'core tout cassé... Désolé ! Hésitez pô à nous envoyer un mail pour nous signaler l'problème : deblock-studios@proton.me",
 
   "servers.subtitle": "Liste des serveurs en direct. Trouvez un serveur et r'joignez-le en un clic.",

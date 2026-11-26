@@ -27,6 +27,8 @@
   "updates.subtitle": "As últimas novidades do jogo, da mais recente para a mais antiga.",
   "updates.loading": "Carregando atualizações…",
   "updates.empty": "Ainda não há atualizações.",
+  "updates.share": "🔗 Compartilhar",
+  "updates.shareCopied": "✅ Link copiado!",
   "updates.error": "Ops. Parece que não está funcionando :/ Um dos desenvolvedores quebrou tudo de novo... Desculpe! Envie um e-mail para relatar o problema: deblock-studios@proton.me",
 
   "servers.subtitle": "Lista de servidores ao vivo. Encontre um servidor e entre com um clique.",

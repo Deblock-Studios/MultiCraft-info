@@ -27,6 +27,8 @@
   "updates.subtitle": "Berita game terbaru, diurutkan dari yang paling baru ke paling lama.",
   "updates.loading": "Memuat pembaruan…",
   "updates.empty": "Belum ada pembaruan.",
+  "updates.share": "🔗 Bagikan",
+  "updates.shareCopied": "✅ Tautan disalin!",
   "updates.error": "Ups. Sepertinya tidak berfungsi :/ Salah satu pengembang merusak semuanya lagi... Maaf! Kirim email kepada kami untuk melaporkan masalah ini: deblock-studios@proton.me",
 
   "servers.subtitle": "Daftar server langsung. Temukan server dan bergabung dengan satu klik.",

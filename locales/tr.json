@@ -27,6 +27,8 @@
   "updates.subtitle": "Oyunun en yeni içerikleri, en yeniden en eskiye doğru sıralanmıştır.",
   "updates.loading": "Güncellemeler yükleniyor…",
   "updates.empty": "Henüz güncelleme yok.",
+  "updates.share": "🔗 Paylaş",
+  "updates.shareCopied": "✅ Bağlantı kopyalandı!",
   "updates.error": "Ups. Görünüşe göre çalışmıyor :/ Geliştiricilerden biri yine her şeyi bozdu... Üzgünüz! Sorunu bildirmek için bize e-posta gönderebilirsiniz: deblock-studios@proton.me",
 
   "servers.subtitle": "Canlı sunucu listesi. Bir sunucu bulun ve tek tıkla katılın.",

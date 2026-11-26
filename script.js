@@ -991,6 +991,7 @@
     if (mainNav) mainNav.classList.remove('open');
     if (navToggle) { navToggle.classList.remove('open'); navToggle.setAttribute('aria-expanded', 'false'); }
     if (pageId === 'mises-a-jour' && !updatesLoaded) loadUpdates();
+    else if (pageId === 'mises-a-jour') focusUpdatePost(requestedUpdateFolder());
     if (pageId === 'le-jeu' && !datacentersLoaded) renderDatacenters();
     if (pageId === 'serveurs' && !serversLoaded) loadServers();
     if (pageId === 'stats' && !statsLoaded) loadStats();
@@ -1250,9 +1251,11 @@
         updatesContainer.innerHTML = '<div class="empty-state"><p>' + window.i18n.t('updates.empty') + '</p></div>';
       } else {
         bindLightbox();
+        bindUpdatesShare();
         renderUpdatesBatch();
       }
       updatesLoaded = true;
+      focusUpdatePost(requestedUpdateFolder());
     } catch (err) {
       console.error(err);
       updatesContainer.innerHTML = '<div class="error-state"><p>' + window.i18n.t('updates.error') + '</p></div>';
@@ -1306,6 +1309,77 @@
     if (updatesSentinel) { updatesSentinel.remove(); updatesSentinel = null; }
   }
 
+  /* ── Partage d'une mise à jour ──
+     Un lien de partage pointe vers /mises-a-jour?update=<dossier>. La page
+     affiche la liste habituelle puis défile jusqu'à la fiche visée. Un
+     paramètre qui ne correspond à aucune fiche du manifeste est ignoré. */
+  function requestedUpdateFolder() {
+    try {
+      return (new URLSearchParams(location.search).get('update') || '').trim();
+    } catch (e) { return ''; }
+  }
+
+  function updateShareUrl(folder) {
+    return location.origin + pagePath('mises-a-jour') + '?update=' + encodeURIComponent(folder);
+  }
+
+  function focusUpdatePost(folder) {
+    if (!folder || !updatesContainer || updatesAllPosts.length === 0) return;
+    const index = updatesAllPosts.findIndex(function (post) { return post.folder === folder; });
+    if (index === -1) return;
+    // Liste paginée : on rend les lots suivants jusqu'à atteindre la fiche.
+    let guard = 0;
+    while (updatesDisplayed <= index && guard < updatesAllPosts.length + 2) {
+      renderUpdatesBatch();
+      guard++;
+    }
+    let post = null;
+    const articles = updatesContainer.querySelectorAll('.update-post');
+    for (let i = 0; i < articles.length; i++) {
+      if (articles[i].dataset.folder === folder) { post = articles[i]; break; }
+    }
+    if (!post) return;
+    requestAnimationFrame(function () {
+      const top = post.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+      post.classList.add('update-post--target');
+      setTimeout(function () { post.classList.remove('update-post--target'); }, 2600);
+    });
+  }
+
+  function shareUpdate(folder, btn) {
+    if (!folder) return;
+    const url = updateShareUrl(folder);
+    const done = function () {
+      if (!btn) return;
+      const original = window.i18n.t('updates.share');
+      btn.textContent = window.i18n.t('updates.shareCopied');
+      btn.classList.add('is-copied');
+      if (btn._shareTimer) clearTimeout(btn._shareTimer);
+      btn._shareTimer = setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove('is-copied');
+      }, 2200);
+    };
+    const fallback = function () { fallbackCopyText(url); done(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  let updatesShareBound = false;
+  function bindUpdatesShare() {
+    if (!updatesContainer || updatesShareBound) return;
+    updatesShareBound = true;
+    updatesContainer.addEventListener('click', function (e) {
+      const btn = e.target.closest ? e.target.closest('.update-share') : null;
+      if (!btn) return;
+      shareUpdate(btn.dataset.folder, btn);
+    });
+  }
+
   const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'm4v', 'ogv'];
   function isVideoFile(name) {
     const ext = String(name || '').split('.').pop().toLowerCase();
@@ -1323,8 +1397,12 @@
         return '<img src="/updates/' + post.folder + '/images/' + img + '" alt="" loading="lazy">';
       }).join('') + '</div>';
     }
-    return '<article class="update-post"><div class="update-header"><time class="update-date" datetime="' +
-      escapeHtml(post.date) + '">' + formatDate(post.date) + '</time><h2 class="update-title">' +
+    return '<article class="update-post" data-folder="' + escapeHtml(post.folder) +
+      '"><div class="update-header"><div class="update-meta"><time class="update-date" datetime="' +
+      escapeHtml(post.date) + '">' + formatDate(post.date) + '</time><button type="button" class="update-share" data-folder="' +
+      escapeHtml(post.folder) + '" aria-label="' + escapeHtml(window.i18n.t('updates.share')) + '" title="' +
+      escapeHtml(window.i18n.t('updates.share')) + '">' + escapeHtml(window.i18n.t('updates.share')) +
+      '</button></div><h2 class="update-title">' +
       escapeHtml(post.title) + '</h2></div><div class="update-body">' + renderMarkdown(post.body) +
       '</div>' + imagesHtml + '</article>';
   }

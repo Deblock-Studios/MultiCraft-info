@@ -1003,7 +1003,10 @@
     } else {
       document.getElementById('app').style.display = '';
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Lien de partage : focusUpdatePost place la fiche, on ne remonte pas en haut.
+    if (!(pageId === 'mises-a-jour' && requestedUpdateFolder())) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     updateScrollTopBtn();
   }
 
@@ -1323,8 +1326,28 @@
     return location.origin + pagePath('mises-a-jour') + '?update=' + encodeURIComponent(folder);
   }
 
+  let updatesFocusToken = 0;
+
+  /* Positionne la fiche en haut de la fenêtre. Le saut est immédiat, puis on
+     réaligne tant que la page bouge : les images des fiches précédentes se
+     chargent après le rendu et décalent la fiche vers le bas. On s'arrête au
+     bout de 3 s, ou dès que l'utilisateur fait défiler la page lui-même. */
+  function alignUpdatePost(post, token) {
+    const deadline = Date.now() + 3000;
+    const step = function () {
+      if (token !== updatesFocusToken || !post.isConnected) return;
+      const top = Math.max(Math.round(post.getBoundingClientRect().top + window.scrollY - 80), 0);
+      if (Math.abs(window.scrollY - top) > 1) window.scrollTo(0, top);
+      if (Date.now() < deadline) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
   function focusUpdatePost(folder) {
     if (!folder || !updatesContainer || updatesAllPosts.length === 0) return;
+    const page = pages['mises-a-jour'];
+    // Page masquée : aucune position à mesurer, on attend qu'elle soit affichée.
+    if (page && !page.classList.contains('active')) return;
     const index = updatesAllPosts.findIndex(function (post) { return post.folder === folder; });
     if (index === -1) return;
     // Liste paginée : on rend les lots suivants jusqu'à atteindre la fiche.
@@ -1339,12 +1362,19 @@
       if (articles[i].dataset.folder === folder) { post = articles[i]; break; }
     }
     if (!post) return;
-    requestAnimationFrame(function () {
-      const top = post.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
-      post.classList.add('update-post--target');
-      setTimeout(function () { post.classList.remove('update-post--target'); }, 2600);
-    });
+    const token = ++updatesFocusToken;
+    post.classList.add('update-post--target');
+    const stop = function () { updatesFocusToken++; };
+    window.addEventListener('wheel', stop, { passive: true });
+    window.addEventListener('touchstart', stop, { passive: true });
+    window.addEventListener('keydown', stop);
+    alignUpdatePost(post, token);
+    setTimeout(function () {
+      post.classList.remove('update-post--target');
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('touchstart', stop);
+      window.removeEventListener('keydown', stop);
+    }, 3200);
   }
 
   function shareUpdate(folder, btn) {
